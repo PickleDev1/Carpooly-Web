@@ -3,8 +3,16 @@ import { headers } from 'next/headers'
 import { WebhookEvent } from '@clerk/nextjs/server'
 
 export async function POST(req: Request) {
+
+  // Get the webhook signing secret from environment variables
+  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET
+
+  if (!WEBHOOK_SECRET) {
+    throw new Error('Please add WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local')
+  }
+
   // Get the headers
-  const headerPayload = headers();
+  const headerPayload = await headers();
   const svix_id = headerPayload.get("svix-id");
   const svix_timestamp = headerPayload.get("svix-timestamp");
   const svix_signature = headerPayload.get("svix-signature");
@@ -45,7 +53,7 @@ export async function POST(req: Request) {
     const { id, email_addresses } = evt.data;
     
     // Create user in your backend
-    const response = await fetch(`${process.env.BACKEND_URL}/api/users`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
