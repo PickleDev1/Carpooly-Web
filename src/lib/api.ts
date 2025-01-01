@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 export async function fetchCarpools() {
-  const { getToken } = auth();
+  const { getToken } = await auth();
   const token = await getToken();
 
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/carpools`, {

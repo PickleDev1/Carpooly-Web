@@ -7,7 +7,7 @@ import { useUser, useAuth } from '@clerk/nextjs'
 import { CarpoolForm } from '@/components/CarpoolForm'
 import { CarpoolTable } from '@/components/CarpoolTable'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import { api } from '@/services/api'
+import { useApi } from '@/services/api'
 import type { Carpool } from '@/types/api'
 
 export default function CreateCarpoolPage() {
@@ -19,6 +19,7 @@ export default function CreateCarpoolPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { getToken } = useAuth()
+  const api = useApi()
 
   const handleSuccess = async (newCarpool: Carpool) => {
     setCarpools([...carpools, newCarpool])

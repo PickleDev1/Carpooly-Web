@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useLoadScript, Autocomplete } from '@react-google-maps/api'
-import { api } from '@/services/api'
+import { useApi } from '@/services/api'
 import type { Carpool } from '@/types/api'
 
 interface CarpoolFormProps {
@@ -17,7 +17,7 @@ export function CarpoolForm({ onSuccess, userId }: CarpoolFormProps) {
   const [error, setError] = useState('')
   const [destinationAddress, setDestinationAddress] = useState('')
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
-
+  const api = useApi();
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     libraries: ['places']

@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { api } from '@/services/api'
+import { useApi } from '@/services/api'
 import type { CompletedRide } from '@/types/api'
 
 export default function HistoryPage() {
   const [completedRides, setCompletedRides] = useState<CompletedRide[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+
+  const api = useApi();
 
   useEffect(() => {
     const fetchHistory = async () => {

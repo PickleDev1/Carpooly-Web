@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { Car, Calendar, Route, Leaf } from 'lucide-react'
-import { api } from '@/services/api'
+import { useApi } from '@/services/api'
 import type { Analytics } from '@/types/api'
 
 export default function AnalyticsPage() {
+  const api = useApi();
   const [analytics, setAnalytics] = useState<Analytics>({
     total_carpools: 0,
     total_rides: 0,
