@@ -56,11 +56,13 @@ export async function POST(req: Request) {
 
     // Handle the webhook
     const eventType = evt.type;
-    console.log('[Webhook] Event type received:', eventType);
+    console.log('----------------------------------------');
+    console.log(`[Webhook ${Date.now()}] New event received:`);
+    console.log('[Webhook] Event type:', eventType);
     console.log('[Webhook] Event data:', JSON.stringify(evt.data, null, 2));
 
     if (eventType === 'user.created') {
-      console.log('[Webhook] Processing user.created event');
+      console.log('[Webhook] 🎉 Processing user.created event');
       const { id, email_addresses } = evt.data;
       
       console.log('[Webhook] Attempting to create user with:', { id, email: email_addresses[0].email_address });
