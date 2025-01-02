@@ -57,6 +57,7 @@ export async function POST(req: Request) {
     // Handle the webhook
     const eventType = evt.type;
     console.log('[Webhook] Event type received:', eventType);
+    console.log('[Webhook] Event data:', JSON.stringify(evt.data, null, 2));
 
     if (eventType === 'user.created') {
       console.log('[Webhook] Processing user.created event');
@@ -74,6 +75,8 @@ export async function POST(req: Request) {
           email: email_addresses[0].email_address
         }),
       });
+
+      console.log('[Webhook] User creation response status:', response.status);
 
       if (!response.ok) {
         console.error('[Webhook] Error creating user in backend');
