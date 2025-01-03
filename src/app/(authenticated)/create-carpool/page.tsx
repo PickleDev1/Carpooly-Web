@@ -1,104 +1,87 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { useUser, useAuth } from '@clerk/nextjs'
-import { CarpoolForm } from '@/components/CarpoolForm'
-import { CarpoolTable } from '@/components/CarpoolTable'
+import { Input } from '@/components/ui/input'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import { useApi } from '@/services/api'
-import type { Carpool } from '@/types/api'
 
 export default function CreateCarpoolPage() {
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [carpools, setCarpools] = useState<Carpool[]>([])
-  const [isFormExpanded, setIsFormExpanded] = useState(true)
-  const { user } = useUser()
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { getToken } = useAuth()
-  const api = useApi()
-
-  const handleSuccess = async (newCarpool: Carpool) => {
-    setCarpools([...carpools, newCarpool])
-    setShowSuccess(true)
-  }
-
-  const createAnother = () => {
-    setShowSuccess(false)
-  }
-
-  useEffect(() => {
-    const fetchCarpools = async () => {
-      try {
-        const token = await getToken()
-        console.log('Authorization Token:', token)
-
-        setIsLoading(true)
-        const data = await api.getCarpools()
-        setCarpools(data)
-      } catch (err) {
-        console.error('Error fetching carpools:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load carpools')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchCarpools()
-  }, [getToken, api])
+  const [isFormOpen, setIsFormOpen] = useState(true)
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Create a Carpool</h1>
-      </div>
+      <h1 className="text-3xl font-bold mb-6">Create a Carpool</h1>
       
-      <div className="space-y-8">
-        <div className="bg-white rounded-lg shadow">
-          <button 
-            onClick={() => setIsFormExpanded(!isFormExpanded)}
-            className="w-full p-6 flex justify-between items-center border-b"
-          >
-            <h2 className="text-2xl font-bold">Create a New Carpool</h2>
-            {isFormExpanded ? (
-              <ChevronUp className="h-6 w-6" />
-            ) : (
-              <ChevronDown className="h-6 w-6" />
-            )}
-          </button>
-          
-          {isFormExpanded && (
-            <div className="p-6">
-              {showSuccess ? (
-                <div className="bg-[#E8EDDF] p-6 rounded-lg mb-8">
-                  <h2 className="text-xl font-semibold text-[#2B5335] mb-4">Carpool Created Successfully!</h2>
-                  <div className="flex gap-4">
-                    <Button onClick={createAnother}>Create Another Carpool</Button>
-                    <Button variant="outline" onClick={() => router.push('/carpools')}>
-                      View All Carpools
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <CarpoolForm onSuccess={handleSuccess} userId={user?.id || ''} />
-              )}
-            </div>
+      <div className="bg-white rounded-lg shadow">
+        <button
+          onClick={() => setIsFormOpen(!isFormOpen)}
+          className="w-full p-6 flex justify-between items-center hover:bg-gray-50 transition-colors"
+        >
+          <h2 className="text-xl font-bold">Create a New Carpool</h2>
+          {isFormOpen ? (
+            <ChevronUp className="h-5 w-5 text-gray-500" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-gray-500" />
           )}
-        </div>
+        </button>
+        
+        {isFormOpen && (
+          <div className="p-6 border-t">
+            <form className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Carpool Name
+                </label>
+                <Input 
+                  placeholder="Morning Junior High school drop off"
+                  className="w-full"
+                />
+              </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">My Carpools</h2>
-            {carpools.length > 0 ? (
-              <CarpoolTable carpools={carpools} />
-            ) : (
-              <p className="text-gray-500">No carpools created yet.</p>
-            )}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Recurring Option
+                </label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  <option value="">None</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Available Seats
+                </label>
+                <Input 
+                  type="number"
+                  min="1"
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Destination Address
+                </label>
+                <Input 
+                  placeholder="123 Office Building, Downtown, San Francisco, CA"
+                  className="w-full"
+                />
+              </div>
+
+              <Button className="bg-[#2B5335] hover:bg-[#1e3b25] text-white">
+                Create Carpool
+              </Button>
+            </form>
           </div>
-        </div>
+        )}
+      </div>
+
+      <div className="mt-12">
+        <h2 className="text-xl font-bold mb-6">My Carpools</h2>
+        <p className="text-gray-500">No carpools created yet.</p>
       </div>
     </div>
   )
