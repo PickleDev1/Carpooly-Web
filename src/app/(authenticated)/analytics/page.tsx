@@ -113,7 +113,40 @@ export default function AnalyticsPage() {
         })}
       </div>
 
-      {/* Optional: Add a chart or graph section below */}
+      {/* Leaderboard Section */}
+      <div className="mt-12 bg-green-50 rounded-lg shadow p-6">
+        <h2 className="text-xl font-bold mb-4">Top Carpoolers</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="py-3 px-6 text-left">Rank</th>
+                <th className="py-3 px-6 text-left">Name</th>
+                <th className="py-3 px-6 text-left">Rides</th>
+                <th className="py-3 px-6 text-left">CO₂ Saved</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { name: "Sarah Johnson", rides: 45, co2: "230kg" },
+                { name: "Mike Chen", rides: 38, co2: "195kg" },
+                { name: "Emma Davis", rides: 32, co2: "165kg" },
+                { name: "Alex Kim", rides: 29, co2: "150kg" },
+                { name: "Lisa Garcia", rides: 25, co2: "128kg" },
+              ].map((user, index) => (
+                <tr key={index} className="border-b">
+                  <td className="py-3 px-6">{index + 1}</td>
+                  <td className="py-3 px-6">{user.name}</td>
+                  <td className="py-3 px-6">{user.rides}</td>
+                  <td className="py-3 px-6">{user.co2}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Monthly Trends Section */}
       <div className="mt-12 bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold mb-4">Monthly Trends</h2>
         <p className="text-gray-500">Coming soon: Charts and graphs to visualize your impact over time.</p>

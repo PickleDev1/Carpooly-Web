@@ -1,17 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useApi } from '@/services/api'
-import type { CompletedRide } from '@/types/api'
+
+interface RideHistory {
+  carpool_name: string
+  date: string
+  time: string
+  destination_address: string
+  passengers: string
+}
 
 export default function HistoryPage() {
-  const [completedRides, setCompletedRides] = useState<CompletedRide[]>([])
+  const [completedRides, setCompletedRides] = useState<RideHistory[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  const api = useApi();
+  const [error, setError] = useState<string | null>(null)
+  const api = useApi()
+  const fetchedRef = useRef(false)
 
   useEffect(() => {
+    if (fetchedRef.current) return
+    
     const fetchHistory = async () => {
       try {
         setIsLoading(true)
@@ -25,42 +34,32 @@ export default function HistoryPage() {
     }
 
     fetchHistory()
+    fetchedRef.current = true
   }, [api])
+
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>
+  }
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Ride History</h1>
-      </div>
-
+      <h1 className="text-3xl font-bold mb-6">Ride History</h1>
       <div className="bg-white rounded-lg shadow">
         <div className="p-6">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2B5335]"></div>
-            </div>
-          ) : error ? (
-            <p className="text-red-500">{error}</p>
-          ) : completedRides.length > 0 ? (
+          {completedRides.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Carpool Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Time
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Destination
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Passengers
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carpool</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Passengers</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
