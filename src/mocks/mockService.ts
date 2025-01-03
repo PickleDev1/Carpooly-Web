@@ -5,12 +5,16 @@ import { mockCompletedRides, mockActiveRide } from './data/rides'
 import { mockInvites } from './data/invites'
 
 export const mockService = {
-  async createCarpool(carpool: Omit<Carpool, 'id'>): Promise<Carpool> {
-    return { id: '1', ...carpool }
+  async createCarpool(carpoolData: any): Promise<Carpool> {
+    return {
+      id: 'mock-carpool-' + Date.now(),
+      ...carpoolData,
+      created_at: new Date().toISOString()
+    }
   },
 
   async getCarpools() {
-    return mockCarpools
+    return [] // Return empty array or mock data
   },
 
   async getCarpool(id: string) {
@@ -18,7 +22,22 @@ export const mockService = {
   },
 
   async getRideHistory() {
-    return mockCompletedRides
+    return [
+      {
+        carpool_name: "Morning School Run",
+        date: "2024-03-15",
+        time: "8:00 AM",
+        destination_address: "123 School St",
+        passengers: "John, Emma, Michael"
+      },
+      {
+        carpool_name: "Afternoon Return",
+        date: "2024-03-15",
+        time: "3:00 PM",
+        destination_address: "456 Home Ave",
+        passengers: "John, Emma, Michael"
+      }
+    ]
   },
 
   async getAnalytics() {
@@ -30,8 +49,6 @@ export const mockService = {
   },
 
   async getActiveRide(userId: string) {
-    console.log('Mock getActiveRide called with userId:', userId)
-    console.log('Mock data:', mockActiveRide)
     return mockActiveRide
   }
 }

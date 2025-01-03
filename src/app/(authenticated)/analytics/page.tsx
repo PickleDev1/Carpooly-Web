@@ -30,7 +30,7 @@ export default function AnalyticsPage() {
     }
 
     fetchAnalytics()
-  }, [])
+  }, [api])
 
   const metrics = [
     {

@@ -18,14 +18,14 @@ export default function HistoryPage() {
         const data = await api.getRideHistory()
         setCompletedRides(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load history')
+        setError('Failed to load ride history')
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchHistory()
-  }, [])
+  }, [api])
 
   return (
     <div>

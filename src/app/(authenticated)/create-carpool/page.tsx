@@ -48,7 +48,7 @@ export default function CreateCarpoolPage() {
     }
 
     fetchCarpools()
-  }, [getToken])
+  }, [getToken, api])
 
   return (
     <div>

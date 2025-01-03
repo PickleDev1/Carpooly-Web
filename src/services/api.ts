@@ -19,7 +19,7 @@ export const useApi = () => {
   return {
     async getInvites(userId: string) {
       if (useMockApi) {
-        return mockService.getInvites()
+        return mockService.getInvites(userId)
       }
       const headers = await getHeaders()
       const response = await fetch(`${API_URL}/api/invites/${userId}`, { headers })
@@ -28,13 +28,51 @@ export const useApi = () => {
 
     async getActiveRide(userId: string) {
       if (useMockApi) {
-        return mockService.getActiveRide()
+        return mockService.getActiveRide(userId)
       }
       const headers = await getHeaders()
       const response = await fetch(`${API_URL}/api/active-ride/${userId}`, { headers })
       return response.json()
     },
 
-    // ... rest of your API methods
+    async getAnalytics() {
+      if (useMockApi) {
+        return mockService.getAnalytics()
+      }
+      const headers = await getHeaders()
+      const response = await fetch(`${API_URL}/api/analytics`, { headers })
+      return response.json()
+    },
+
+    async getCarpools() {
+      if (useMockApi) {
+        return mockService.getCarpools()
+      }
+      const headers = await getHeaders()
+      const response = await fetch(`${API_URL}/api/carpools`, { headers })
+      return response.json()
+    },
+
+    async getRideHistory() {
+      if (useMockApi) {
+        return mockService.getRideHistory()
+      }
+      const headers = await getHeaders()
+      const response = await fetch(`${API_URL}/api/ride-history`, { headers })
+      return response.json()
+    },
+
+    async createCarpool(carpoolData: any) {
+      if (useMockApi) {
+        return mockService.createCarpool(carpoolData)
+      }
+      const headers = await getHeaders()
+      const response = await fetch(`${API_URL}/api/carpools`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(carpoolData)
+      })
+      return response.json()
+    }
   }
 }
