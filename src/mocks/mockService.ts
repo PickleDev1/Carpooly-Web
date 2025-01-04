@@ -9,7 +9,8 @@ export const mockService = {
     return {
       id: 'mock-carpool-' + Date.now(),
       ...carpoolData,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      status: 'active'
     }
   },
 
