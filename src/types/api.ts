@@ -23,4 +23,9 @@ export interface Analytics {
   total_rides: number;
   miles_saved: number;
   co2_reduced: number;
+  top_carpoolers: {
+    name: string;
+    rides: number;
+    co2_saved: string;
+  }[];
 }

@@ -1,95 +1,88 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Car, Calendar, Route, Leaf } from 'lucide-react'
 import { useApi } from '@/services/api'
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts'
+
+interface TopCarpooler {
+  name: string
+  rides: number
+  co2_saved: string
+}
+
+interface Analytics {
+  total_carpools: number
+  total_rides: number
+  miles_saved: number
+  co2_reduced: number
+  top_carpoolers: TopCarpooler[]
+}
 
 export default function AnalyticsPage() {
-  const [analytics, setAnalytics] = useState({
+  const api = useApi()
+  const [analytics, setAnalytics] = useState<Analytics>({
     total_carpools: 0,
     total_rides: 0,
     miles_saved: 0,
-    co2_reduced: 0
+    co2_reduced: 0,
+    top_carpoolers: [] // Initialize empty array for top carpoolers
   })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const api = useApi()
 
   useEffect(() => {
-    let isMounted = true;
-
     const fetchData = async () => {
+      setIsLoading(true)
       try {
-        const data = await api.getAnalytics();
-        if (isMounted) {
-          setAnalytics(data);
-          setIsLoading(false);
-        }
+        const data = await api.getAnalytics()
+        setAnalytics(data)
       } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Failed to load analytics');
-          setIsLoading(false);
-        }
+        setError('Failed to load analytics data. Please try again later.')
+        console.error('Error fetching analytics:', err)
+      } finally {
+        setIsLoading(false)
       }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []); // Empty dependency array for initial fetch
-
-  useEffect(() => {
-    // This effect will only run when the `analytics` state changes
-    // You can add conditional logic here if needed
-  }, [analytics]); // Include `analytics` in the dependency array
-
-  const metrics = [
-    {
-      title: 'Total Carpools',
-      value: analytics.total_carpools,
-      icon: Car,
-      color: 'bg-blue-50',
-      textColor: 'text-blue-700',
-      iconColor: 'text-blue-500'
-    },
-    {
-      title: 'Total Rides',
-      value: analytics.total_rides,
-      icon: Calendar,
-      color: 'bg-purple-50',
-      textColor: 'text-purple-700',
-      iconColor: 'text-purple-500'
-    },
-    {
-      title: 'Car Miles Saved',
-      value: `${analytics.miles_saved.toLocaleString()} mi`,
-      icon: Route,
-      color: 'bg-[#E8EDDF]',
-      textColor: 'text-[#2B5335]',
-      iconColor: 'text-[#2B5335]'
-    },
-    {
-      title: 'CO₂ Emissions Reduced',
-      value: `${analytics.co2_reduced.toLocaleString()} lbs`,
-      icon: Leaf,
-      color: 'bg-green-50',
-      textColor: 'text-green-700',
-      iconColor: 'text-green-500'
     }
-  ]
+
+    fetchData()
+  }, [])
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div className="flex justify-center items-center h-screen">Loading...</div>
   }
 
   if (error) {
-    return <div className="text-red-500">{error}</div>
+    return <div className="text-red-500 text-center">{error}</div>
   }
 
+  const metrics = [
+    { title: 'Total Carpools', value: analytics.total_carpools, icon: Car, color: 'bg-blue-50', textColor: 'text-blue-700', iconColor: 'text-blue-500' },
+    { title: 'Total Rides', value: analytics.total_rides, icon: Calendar, color: 'bg-purple-50', textColor: 'text-purple-700', iconColor: 'text-purple-500' },
+    { title: 'Car Miles Saved', value: `${analytics.miles_saved.toLocaleString()} mi`, icon: Route, color: 'bg-[#E8EDDF]', textColor: 'text-[#2B5335]', iconColor: 'text-[#2B5335]' },
+    { title: 'CO₂ Emissions Reduced', value: `${analytics.co2_reduced.toLocaleString()} lbs`, icon: Leaf, color: 'bg-green-50', textColor: 'text-green-700', iconColor: 'text-green-500' },
+  ]
+
+  // Sample data for the chart - replace with real data when available
+  const monthlyData = [
+    { name: 'Jan', rides: 4 },
+    { name: 'Feb', rides: 6 },
+    { name: 'Mar', rides: 8 },
+    { name: 'Apr', rides: 12 },
+    { name: 'May', rides: 15 },
+    { name: 'Jun', rides: 18 },
+  ]
+
   return (
-    <div>
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Analytics</h1>
       </div>
@@ -132,18 +125,12 @@ export default function AnalyticsPage() {
               </tr>
             </thead>
             <tbody>
-              {[
-                { name: "Sarah Johnson", rides: 45, co2: "230kg" },
-                { name: "Mike Chen", rides: 38, co2: "195kg" },
-                { name: "Emma Davis", rides: 32, co2: "165kg" },
-                { name: "Alex Kim", rides: 29, co2: "150kg" },
-                { name: "Lisa Garcia", rides: 25, co2: "128kg" },
-              ].map((user, index) => (
+              {analytics.top_carpoolers.map((user, index) => (
                 <tr key={index} className="border-b">
                   <td className="py-3 px-6">{index + 1}</td>
                   <td className="py-3 px-6">{user.name}</td>
                   <td className="py-3 px-6">{user.rides}</td>
-                  <td className="py-3 px-6">{user.co2}</td>
+                  <td className="py-3 px-6">{user.co2_saved}</td>
                 </tr>
               ))}
             </tbody>
@@ -151,11 +138,27 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Monthly Trends Section */}
+      {/* Monthly Trends Section with Chart */}
       <div className="mt-12 bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold mb-4">Monthly Trends</h2>
-        <p className="text-gray-500">Coming soon: Charts and graphs to visualize your impact over time.</p>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Line 
+                type="monotone" 
+                dataKey="rides" 
+                stroke="#2B5335" 
+                strokeWidth={2} 
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   )
 }
+
