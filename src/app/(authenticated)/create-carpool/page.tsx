@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useApi } from '@/services/api'
 import { Autocomplete } from '@react-google-maps/api'
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface CarpoolFormData {
   carpool_name: string
@@ -13,6 +14,10 @@ interface CarpoolFormData {
   available_seats: number
   seats: number
   destination_address: string
+}
+
+interface Carpool extends CarpoolFormData {
+  id: string
 }
 
 export default function CreateCarpoolPage() {
@@ -24,7 +29,22 @@ export default function CreateCarpoolPage() {
     seats: 4,
     destination_address: ''
   })
+  const [carpools, setCarpools] = useState<Carpool[]>([])
+  const [successMessage, setSuccessMessage] = useState('')
   const api = useApi()
+
+  useEffect(() => {
+    fetchCarpools()
+  }, [])
+
+  const fetchCarpools = async () => {
+    try {
+      const response = await api.getCarpools()
+      setCarpools(response.data)
+    } catch (error) {
+      console.error('Failed to fetch carpools:', error)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,6 +52,9 @@ export default function CreateCarpoolPage() {
       console.log('Submitting carpool data:', formData)
       const response = await api.createCarpool(formData)
       console.log('Carpool created:', response)
+      
+      setSuccessMessage('Carpool created successfully!')
+      setIsFormOpen(false)
       
       // Reset form after successful creation
       setFormData({
@@ -41,8 +64,12 @@ export default function CreateCarpoolPage() {
         seats: 4,
         destination_address: ''
       })
+
+      // Fetch updated carpools
+      fetchCarpools()
     } catch (error) {
       console.error('Failed to create carpool:', error)
+      setSuccessMessage('Failed to create carpool. Please try again.')
     }
   }
 
@@ -53,10 +80,16 @@ export default function CreateCarpoolPage() {
   }
 
   return (
-    <div>
+    <div className="container mx-auto px-4 py-8">
+      {successMessage && (
+        <Alert className="mb-6">
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
+
       <h1 className="text-3xl font-bold mb-6">Create a Carpool</h1>
       
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow mb-8">
         <button
           onClick={() => setIsFormOpen(!isFormOpen)}
           className="w-full p-6 flex justify-between items-center hover:bg-gray-50 transition-colors"
@@ -162,8 +195,36 @@ export default function CreateCarpoolPage() {
 
       <div className="mt-12">
         <h2 className="text-xl font-bold mb-6">My Carpools</h2>
-        <p className="text-gray-500">No carpools created yet.</p>
+        {carpools.length === 0 ? (
+          <p className="text-gray-500">No carpools created yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recurring</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Seats</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Seats</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
+                </tr>
+              </thead>
+              <tbody>
+                {carpools.map((carpool, index) => (
+                  <tr key={carpool.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{carpool.carpool_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.recurring_option || 'None'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.available_seats}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.seats}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.destination_address}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )
-} 
+}
+

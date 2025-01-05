@@ -57,8 +57,30 @@ export const useApi = () => {
         return mockService.getCarpools()
       }
       const headers = await getHeaders()
-      const response = await fetch(`${API_URL}/api/carpools`, { headers })
-      return response.json()
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/carpools/user`, { 
+        method: 'GET',
+        headers 
+      })
+
+      if (!response.ok) {
+        console.error('Carpools API Error:', response.status, response.statusText)
+        const responseText = await response.text()
+        console.error('Response body:', responseText)
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const text = await response.text()
+      if (!text) {
+        console.log('Empty response received')
+        return []
+      }
+
+      try {
+        return JSON.parse(text)
+      } catch (error) {
+        console.error('JSON Parse Error:', error, 'Response:', text)
+        return []
+      }
     },
 
     async getRideHistory() {
@@ -71,25 +93,33 @@ export const useApi = () => {
     },
 
     async createCarpool(carpoolData: any) {
-      console.log('createCarpool called with:', carpoolData)
-      console.log('useMockApi:', useMockApi)
-      
       if (useMockApi) {
         return mockService.createCarpool(carpoolData)
       }
-      
       const headers = await getHeaders()
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/carpools`, {
         method: 'POST',
         headers,
         body: JSON.stringify(carpoolData)
       })
-      
+
       if (!response.ok) {
+        console.error('Create Carpool Error:', response.status, response.statusText)
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
-      return response.json()
+
+      const text = await response.text()
+      if (!text) {
+        console.log('Empty response received from create')
+        return null
+      }
+
+      try {
+        return JSON.parse(text)
+      } catch (error) {
+        console.error('JSON Parse Error:', error, 'Response:', text)
+        return null
+      }
     }
   }
 }
