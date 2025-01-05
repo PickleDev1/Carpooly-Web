@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { Car, Calendar, Route, Leaf } from 'lucide-react'
 import { useApi } from '@/services/api'
 
+const api = useApi()
+
 export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState({
     total_carpools: 0,
@@ -13,37 +15,21 @@ export default function AnalyticsPage() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const api = useApi()
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
+    const fetchAnalytics = async () => {
       try {
-        const data = await api.getAnalytics();
-        if (isMounted) {
-          setAnalytics(data);
-          setIsLoading(false);
-        }
+        const data = await api.getAnalytics()
+        setAnalytics(data)
+        setIsLoading(false)
       } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Failed to load analytics');
-          setIsLoading(false);
-        }
+        setError(err instanceof Error ? err.message : 'Failed to load analytics')
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []); // Empty dependency array for initial fetch
-
-  useEffect(() => {
-    // This effect will only run when the `analytics` state changes
-    // You can add conditional logic here if needed
-  }, [analytics]); // Include `analytics` in the dependency array
+    fetchAnalytics()
+  }, []) // No dependencies needed now
 
   const metrics = [
     {
@@ -81,11 +67,19 @@ export default function AnalyticsPage() {
   ]
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2B5335]"></div>
+      </div>
+    )
   }
 
   if (error) {
-    return <div className="text-red-500">{error}</div>
+    return (
+      <div className="text-red-500 text-center py-8">
+        {error}
+      </div>
+    )
   }
 
   return (

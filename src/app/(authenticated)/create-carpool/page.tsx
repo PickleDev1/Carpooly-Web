@@ -29,7 +29,10 @@ export default function CreateCarpoolPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await api.createCarpool(formData)
+      console.log('Submitting carpool data:', formData)
+      const response = await api.createCarpool(formData)
+      console.log('Carpool created:', response)
+      
       // Reset form after successful creation
       setFormData({
         carpool_name: '',

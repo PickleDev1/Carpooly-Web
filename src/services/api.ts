@@ -10,10 +10,13 @@ export const useApi = () => {
 
   const getHeaders = async () => {
     const token = await getToken()
-    return {
+    console.log('Token:', token)
+    const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     }
+    console.log('Headers:', headers)
+    return headers
   }
 
   return {
@@ -22,7 +25,12 @@ export const useApi = () => {
         return mockService.getInvites(userId)
       }
       const headers = await getHeaders()
+      console.log('Making request with headers:', headers)
       const response = await fetch(`${API_URL}/api/invites/${userId}`, { headers })
+      if (!response.ok) {
+        console.log('Response not ok:', response.status, await response.text())
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
       return response.json()
     },
 
@@ -63,15 +71,24 @@ export const useApi = () => {
     },
 
     async createCarpool(carpoolData: any) {
+      console.log('createCarpool called with:', carpoolData)
+      console.log('useMockApi:', useMockApi)
+      
       if (useMockApi) {
         return mockService.createCarpool(carpoolData)
       }
+      
       const headers = await getHeaders()
-      const response = await fetch(`${API_URL}/api/carpools`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/carpools`, {
         method: 'POST',
         headers,
         body: JSON.stringify(carpoolData)
       })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       return response.json()
     }
   }
