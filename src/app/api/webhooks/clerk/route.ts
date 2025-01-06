@@ -2,6 +2,7 @@ import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { WebhookEvent } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 
 export async function POST(req: Request) {
   try {
@@ -66,11 +67,15 @@ export async function POST(req: Request) {
       const { id, email_addresses } = evt.data;
       
       console.log('[Webhook] Attempting to create user with:', { id, email: email_addresses[0].email_address });
+      // Get token for authorization
+      const { getToken } = await auth();
+      const token = await getToken();
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           clerk_id: id,
