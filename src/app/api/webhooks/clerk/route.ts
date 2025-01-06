@@ -66,17 +66,24 @@ export async function POST(req: Request) {
       console.log('[Webhook] 🎉 Processing user.created event');
       const { id, email_addresses } = evt.data;
       
-      console.log('[Webhook] Attempting to create user with:', { id, email: email_addresses[0].email_address });
-      // Get token for authorization
-      const { getToken } = await auth();
-      const token = await getToken();
+      // Use WEBHOOK_SECRET for authentication
+      const webhookSecret = process.env.WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        console.error('[Webhook] Missing WEBHOOK_SECRET');
+        return NextResponse.json(
+          { error: 'Missing WEBHOOK_SECRET' },
+          { status: 500 }
+        );
+      }
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        'X-Webhook-Secret': webhookSecret,
+      };
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({
           clerk_id: id,
           email: email_addresses[0].email_address
