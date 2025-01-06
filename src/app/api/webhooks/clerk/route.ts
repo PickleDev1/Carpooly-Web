@@ -2,7 +2,7 @@ import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { WebhookEvent } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+
 
 export async function POST(req: Request) {
   try {
@@ -64,7 +64,12 @@ export async function POST(req: Request) {
 
     if (eventType === 'user.created') {
       console.log('[Webhook] 🎉 Processing user.created event');
-      const { id, email_addresses } = evt.data;
+      const { 
+        id, 
+        email_addresses, 
+        first_name, 
+        last_name
+      } = evt.data;
       
       // Use WEBHOOK_SECRET for authentication
       const webhookSecret = process.env.WEBHOOK_SECRET;
@@ -86,7 +91,8 @@ export async function POST(req: Request) {
         headers,
         body: JSON.stringify({
           clerk_id: id,
-          email: email_addresses[0].email_address
+          email: email_addresses[0].email_address,
+          username: `${first_name} ${last_name}`.trim()
         }),
       });
 
