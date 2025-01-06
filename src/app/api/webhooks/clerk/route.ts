@@ -67,7 +67,7 @@ export async function POST(req: Request) {
       
       console.log('[Webhook] Attempting to create user with:', { id, email: email_addresses[0].email_address });
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
