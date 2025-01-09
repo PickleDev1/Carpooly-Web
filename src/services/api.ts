@@ -94,12 +94,12 @@ export const useApi = () => {
       }
     },
 
-    async getCarpools() {
+    async getCarpools(userId: string) {
       if (useMockApi) {
         return mockService.getCarpools()
       }
       const headers = await getHeaders()
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/carpools/user`, { 
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/carpools/users/${userId}`, { 
         method: 'GET',
         headers 
       })
@@ -113,15 +113,15 @@ export const useApi = () => {
 
       const text = await response.text()
       if (!text) {
-        console.log('Empty response received')
-        return []
+        console.log('No text!')
+        return { data: [] }
       }
 
       try {
         return JSON.parse(text)
       } catch (error) {
         console.error('JSON Parse Error:', error, 'Response:', text)
-        return []
+        return { data: [] }
       }
     },
 

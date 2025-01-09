@@ -7,6 +7,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useApi } from '@/services/api'
 import { Autocomplete } from '@react-google-maps/api'
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useUser } from '@clerk/nextjs'
 
 interface CarpoolFormData {
   carpool_name: string
@@ -20,6 +21,10 @@ interface Carpool extends CarpoolFormData {
   id: string
 }
 
+interface CarpoolResponse {
+  data: Carpool[]
+}
+
 export default function CreateCarpoolPage() {
   const [isFormOpen, setIsFormOpen] = useState(true)
   const [formData, setFormData] = useState<CarpoolFormData>({
@@ -29,20 +34,38 @@ export default function CreateCarpoolPage() {
     seats: 4,
     destination_address: ''
   })
-  const [carpools, setCarpools] = useState<Carpool[]>([])
+  const [carpoolsData, setCarpoolsData] = useState<CarpoolResponse>({ data: [] })
   const [successMessage, setSuccessMessage] = useState('')
   const api = useApi()
+  const { user } = useUser()
 
   useEffect(() => {
+    if (!user?.id) {
+      console.log('No user ID found')
+      return;
+    }
     fetchCarpools()
-  }, [])
+  }, [user?.id])
 
   const fetchCarpools = async () => {
+    if (!user?.id) {
+      console.log('No user ID found')
+      return;
+    }
     try {
-      const response = await api.getCarpools()
-      setCarpools(response.data)
+      const response = await api.getCarpools(user.id)
+      console.log('Raw response from getCarpools:', response)
+      
+      // If response is the data itself, use it directly
+      const carpoolData = {
+        data: Array.isArray(response) ? response : response.data || []
+      }
+      
+      console.log('Processed carpool data:', carpoolData)
+      setCarpoolsData(carpoolData)
     } catch (error) {
       console.error('Failed to fetch carpools:', error)
+      setCarpoolsData({ data: [] })
     }
   }
 
@@ -195,32 +218,34 @@ export default function CreateCarpoolPage() {
 
       <div className="mt-12">
         <h2 className="text-xl font-bold mb-6">My Carpools</h2>
-        {carpools.length === 0 ? (
+        {!carpoolsData.data || carpoolsData.data.length === 0 ? (
           <p className="text-gray-500">No carpools created yet.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recurring</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Seats</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Seats</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
-                </tr>
-              </thead>
-              <tbody>
-                {carpools.map((carpool, index) => (
-                  <tr key={carpool.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{carpool.carpool_name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.recurring_option || 'None'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.available_seats}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.seats}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.destination_address}</td>
+          <div className="space-y-6">
+            <div className="overflow-x-auto rounded-lg shadow">
+              <table className="min-w-full bg-white">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recurring</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Seats</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Seats</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {carpoolsData.data.map((carpool, index) => (
+                    <tr key={carpool.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{carpool.carpool_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.recurring_option || 'None'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.available_seats}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.seats}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.destination_address}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
