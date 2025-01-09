@@ -2,7 +2,7 @@
 
 import { useLoadScript } from '@react-google-maps/api'
 import Link from 'next/link'
-import { UserButton } from '@clerk/nextjs'
+import { SignOutButton } from '@/components/SignOutButton'
 import Image from 'next/image'
 
 export default function AuthenticatedLayout({
@@ -24,7 +24,7 @@ export default function AuthenticatedLayout({
             <Link href="/carpools">Carpools</Link>
             <Link href="/history">History</Link>
             <Link href="/analytics">Analytics</Link>
-            <UserButton afterSignOutUrl="/" />
+            <SignOutButton />
           </nav>
         </div>
       </header>

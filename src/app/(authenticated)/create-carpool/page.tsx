@@ -102,6 +102,11 @@ export default function CreateCarpoolPage() {
     }
   }
 
+  const handleInvite = (carpoolId: string) => {
+    // Implement invite functionality here
+    console.log(`Inviting carpool member for carpool ID: ${carpoolId}`)
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       {successMessage && (
@@ -231,6 +236,7 @@ export default function CreateCarpoolPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Seats</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Seats</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -241,6 +247,14 @@ export default function CreateCarpoolPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.available_seats}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.seats}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{carpool.destination_address}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button 
+                          className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-md text-sm"
+                          onClick={() => handleInvite(carpool.id)}
+                        >
+                          Invite carpool member
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
