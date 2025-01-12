@@ -9,8 +9,8 @@ export const useApi = () => {
   const { getToken } = useAuth()
   
   // Debug logs
-  console.log('Inside useApi - NEXT_PUBLIC_USE_MOCK_API:', process.env.NEXT_PUBLIC_USE_MOCK_API)
-  console.log('Inside useApi - useMockApi:', useMockApi)
+  //console.log('Inside useApi - NEXT_PUBLIC_USE_MOCK_API:', process.env.NEXT_PUBLIC_USE_MOCK_API)
+  //console.log('Inside useApi - useMockApi:', useMockApi)
 
   const getHeaders = async () => {
     const token = await getToken()
@@ -162,6 +162,70 @@ export const useApi = () => {
         console.error('JSON Parse Error:', error, 'Response:', text)
         return null
       }
-    }
+    },
+
+    createInvite: async (data: { 
+      carpool_id: string; 
+      from_user: string; 
+      email: string; 
+      message: string 
+    }) => {
+      try {
+        const token = await getToken()
+        console.log('Sending invite with data:', {
+          ...data,
+          from_user: data.from_user.substring(0, 8) + '...' // Log partial user ID for privacy
+        })
+        
+        const response = await fetch(`${API_URL}/api/invites`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
+        })
+
+        const responseText = await response.text()
+        console.log('API Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: responseText,
+          headers: Object.fromEntries(response.headers.entries())
+        })
+
+        if (!response.ok) {
+          throw new Error(responseText || 'Failed to send invite')
+        }
+
+        return true
+      } catch (error) {
+        console.error('Create invite error:', {
+          error,
+          message: error instanceof Error ? error.message : 'Unknown error'
+        })
+        throw error
+      }
+    },
+
+    getUserMe: async () => {
+      try {
+        const token = await getToken()
+        const response = await fetch(`${API_URL}/api/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to get user data')
+        }
+
+        return response.json()
+      } catch (error) {
+        console.error('Get user data error:', error)
+        throw error
+      }
+    },
   }
 }
