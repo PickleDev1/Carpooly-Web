@@ -288,7 +288,49 @@ export const useApi = () => {
           console.error('JSON Parse Error:', error, 'Response:', text)
           return null
         }
-      }
+      },
+
+      async updateInviteStatus(inviteId: string, status: number) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/api/invites/${inviteId}/updateStatus`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ status })
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`Failed to update invite status: ${errorText}`)
+        }
+
+        const text = await response.text()
+        if (!text) return null
+        
+        try {
+          return JSON.parse(text)
+        } catch (error) {
+          console.error('JSON Parse Error:', error, 'Response:', text)
+          return null
+        }
+      },
+
+      async deleteCarpool(carpoolId: string) {
+        if (useMockApi) {
+          return mockService.deleteCarpool(carpoolId)
+        }
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}`, {
+          method: 'DELETE',
+          headers
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`Failed to delete carpool: ${errorText}`)
+        }
+
+        return true
+      },
     }
   }, [getToken])
 }

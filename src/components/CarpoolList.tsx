@@ -5,11 +5,14 @@ import { Carpool } from '@/types/api'
 import { InviteModal } from './InviteModal'
 import { useUserUuid } from '@/contexts/UserContext'
 import { useCarpools } from '@/hooks/useCarpools'
+import { useApi } from '@/services/api'
+import { TrashIcon, CalendarIcon } from '@heroicons/react/24/outline'
 
 export function CarpoolList() {
   const [selectedCarpoolId, setSelectedCarpoolId] = useState<string | null>(null)
   const { uuid, loading: uuidLoading, error: uuidError } = useUserUuid()
   const { carpools, loading: carpoolsLoading } = useCarpools()
+  const api = useApi()
 
   console.log('CarpoolList render:', {
     uuid,
@@ -18,6 +21,18 @@ export function CarpoolList() {
     carpools,
     carpoolsLoading
   })
+
+  const handleDelete = async (carpoolId: string) => {
+    if (window.confirm('Are you sure you want to delete this carpool?')) {
+      try {
+        await api.deleteCarpool(carpoolId)
+        // Refresh the list
+      } catch (error) {
+        console.error('Error deleting carpool:', error)
+        alert('Failed to delete carpool')
+      }
+    }
+  }
 
   if (uuidError) {
     return <div className="text-center py-8 text-red-600">Error loading user data: {uuidError}</div>
@@ -86,6 +101,19 @@ export function CarpoolList() {
                   className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-md text-sm transition-colors"
                 >
                   Invite carpool member
+                </button>
+                <button
+                  onClick={() => {/* Add update schedule logic */}}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                >
+                  <CalendarIcon className="h-5 w-5 inline-block mr-1" />
+                  Update Schedule
+                </button>
+                <button
+                  onClick={() => carpool.id && handleDelete(carpool.id)}
+                  className="p-2 text-red-600 hover:text-red-900"
+                >
+                  <TrashIcon className="h-5 w-5" />
                 </button>
               </td>
             </tr>

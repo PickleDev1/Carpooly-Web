@@ -1,6 +1,7 @@
 'use client'
 
 import { useInvites } from '@/hooks/useInvites'
+import { InviteActions } from './InviteActions'
 
 interface Invite {
   id: string
@@ -23,13 +24,13 @@ export function InvitesTable() {
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Sender Email
+              SENDER EMAIL
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Carpool
+              CARPOOL
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
+              ACTIONS
             </th>
           </tr>
         </thead>
@@ -49,13 +50,12 @@ export function InvitesTable() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   {invite.carpool_name || 'Unknown Carpool'}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap space-x-2">
-                  <button className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 rounded-md hover:from-green-600 hover:to-green-700">
-                    Accept
-                  </button>
-                  <button className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 rounded-md hover:from-red-600 hover:to-red-700">
-                    Reject
-                  </button>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <InviteActions 
+                    inviteId={invite.id}
+                    status={parseInt(invite.status)}
+                    onStatusUpdate={() => {}}
+                  />
                 </td>
               </tr>
             )

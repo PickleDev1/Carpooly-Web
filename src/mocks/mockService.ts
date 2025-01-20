@@ -59,5 +59,10 @@ export const mockService = {
       email: "user@example.com",
       name: "John Doe"
     }
-  }
+  },
+
+  deleteCarpool: async (carpoolId: string) => {
+    console.log('Mock: Deleting carpool', carpoolId)
+    return true
+  },
 }
