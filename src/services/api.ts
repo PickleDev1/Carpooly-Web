@@ -331,6 +331,21 @@ export const useApi = () => {
 
         return true
       },
+
+      async updateCarpoolSchedule(schedule: any) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/api/carpools/${schedule.carpoolId}/schedule`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(schedule)
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to update schedule')
+        }
+
+        return response.json()
+      },
     }
   }, [getToken])
 }
