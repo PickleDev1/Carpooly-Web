@@ -4,6 +4,10 @@ import { useLoadScript } from '@react-google-maps/api'
 import Link from 'next/link'
 import { SignOutButton } from '@/components/SignOutButton'
 import Image from 'next/image'
+import { PWAPrompt } from '@/components/PWAPrompt'
+import { NetworkStatus } from '@/components/NetworkStatus'
+import { UpdatePrompt } from '@/components/UpdatePrompt'
+import { NotificationPreferences } from '@/components/NotificationPreferences'
 
 export default function AuthenticatedLayout({
   children,
@@ -21,6 +25,7 @@ export default function AuthenticatedLayout({
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link href="/dashboard" className="text-2xl font-bold">Carpooly</Link>
           <nav className="flex items-center space-x-6">
+            <NotificationPreferences />
             <Link href="/carpools">Carpools</Link>
             <Link href="/history">History</Link>
             <Link href="/analytics">Analytics</Link>
@@ -72,6 +77,9 @@ export default function AuthenticatedLayout({
           </div>
         </div>
       </footer>
+      <PWAPrompt />
+      <NetworkStatus />
+      <UpdatePrompt />
     </div>
   )
 }

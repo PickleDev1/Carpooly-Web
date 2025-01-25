@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Car, Calendar, Route, Leaf } from 'lucide-react'
 import { useApi } from '@/services/api'
 import { 
@@ -10,7 +10,10 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Legend
 } from 'recharts'
 
 interface TopCarpooler {
@@ -28,47 +31,32 @@ interface Analytics {
 }
 
 export default function AnalyticsPage() {
+  const [data, setData] = useState<Analytics | null>(null)
+  const [loading, setLoading] = useState(true)
   const api = useApi()
-  const [analytics, setAnalytics] = useState<Analytics>({
-    total_carpools: 0,
-    total_rides: 0,
-    miles_saved: 0,
-    co2_reduced: 0,
-    top_carpoolers: [] // Initialize empty array for top carpoolers
-  })
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true)
+    async function fetchAnalytics() {
       try {
-        const data = await api.getAnalytics()
-        setAnalytics(data)
-      } catch (err) {
-        setError('Failed to load analytics data. Please try again later.')
-        console.error('Error fetching analytics:', err)
+        const analyticsData = await api.getAnalytics()
+        setData(analyticsData)
+      } catch (error) {
+        console.error('Error fetching analytics:', error)
       } finally {
-        setIsLoading(false)
+        setLoading(false)
       }
     }
 
-    fetchData()
-  }, [api])
+    fetchAnalytics()
+  }, [])
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>
-  }
-
-  if (error) {
-    return <div className="text-red-500 text-center">{error}</div>
-  }
+  if (loading) return <div>Loading analytics...</div>
 
   const metrics = [
-    { title: 'Total Carpools', value: analytics.total_carpools, icon: Car, color: 'bg-blue-50', textColor: 'text-blue-700', iconColor: 'text-blue-500' },
-    { title: 'Total Rides', value: analytics.total_rides, icon: Calendar, color: 'bg-purple-50', textColor: 'text-purple-700', iconColor: 'text-purple-500' },
-    { title: 'Car Miles Saved', value: `${analytics.miles_saved.toLocaleString()} mi`, icon: Route, color: 'bg-[#E8EDDF]', textColor: 'text-[#2B5335]', iconColor: 'text-[#2B5335]' },
-    { title: 'CO₂ Emissions Reduced', value: `${analytics.co2_reduced.toLocaleString()} lbs`, icon: Leaf, color: 'bg-green-50', textColor: 'text-green-700', iconColor: 'text-green-500' },
+    { title: 'Total Carpools', value: data?.total_carpools, icon: Car, color: 'bg-blue-50', textColor: 'text-blue-700', iconColor: 'text-blue-500' },
+    { title: 'Total Rides', value: data?.total_rides, icon: Calendar, color: 'bg-purple-50', textColor: 'text-purple-700', iconColor: 'text-purple-500' },
+    { title: 'Car Miles Saved', value: `${data?.miles_saved.toLocaleString()} mi`, icon: Route, color: 'bg-[#E8EDDF]', textColor: 'text-[#2B5335]', iconColor: 'text-[#2B5335]' },
+    { title: 'CO₂ Emissions Reduced', value: `${data?.co2_reduced.toLocaleString()} lbs`, icon: Leaf, color: 'bg-green-50', textColor: 'text-green-700', iconColor: 'text-green-500' },
   ]
 
   // Sample data for the chart - replace with real data when available
@@ -125,7 +113,7 @@ export default function AnalyticsPage() {
               </tr>
             </thead>
             <tbody>
-              {analytics.top_carpoolers.map((user, index) => (
+              {data?.top_carpoolers.map((user, index) => (
                 <tr key={index} className="border-b">
                   <td className="py-3 px-6">{index + 1}</td>
                   <td className="py-3 px-6">{user.name}</td>
