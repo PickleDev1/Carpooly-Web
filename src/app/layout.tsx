@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { UserProvider } from '@/contexts/UserContext'
 import { Metadata, Viewport } from 'next'
+import { MainLayout } from '@/components/layouts/MainLayout'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -31,18 +32,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="CarPooly" />
-        <link rel="apple-touch-icon" href="/icons/apple-icon-180.png" />
-      </head>
-      <ClerkProvider>
-        <UserProvider>
-          <body>{children}</body>
-        </UserProvider>
-      </ClerkProvider>
+      <body>
+        <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
+          <MainLayout>
+            {children}
+          </MainLayout>
+        </ClerkProvider>
+      </body>
     </html>
   )
 }

@@ -1,101 +1,62 @@
-import Image from "next/image"
-import Link from "next/link"
-import { SignInButton, UserButton } from "@clerk/nextjs"
-import { auth } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { SignInRedirect } from "@/components/SignInRedirect"
+'use client'
 
-export default async function Home() {
-  const { userId } = await auth()
-  
-  if (userId) {
-    redirect('/dashboard')
-  }
+import { SignUpButton, useAuth } from "@clerk/nextjs"
+import Link from 'next/link'
+import Image from "next/image"
+
+export default function HomePage() {
+  const { isSignedIn } = useAuth()
 
   return (
-    <div className="min-h-screen">
-      {/* Navigation */}
-      <nav className="bg-white p-4 shadow-sm">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Image 
-              src="/assets/logo/carpooly-logo.jpg" 
-              alt="CarPooly Logo" 
-              width={32} 
-              height={32}
-            />
-            <span className="text-black text-xl font-semibold">CarPooly</span>
-          </div>
-          <div className="flex items-center space-x-6">
-            <Link href="/create-carpool" className="text-gray-700 hover:text-gray-900">Create Carpool</Link>
-            <Link href="/invite" className="text-gray-700 hover:text-gray-900">Invite Friends</Link>
-            <Link href="/schedule" className="text-gray-700 hover:text-gray-900">Schedule Updates</Link>
-            <Link href="/join" className="text-gray-700 hover:text-gray-900">Join Carpool</Link>
-            {userId ? (
-              <UserButton afterSignOutUrl="/" />
-            ) : (
-              <SignInRedirect className="bg-[#2B5335] hover:bg-[#1e3b25] text-white" size="sm">
-                Sign up
-              </SignInRedirect>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <main className="container mx-auto px-4 py-16 flex justify-between items-center">
-        <div className="max-w-xl">
-          <div className="mb-6">
-            <span className="bg-[#E8EDDF] text-[#2B5335] px-4 py-1 rounded-full text-sm font-medium">
+    <div className="px-4 py-8 w-full max-w-[100vw] overflow-x-hidden">
+      <div className="w-full max-w-6xl mx-auto md:flex md:items-center md:gap-12">
+        {/* Left content */}
+        <div className="md:w-1/2">
+          <div className="bg-green-50 rounded-lg px-4 py-2 mb-6 inline-block">
+            <p className="text-green-800 font-medium text-sm md:text-base">
               #1 on Parent&apos;s Choice
-            </span>
+            </p>
           </div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Simplify Your<br />Carpool Routine
+
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 break-words">
+            Simplify Your Carpool Routine
           </h1>
-          <p className="text-gray-600 text-lg mb-8">
-            Discover seamless rides with CarPooly – where your kids&apos; schedules and social circle harmonize effortlessly.
+
+          <p className="text-gray-600 text-base md:text-xl mb-8">
+            Discover seamless rides with CarPooly – where your kids&apos; schedules 
+            and social circle harmonize effortlessly.
           </p>
-          {userId ? (
-            <UserButton afterSignOutUrl="/" />
+
+          {isSignedIn ? (
+            <Link 
+              href="/dashboard" 
+              className="w-full sm:w-auto bg-green-700 text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-green-800 transition-colors inline-block text-center"
+            >
+              Go to Dashboard
+            </Link>
           ) : (
-            <SignInRedirect className="bg-[#2B5335] hover:bg-[#1e3b25] text-white px-8 py-3 text-lg">
-              Sign up today
-            </SignInRedirect>
+            <SignUpButton mode="modal">
+              <button className="w-full sm:w-auto bg-green-700 text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-green-800 transition-colors">
+                Sign up today
+              </button>
+            </SignUpButton>
           )}
         </div>
-        <div className="flex-1 ml-20">
-          <Image 
-            src="/assets/images/carpool-illustration.png" 
-            alt="Carpool Illustration" 
-            width={600} 
-            height={400}
-            className="rounded-lg"
-          />
-        </div>
-      </main>
 
-      {/* Social Proof Section */}
-      <section className="bg-[#2B5335] text-white py-16 mt-20">
-        <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            The #1 Carpool Solution for Parents
-          </h2>
-          <p className="text-gray-200">
-            As recognized by parents around the globe
-          </p>
-          <div className="flex justify-center space-x-8 mt-12">
-            <Image 
-              src="/assets/images/social-proof.png" 
-              alt="Social Proof Statistics" 
-              width={600} 
-              height={400}
-              className="rounded-lg"
+        {/* Right content */}
+        <div className="hidden md:block md:w-1/2">
+          <div className="relative">
+            <Image
+              src="/assets/images/carpool-illustration.png"
+              alt="Carpool Illustration"
+              width={600}
+              height={600}
+              className="w-full h-auto"
+              priority
             />
           </div>
         </div>
-      </section>
+      </div>
     </div>
   )
 }

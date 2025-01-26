@@ -80,66 +80,70 @@ export function CarpoolList() {
   return (
     <>
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Schedule
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Available Seats
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Destination
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {carpools.map((carpool) => (
-              <tr key={carpool.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {carpool.carpool_name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {carpool.recurring_option || 'One-time'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {carpool.available_seats} of {carpool.seats}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {carpool.destination_address}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button
-                    onClick={() => setSelectedCarpoolId(carpool.id || null)}
-                    className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-md text-sm transition-colors"
-                  >
-                    Invite carpool member
-                  </button>
-                  <button
-                    onClick={() => handleUpdateSchedule(carpool)}
-                    className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 flex items-center gap-2"
-                  >
-                    <CalendarIcon className="h-5 w-5" />
-                    Update Schedule
-                  </button>
-                  <button
-                    onClick={() => carpool.id && handleDelete(carpool.id)}
-                    className="p-2 text-red-600 hover:text-red-900"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="inline-block min-w-full align-middle">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Schedule
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Available Seats
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Destination
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {carpools.map((carpool) => (
+                  <tr key={carpool.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {carpool.carpool_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {carpool.recurring_option || 'One-time'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {carpool.available_seats} of {carpool.seats}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {carpool.destination_address}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <button
+                        onClick={() => setSelectedCarpoolId(carpool.id || null)}
+                        className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-md text-sm transition-colors"
+                      >
+                        Invite carpool member
+                      </button>
+                      <button
+                        onClick={() => handleUpdateSchedule(carpool)}
+                        className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 flex items-center gap-2"
+                      >
+                        <CalendarIcon className="h-5 w-5" />
+                        Update Schedule
+                      </button>
+                      <button
+                        onClick={() => carpool.id && handleDelete(carpool.id)}
+                        className="p-2 text-red-600 hover:text-red-900"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <InviteModal 
