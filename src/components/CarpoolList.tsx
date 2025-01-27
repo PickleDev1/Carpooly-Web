@@ -8,6 +8,16 @@ import { useCarpools } from '@/hooks/useCarpools'
 import { useApi } from '@/services/api'
 import { TrashIcon, CalendarIcon } from '@heroicons/react/24/outline'
 import { ScheduleModal } from './ScheduleModal'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function CarpoolList() {
   const [selectedCarpoolId, setSelectedCarpoolId] = useState<string | null>(null)
@@ -66,99 +76,78 @@ export function CarpoolList() {
   }
 
   if (carpoolsLoading) {
-    return <div className="text-center py-8">Loading carpools...</div>
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-center">Loading carpools...</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   if (!carpools?.length) {
     return (
-      <div className="text-center py-12 bg-white rounded-lg shadow">
-        <p className="text-gray-500">No carpools created yet.</p>
-      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-center text-muted-foreground">No carpools created yet.</p>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <>
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto -mx-4 sm:mx-0">
-          <div className="inline-block min-w-full align-middle">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Schedule
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Available Seats
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Destination
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {carpools.map((carpool) => (
-                  <tr key={carpool.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {carpool.carpool_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {carpool.recurring_option || 'One-time'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {carpool.available_seats} of {carpool.seats}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {carpool.destination_address}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button
-                        onClick={() => setSelectedCarpoolId(carpool.id || null)}
-                        className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-md text-sm transition-colors"
-                      >
-                        Invite carpool member
-                      </button>
-                      <button
-                        onClick={() => handleUpdateSchedule(carpool)}
-                        className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 flex items-center gap-2"
-                      >
-                        <CalendarIcon className="h-5 w-5" />
-                        Update Schedule
-                      </button>
-                      <button
-                        onClick={() => carpool.id && handleDelete(carpool.id)}
-                        className="p-2 text-red-600 hover:text-red-900"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>My Carpools</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Schedule</TableHead>
+                <TableHead>Available Seats</TableHead>
+                <TableHead>Destination</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {carpools.map((carpool) => (
+                <TableRow key={carpool.id}>
+                  <TableCell className="font-medium">{carpool.carpool_name}</TableCell>
+                  <TableCell>{carpool.recurring_option || 'One-time'}</TableCell>
+                  <TableCell>{carpool.available_seats} of {carpool.seats}</TableCell>
+                  <TableCell>{carpool.destination_address}</TableCell>
+                  <TableCell className="space-x-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setSelectedCarpoolId(carpool.id || null)}
+                    >
+                      Invite member
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleUpdateSchedule(carpool)}
+                      className="gap-2"
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                      Update Schedule
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => carpool.id && handleDelete(carpool.id)}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-      </div>
-
-      <InviteModal 
-        carpoolId={selectedCarpoolId || ''}
-        isOpen={!!selectedCarpoolId}
-        onClose={() => setSelectedCarpoolId(null)}
-      />
-
-      <ScheduleModal
-        isOpen={scheduleModalOpen}
-        onClose={() => setScheduleModalOpen(false)}
-        carpoolId={selectedCarpool?.id || ''}
-        recurringOption={(selectedCarpool?.recurring_option as "one-time" | "daily" | "weekly" | "monthly") || "one-time"}
-        onScheduleUpdate={handleScheduleUpdate}
-      />
-    </>
+      </CardContent>
+    </Card>
   )
 } 

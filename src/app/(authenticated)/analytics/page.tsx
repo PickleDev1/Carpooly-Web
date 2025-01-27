@@ -15,6 +15,15 @@ import {
   Bar,
   Legend
 } from 'recharts'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface TopCarpooler {
   name: string
@@ -100,31 +109,33 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Leaderboard Section */}
-      <div className="mt-12 bg-green-50 rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">Top Carpoolers</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="py-3 px-6 text-left">Rank</th>
-                <th className="py-3 px-6 text-left">Name</th>
-                <th className="py-3 px-6 text-left">Rides</th>
-                <th className="py-3 px-6 text-left">CO₂ Saved</th>
-              </tr>
-            </thead>
-            <tbody>
+      <Card className="mt-12">
+        <CardHeader>
+          <CardTitle>Top Carpoolers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Rank</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Rides</TableHead>
+                <TableHead>CO₂ Saved</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {data?.top_carpoolers.map((user, index) => (
-                <tr key={index} className="border-b">
-                  <td className="py-3 px-6">{index + 1}</td>
-                  <td className="py-3 px-6">{user.name}</td>
-                  <td className="py-3 px-6">{user.rides}</td>
-                  <td className="py-3 px-6">{user.co2_saved}</td>
-                </tr>
+                <TableRow key={index}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{user.name}</TableCell>
+                  <TableCell>{user.rides}</TableCell>
+                  <TableCell>{user.co2_saved}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Monthly Trends Section with Chart */}
       <div className="mt-12 bg-white rounded-lg shadow p-6">

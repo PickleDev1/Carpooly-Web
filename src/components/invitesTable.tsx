@@ -1,5 +1,14 @@
 'use client'
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Card, CardContent } from "@/components/ui/card"
 import { useInvites } from '@/hooks/useInvites'
 import { InviteActions } from './InviteActions'
 
@@ -15,26 +24,25 @@ export function InvitesTable() {
 
   console.log('All invites:', invites) // Log all invites
 
-  if (loading) return <div>Loading invites...</div>
-  if (!invites?.length) return <div>No pending invites</div>
+  if (loading) {
+    return <Card><CardContent className="py-4">Loading invites...</CardContent></Card>
+  }
+  
+  if (!invites?.length) {
+    return <Card><CardContent className="py-4">No pending invites</CardContent></Card>
+  }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              SENDER EMAIL
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              CARPOOL
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              ACTIONS
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Sender Email</TableHead>
+            <TableHead>Carpool</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {invites.map((invite) => {
             console.log('Processing invite:', {
               id: invite.id,
@@ -43,25 +51,21 @@ export function InvitesTable() {
             })
             
             return (
-              <tr key={invite.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {invite.sender_email || 'Unknown Sender'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {invite.carpool_name || 'Unknown Carpool'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+              <TableRow key={invite.id}>
+                <TableCell>{invite.sender_email || 'Unknown Sender'}</TableCell>
+                <TableCell>{invite.carpool_name || 'Unknown Carpool'}</TableCell>
+                <TableCell>
                   <InviteActions 
                     inviteId={invite.id}
                     status={parseInt(invite.status)}
                     onStatusUpdate={() => {}}
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   )
 }
