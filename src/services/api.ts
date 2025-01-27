@@ -123,6 +123,8 @@ export const useApi = () => {
           headers 
         })
 
+        console.log('API: getCarpools response status:', response.status)
+
         if (!response.ok) {
           console.error('Carpools API Error:', response.status, response.statusText)
           const responseText = await response.text()
@@ -137,7 +139,9 @@ export const useApi = () => {
         }
 
         try {
-          return JSON.parse(text)
+          const data = JSON.parse(text)
+          console.log('API: getCarpools data received:', data)
+          return data
         } catch (error) {
           console.error('JSON Parse Error:', error, 'Response:', text)
           return { data: [] }
@@ -345,6 +349,15 @@ export const useApi = () => {
         }
 
         return response.json()
+      },
+
+      async inviteToCarpool(carpoolId: string, email: string): Promise<void> {
+        const headers = await getHeaders()
+        await fetch(`${API_URL}/api/carpools/${carpoolId}/invite`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ email })
+        });
       },
     }
   }, [getToken])

@@ -2,31 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { useApi } from '@/services/api'
-import { useUserUuid } from '@/contexts/UserContext'
-import { Carpool } from '@/types/api'
+import { useUser } from '@clerk/nextjs'
+import type { Carpool } from '@/types/api'
 
 export function useCarpools() {
   const [carpools, setCarpools] = useState<Carpool[]>([])
-  const [loading, setLoading] = useState(true)
-  const { uuid } = useUserUuid()
+  const { user } = useUser()
   const api = useApi()
 
   useEffect(() => {
     async function fetchCarpools() {
-      if (!uuid) return
-      
+      if (!user?.id) return;
+
       try {
-        const data = await api.getCarpools(uuid)
-        setCarpools(Array.isArray(data) ? data : [])
+        console.log('Fetching carpools for user:', user.id);
+        const carpoolsData = await api.getCarpools(user.id);
+        console.log('Carpools data received:', carpoolsData);
+        setCarpools(carpoolsData || []);
       } catch (error) {
-        console.error('Error fetching carpools:', error)
-      } finally {
-        setLoading(false)
+        console.error('Error fetching carpools:', error);
       }
     }
 
-    fetchCarpools()
-  }, [uuid, api]) // Added api to the dependency array
+    fetchCarpools();
+  }, [user?.id, api]);
 
-  return { carpools, loading }
+  return { carpools };
 } 

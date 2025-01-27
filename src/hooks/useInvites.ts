@@ -1,6 +1,7 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { useApi } from '@/services/api'
-import { useUserUuid } from '@/contexts/UserContext'
 import { useUser } from '@clerk/nextjs'
 
 interface Invite {
@@ -12,32 +13,26 @@ interface Invite {
 
 export function useInvites() {
   const [invites, setInvites] = useState<Invite[]>([])
-  const [loading, setLoading] = useState(true)
-  const { uuid } = useUserUuid()
+  const [isLoading, setIsLoading] = useState(true)
   const { user } = useUser()
   const api = useApi()
 
   useEffect(() => {
     async function fetchInvites() {
-      if (!uuid || !user?.emailAddresses?.[0]?.emailAddress) return
+      if (!user?.id) return;
       
       try {
-        console.log('Fetching invites for:', {
-          uuid,
-          email: user.emailAddresses[0].emailAddress
-        })
-        const data = await api.getInvites(uuid)
-        console.log('Received invites:', data)
-        setInvites(Array.isArray(data) ? data : [])
+        const data = await api.getInvites(user.id)
+        setInvites(data || [])
       } catch (error) {
         console.error('Error fetching invites:', error)
       } finally {
-        setLoading(false)
+        setIsLoading(false)
       }
     }
 
     fetchInvites()
-  }, [uuid, user])
+  }, [user?.id, api])
 
-  return { invites, loading }
+  return { invites, isLoading }
 } 

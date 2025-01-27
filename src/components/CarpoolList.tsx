@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Carpool } from '@/types/api'
-import { InviteModal } from './InviteModal'
+import { InviteModal } from '@/components/InviteModal'
 import { useUserUuid } from '@/contexts/UserContext'
 import { useCarpools } from '@/hooks/useCarpools'
 import { useApi } from '@/services/api'
@@ -18,22 +18,24 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useUser } from '@clerk/nextjs'
 
 export function CarpoolList() {
+  const { user, isLoaded } = useUser()
   const [selectedCarpoolId, setSelectedCarpoolId] = useState<string | null>(null)
   const { uuid, loading: uuidLoading, error: uuidError } = useUserUuid()
-  const { carpools, loading: carpoolsLoading } = useCarpools()
+  const { carpools } = useCarpools()
   const api = useApi()
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
   const [selectedCarpool, setSelectedCarpool] = useState<Carpool | null>(null)
+  const [inviteModalOpen, setInviteModalOpen] = useState(false)
 
-  console.log('CarpoolList render:', {
-    uuid,
-    uuidLoading,
-    uuidError,
-    carpools,
-    carpoolsLoading
-  })
+  console.log('CarpoolList render:', { user, isLoaded, carpools})
+
+  // Only check for user authentication
+  if (!isLoaded || !user) {
+    return null;
+  }
 
   const handleDelete = async (carpoolId: string) => {
     if (window.confirm('Are you sure you want to delete this carpool?')) {
@@ -63,26 +65,13 @@ export function CarpoolList() {
     }
   }
 
+  const handleInvite = (carpoolId: string) => {
+    setSelectedCarpoolId(carpoolId)
+    setInviteModalOpen(true)
+  }
+
   if (uuidError) {
     return <div className="text-center py-8 text-red-600">Error loading user data: {uuidError}</div>
-  }
-
-  if (uuidLoading) {
-    return <div className="text-center py-8">Loading user data...</div>
-  }
-
-  if (!uuid) {
-    return <div className="text-center py-8">User not authenticated</div>
-  }
-
-  if (carpoolsLoading) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-center">Loading carpools...</p>
-        </CardContent>
-      </Card>
-    )
   }
 
   if (!carpools?.length) {
@@ -96,58 +85,85 @@ export function CarpoolList() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>My Carpools</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Schedule</TableHead>
-                <TableHead>Available Seats</TableHead>
-                <TableHead>Destination</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {carpools.map((carpool) => (
-                <TableRow key={carpool.id}>
-                  <TableCell className="font-medium">{carpool.carpool_name}</TableCell>
-                  <TableCell>{carpool.recurring_option || 'One-time'}</TableCell>
-                  <TableCell>{carpool.available_seats} of {carpool.seats}</TableCell>
-                  <TableCell>{carpool.destination_address}</TableCell>
-                  <TableCell className="space-x-2">
-                    <Button
-                      variant="secondary"
-                      onClick={() => setSelectedCarpoolId(carpool.id || null)}
-                    >
-                      Invite member
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleUpdateSchedule(carpool)}
-                      className="gap-2"
-                    >
-                      <CalendarIcon className="h-4 w-4" />
-                      Update Schedule
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => carpool.id && handleDelete(carpool.id)}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>My Carpools ({carpools?.length || 0})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Schedule</TableHead>
+                  <TableHead>Available Seats</TableHead>
+                  <TableHead>Destination</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {carpools?.map((carpool) => (
+                  <TableRow key={carpool.id}>
+                    <TableCell className="font-medium">{carpool.carpool_name}</TableCell>
+                    <TableCell>{carpool.recurring_option || 'One-time'}</TableCell>
+                    <TableCell>{carpool.available_seats} of {carpool.seats}</TableCell>
+                    <TableCell>{carpool.destination_address}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="secondary"
+                          onClick={() => carpool.id && handleInvite(carpool.id)}
+                          className="bg-blue-200 hover:bg-blue-300"
+                        >
+                          Invite
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleUpdateSchedule(carpool)}
+                          size="icon"
+                          className="bg-green-200 hover:bg-green-300"
+                        >
+                          <CalendarIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => carpool.id && handleDelete(carpool.id)}
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {inviteModalOpen && selectedCarpoolId && (
+        <InviteModal
+          carpoolId={selectedCarpoolId}
+          isOpen={inviteModalOpen}
+          onClose={() => {
+            setInviteModalOpen(false)
+            setSelectedCarpoolId(null)
+          }}
+        />
+      )}
+
+      {scheduleModalOpen && (
+        <ScheduleModal
+          carpool={selectedCarpool}
+          isOpen={scheduleModalOpen}
+          onClose={() => {
+            setScheduleModalOpen(false)
+            setSelectedCarpool(null)
+          }}
+        />
+      )}
+    </>
   )
 } 
