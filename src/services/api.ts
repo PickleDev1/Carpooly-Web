@@ -11,7 +11,7 @@ export const useApi = () => {
   
   return useMemo(() => {
     const getHeaders = async () => {
-      const token = await getToken()
+      const token = await getToken({template: "carpooly"})
       return {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
@@ -194,7 +194,7 @@ export const useApi = () => {
         message: string 
       }) => {
         try {
-          const token = await getToken()
+          const token = await getToken({template: "carpooly"})
           
           // Log the full data for debugging (remove in production)
           console.log('Full invite data:', {
@@ -242,7 +242,7 @@ export const useApi = () => {
 
       getUserMe: async () => {
         try {
-          const token = await getToken()
+          const token = await getToken({template: "carpooly"})
           const response = await fetch(`${API_URL}/api/users/me`, {
             headers: {
               'Authorization': `Bearer ${token}`,
