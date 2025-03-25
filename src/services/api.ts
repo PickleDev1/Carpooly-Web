@@ -336,16 +336,42 @@ export const useApi = () => {
         return true
       },
 
-      async updateCarpoolSchedule(schedule: any) {
+      async updateCarpoolSchedule(schedule: {
+        carpoolId: string,
+        scheduleType: string,
+        startDate: Date,
+        endDate?: Date,
+        startTime: string,
+        dayOfWeek?: string
+      }) {
         const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/api/carpools/${schedule.carpoolId}/schedule`, {
-          method: 'PUT',
+        
+        // Convert day of week from string to number (0-6)
+        const dayOfWeekMap: { [key: string]: number } = {
+          'SUNDAY': 0, 'MONDAY': 1, 'TUESDAY': 2, 'WEDNESDAY': 3,
+          'THURSDAY': 4, 'FRIDAY': 5, 'SATURDAY': 6
+        }
+
+        // Format the request body to match backend requirements
+        const requestBody = {
+          carpool_id: schedule.carpoolId,
+          schedule_type: schedule.scheduleType.toLowerCase(),
+          start_date: schedule.startDate.toISOString(),
+          end_date: schedule.endDate?.toISOString(),
+          start_time: new Date(`2025-03-25T${schedule.startTime}:00.000Z`).toISOString(),
+          day_of_week: schedule.dayOfWeek ? dayOfWeekMap[schedule.dayOfWeek] : undefined
+        }
+
+        console.log('Making API request to create schedule:', requestBody)
+        
+        const response = await fetch(`${API_URL}/carpools/${schedule.carpoolId}/schedules`, {
+          method: 'POST',
           headers,
-          body: JSON.stringify(schedule)
+          body: JSON.stringify(requestBody)
         })
 
         if (!response.ok) {
-          throw new Error('Failed to update schedule')
+          throw new Error('Failed to create schedule')
         }
 
         return response.json()
