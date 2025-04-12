@@ -336,7 +336,7 @@ export const useApi = () => {
         return true
       },
 
-      async updateCarpoolSchedule(schedule: {
+      async createCarpoolSchedule(schedule: {
         carpoolId: string,
         scheduleType: string,
         startDate: Date,
@@ -346,13 +346,11 @@ export const useApi = () => {
       }) {
         const headers = await getHeaders()
         
-        // Convert day of week from string to number (0-6)
         const dayOfWeekMap: { [key: string]: number } = {
           'SUNDAY': 0, 'MONDAY': 1, 'TUESDAY': 2, 'WEDNESDAY': 3,
           'THURSDAY': 4, 'FRIDAY': 5, 'SATURDAY': 6
         }
 
-        // Format the request body to match backend requirements
         const requestBody = {
           carpool_id: schedule.carpoolId,
           schedule_type: schedule.scheduleType.toLowerCase(),
@@ -377,6 +375,45 @@ export const useApi = () => {
         return response.json()
       },
 
+      async updateSchedule(schedule: {
+        carpoolId: string,
+        scheduleType: string,
+        startDate: Date,
+        endDate?: Date,
+        startTime: string,
+        dayOfWeek?: string
+      }) {
+        const headers = await getHeaders()
+        
+        const dayOfWeekMap: { [key: string]: number } = {
+          'SUNDAY': 0, 'MONDAY': 1, 'TUESDAY': 2, 'WEDNESDAY': 3,
+          'THURSDAY': 4, 'FRIDAY': 5, 'SATURDAY': 6
+        }
+
+        const requestBody = {
+          carpool_id: schedule.carpoolId,
+          schedule_type: schedule.scheduleType.toLowerCase(),
+          start_date: schedule.startDate.toISOString(),
+          end_date: schedule.endDate?.toISOString(),
+          start_time: new Date(`2025-03-25T${schedule.startTime}:00.000Z`).toISOString(),
+          day_of_week: schedule.dayOfWeek ? dayOfWeekMap[schedule.dayOfWeek] : undefined
+        }
+
+        console.log('Making API request to update schedule:', requestBody)
+        
+        const response = await fetch(`${API_URL}/carpools/${schedule.carpoolId}/schedules`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(requestBody)
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to update schedule')
+        }
+
+        return response.json()
+      },
+
       async inviteToCarpool(carpoolId: string, email: string): Promise<void> {
         const headers = await getHeaders()
         await fetch(`${API_URL}/api/carpools/${carpoolId}/invite`, {
@@ -384,6 +421,44 @@ export const useApi = () => {
           headers,
           body: JSON.stringify({ email })
         });
+      },
+
+      async getUserActiveRides(userId: string) {
+        if (useMockApi) {
+          return mockService.getActiveRide(userId)
+        }
+        const headers = await getHeaders()
+        console.log('Making request with headers:', headers)
+        console.log('Fetching active rides for userId:', userId)
+        
+        const response = await fetch(`${API_URL}/users/${userId}/active-rides`, { 
+          method: 'GET',
+          headers 
+        })
+
+        if (!response.ok) {
+          console.error('Active Rides API Error:', response.status, response.statusText)
+          const responseText = await response.text()
+          console.error('Response body:', responseText)
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const text = await response.text()
+        console.log('Raw active rides response:', text)
+        
+        if (!text) {
+          console.log('Empty response received')
+          return []
+        }
+
+        try {
+          const data = JSON.parse(text)
+          console.log('Parsed active rides:', data)
+          return data || []
+        } catch (error) {
+          console.error('JSON Parse Error:', error, 'Response:', text)
+          return []
+        }
       },
     }
   }, [getToken])

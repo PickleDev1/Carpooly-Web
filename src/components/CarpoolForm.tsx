@@ -1,122 +1,201 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useLoadScript, Autocomplete } from '@react-google-maps/api'
+import { useState } from 'react'
 import { useApi } from '@/services/api'
-import type { Carpool } from '@/types/api'
+import { DayPicker } from 'react-day-picker'
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import "react-day-picker/dist/style.css"
 
 interface CarpoolFormProps {
-  onSuccess: (carpool: any) => void
   userId: string
+  onSuccess: () => void
 }
 
-export function CarpoolForm({ onSuccess, userId }: CarpoolFormProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const api = useApi()
+
+  // Carpool fields
+  const [carpoolName, setCarpoolName] = useState('')
+  const [seats, setSeats] = useState('')
   const [destinationAddress, setDestinationAddress] = useState('')
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
-  const api = useApi();
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places']
-  })
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Schedule fields
+  const [scheduleType, setScheduleType] = useState('one_time')
+  const [startDate, setStartDate] = useState<Date>()
+  const [endDate, setEndDate] = useState<Date>()
+  const [startTime, setStartTime] = useState('09:00')
+  const [dayOfWeek, setDayOfWeek] = useState<string>('MONDAY')
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setError('')
-
-    const formData = new FormData(e.currentTarget)
-    const availableSeats = parseInt(formData.get('available_seats')?.toString() || '0')
     
-    const carpoolData: Omit<Carpool, 'id'> = {
-      carpool_name: formData.get('carpool_name')?.toString() || '',
-      recurring_option: formData.get('recurring_option')?.toString() || '',
-      available_seats: availableSeats,
-      destination_address: formData.get('destination_address')?.toString() || '',
-      seats: availableSeats + 1,
-      created_by: userId,
+    // Validate required date
+    if (!startDate) {
+      alert('Please select a start date')
+      return
     }
 
+    setIsSubmitting(true)
+
     try {
+      // Only send carpool-specific data to createCarpool
+      const carpoolData = {
+        carpool_name: carpoolName,
+        seats: parseInt(seats),
+        destination_address: destinationAddress,
+        created_by: userId
+      }
+
+      console.log('Creating carpool with data:', carpoolData)
       const newCarpool = await api.createCarpool(carpoolData)
-      onSuccess(newCarpool)
-    } catch (err) {
-      console.error('Error:', err)
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      console.log('Carpool created:', newCarpool)
+
+      // Create schedule with the new carpool ID
+      const scheduleData = {
+        carpoolId: newCarpool.id,
+        scheduleType,
+        startDate,
+        endDate: scheduleType !== 'one_time' ? endDate : undefined,
+        startTime,
+        dayOfWeek: scheduleType === 'weekly' ? dayOfWeek : undefined
+      }
+
+      console.log('Creating schedule with data:', scheduleData)
+      await api.createCarpoolSchedule(scheduleData)
+      console.log('Schedule created successfully')
+
+      onSuccess()
+    } catch (error) {
+      console.error('Error in form submission:', error)
+      alert('Failed to create carpool and schedule')
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium mb-2">Carpool Name</label>
-        <Input 
-          type="text" 
-          name="carpool_name" 
-          placeholder="Morning Junior High school drop off" 
-          required 
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-2">Recurring Option</label>
-        <select name="recurring_option" className="w-full border rounded-md p-2" required>
-          <option value="NONE">None</option>
-          <option value="DAILY">Daily</option>
-          <option value="WEEKLY">Weekly</option>
-          <option value="MONTHLY">Monthly</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-2">Available Seats</label>
-        <Input type="number" name="available_seats" min="1" required />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-2">Destination Address</label>
-        {isLoaded ? (
-          <Autocomplete
-            onLoad={(autocomplete) => {
-              autocompleteRef.current = autocomplete;
-            }}
-            onPlaceChanged={() => {
-              const place = autocompleteRef.current?.getPlace();
-              if (place?.formatted_address) {
-                setDestinationAddress(place.formatted_address);
-              }
-            }}
-          >
-            <Input 
-              type="text" 
-              name="destination_address" 
-              value={destinationAddress}
-              onChange={(e) => setDestinationAddress(e.target.value)}
-              placeholder="123 Office Building, Downtown, San Francisco, CA" 
-              required 
-            />
-          </Autocomplete>
-        ) : (
-          <Input 
-            type="text" 
-            name="destination_address" 
-            placeholder="Loading..." 
-            disabled 
+      {/* Carpool Details Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Carpool Details</h2>
+        
+        <div>
+          <Label htmlFor="carpoolName">Carpool Name</Label>
+          <Input
+            id="carpoolName"
+            value={carpoolName}
+            onChange={(e) => setCarpoolName(e.target.value)}
+            required
           />
+        </div>
+
+        <div>
+          <Label htmlFor="seats">Number of Seats</Label>
+          <Input
+            id="seats"
+            type="number"
+            value={seats}
+            onChange={(e) => setSeats(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="destinationAddress">Destination Address</Label>
+          <Input
+            id="destinationAddress"
+            value={destinationAddress}
+            onChange={(e) => setDestinationAddress(e.target.value)}
+            required
+          />
+        </div>
+      </div>
+
+      {/* Schedule Section */}
+      <div className="space-y-4 pt-6 border-t">
+        <h2 className="text-xl font-semibold">Schedule Details</h2>
+
+        <RadioGroup value={scheduleType} onValueChange={setScheduleType}>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="one_time" id="one-time" />
+            <Label htmlFor="one-time">One-time</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="daily" id="daily" />
+            <Label htmlFor="daily">Daily</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="weekly" id="weekly" />
+            <Label htmlFor="weekly">Weekly</Label>
+          </div>
+        </RadioGroup>
+
+        <div>
+          <Label>Start Date</Label>
+          <DayPicker
+            mode="single"
+            selected={startDate}
+            onSelect={setStartDate}
+            required
+            disabled={false}
+          />
+        </div>
+
+        {scheduleType !== 'one_time' && (
+          <div>
+            <Label>End Date</Label>
+            <DayPicker
+              mode="single"
+              selected={endDate}
+              onSelect={setEndDate}
+              fromDate={startDate}
+              footer={!startDate ? "Please select a start date first" : undefined}
+            />
+          </div>
+        )}
+
+        <div>
+          <Label htmlFor="startTime">Start Time</Label>
+          <Input
+            id="startTime"
+            type="time"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            required
+          />
+        </div>
+
+        {scheduleType === 'weekly' && (
+          <div>
+            <Label htmlFor="dayOfWeek">Day of Week</Label>
+            <select
+              id="dayOfWeek"
+              value={dayOfWeek}
+              onChange={(e) => setDayOfWeek(e.target.value)}
+              className="w-full border rounded-md p-2"
+            >
+              <option value="MONDAY">Monday</option>
+              <option value="TUESDAY">Tuesday</option>
+              <option value="WEDNESDAY">Wednesday</option>
+              <option value="THURSDAY">Thursday</option>
+              <option value="FRIDAY">Friday</option>
+              <option value="SATURDAY">Saturday</option>
+              <option value="SUNDAY">Sunday</option>
+            </select>
+          </div>
         )}
       </div>
 
-      {error && (
-        <div className="text-red-600 bg-red-50 p-4 rounded-md">{error}</div>
-      )}
-
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? 'Creating...' : 'Create Carpool'}
+      <Button 
+        type="submit" 
+        disabled={isSubmitting}
+        className="w-full"
+      >
+        {isSubmitting ? 'Creating...' : 'Create Carpool'}
       </Button>
     </form>
   )

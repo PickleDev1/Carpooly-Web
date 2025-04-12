@@ -44,10 +44,10 @@ export function ScheduleModal({ carpool, isOpen, onClose }: ScheduleModalProps) 
       dayOfWeek: scheduleType === 'weekly' ? dayOfWeek : undefined
     }
 
-    console.log('Sending schedule data to backend:', scheduleData)
+    console.log('Sending schedule update data to backend:', scheduleData)
     setIsSubmitting(true)
     try {
-      await api.updateCarpoolSchedule(scheduleData)
+      await api.updateSchedule(scheduleData)
       onClose()
       window.location.reload()
     } catch (error) {

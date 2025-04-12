@@ -29,3 +29,15 @@ export interface Analytics {
     co2_saved: string;
   }[];
 }
+
+export interface ActiveRide {
+  id: string;
+  carpool_id: string;
+  driver_id: string;
+  status: string;
+  location_lat: number;
+  location_lng: number;
+  miles_saved: number;
+  created_at: string;
+  updated_at: string;
+}
