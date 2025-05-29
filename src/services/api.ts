@@ -1,4 +1,4 @@
-import { Carpool, CompletedRide, Analytics } from '@/types/api'
+import { Carpool, CompletedRide, Analytics, Schedule } from '@/types/api'
 import { useAuth } from '@clerk/nextjs'
 import { mockService } from '@/mocks/mockService'
 import { useMemo } from 'react'
@@ -459,6 +459,126 @@ export const useApi = () => {
           console.error('JSON Parse Error:', error, 'Response:', text)
           return []
         }
+      },
+
+      async getCarpool(carpoolId: string) {
+        const headers = await getHeaders()
+        
+        const response = await fetch(`${API_URL}/carpools/${carpoolId}`, {
+          method: 'GET',
+          headers
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch carpool')
+        }
+
+        return response.json()
+      },
+
+      async getCarpoolSchedules(carpoolId: string): Promise<Schedule[]> {
+        const headers = await getHeaders()
+        
+        const response = await fetch(`${API_URL}/carpools/${carpoolId}/schedules`, {
+          method: 'GET',
+          headers
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch carpool schedules')
+        }
+
+        return response.json()
+      },
+
+      async getCarpoolDayDetails(carpoolId: string, date: string) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/carpools/${carpoolId}/rides/${date}`, {
+          headers
+        })
+        if (!response.ok) throw new Error('Failed to fetch day details')
+        return response.json()
+      },
+
+      async setCarpoolDriver(carpoolId: string, date: string) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/carpools/${carpoolId}/days/${date}/driver`, {
+          method: 'POST',
+          headers
+        })
+        if (!response.ok) throw new Error('Failed to set driver')
+        return response.json()
+      },
+
+      async removeCarpoolDriver(carpoolId: string, date: string) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/carpools/${carpoolId}/days/${date}/driver`, {
+          method: 'DELETE',
+          headers
+        })
+        if (!response.ok) throw new Error('Failed to remove driver')
+        return response.json()
+      },
+
+      async removeCarpoolParticipant(carpoolId: string, date: string) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/carpools/${carpoolId}/days/${date}/participants`, {
+          method: 'DELETE',
+          headers
+        })
+        if (!response.ok) throw new Error('Failed to remove participant')
+        return response.json()
+      },
+
+      async addCarpoolComment(carpoolId: string, date: string, comment: string) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/carpools/${carpoolId}/days/${date}/comments`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ text: comment })
+        })
+        if (!response.ok) throw new Error('Failed to add comment')
+        return response.json()
+      },
+
+      async getCarpoolMembers(carpoolId: string) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/carpools/${carpoolId}/members`, {
+          headers
+        })
+        if (!response.ok) throw new Error('Failed to fetch carpool members')
+        return response.json()
+      },
+
+      async createCarpoolRide(carpoolId: string, date: string, startTime: string) {
+        const headers = await getHeaders()
+        
+        // Create start_time by combining date and time
+        const startDateTime = new Date(`${date}T${startTime}:00Z`)
+        
+        // Create end_time (1 hour after start)
+        const endDateTime = new Date(startDateTime)
+        endDateTime.setHours(endDateTime.getHours() + 1)
+
+        const response = await fetch(`${API_URL}/carpools/${carpoolId}/rides`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            start_time: startDateTime.toISOString(),
+            end_time: endDateTime.toISOString()
+          })
+        })
+        if (!response.ok) throw new Error('Failed to create carpool ride')
+        return response.json()
+      },
+
+      async getCarpoolRideByDate(carpoolId: string, date: string) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/carpools/${carpoolId}/rides/${date}`, {
+          headers
+        })
+        if (!response.ok) throw new Error('Failed to fetch ride details')
+        return response.json()
       },
     }
   }, [getToken])

@@ -6,7 +6,7 @@ import { InviteModal } from '@/components/InviteModal'
 import { useUserUuid } from '@/contexts/UserContext'
 import { useCarpools } from '@/hooks/useCarpools'
 import { useApi } from '@/services/api'
-import { TrashIcon, CalendarIcon } from '@heroicons/react/24/outline'
+import { TrashIcon, CalendarIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import { ScheduleModal } from './ScheduleModal'
 import {
   Table,
@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 
 export function CarpoolList() {
   const { user, isLoaded } = useUser()
@@ -29,6 +30,7 @@ export function CarpoolList() {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
   const [selectedCarpool, setSelectedCarpool] = useState<Carpool | null>(null)
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
+  const router = useRouter()
 
   console.log('CarpoolList render:', { user, isLoaded, carpools})
 
@@ -56,8 +58,8 @@ export function CarpoolList() {
 
   const handleScheduleUpdate = async (schedule: any) => {
     try {
-      // Add API call to update schedule
-      await api.updateCarpoolSchedule(schedule)
+      // Changed from updateCarpoolSchedule to updateSchedule
+      await api.updateSchedule(schedule)
       // Refresh carpools list
     } catch (error) {
       console.error('Error updating schedule:', error)
@@ -68,6 +70,10 @@ export function CarpoolList() {
   const handleInvite = (carpoolId: string) => {
     setSelectedCarpoolId(carpoolId)
     setInviteModalOpen(true)
+  }
+
+  const handleViewCalendar = (carpoolId: string) => {
+    router.push(`/carpools/${carpoolId}/calendar`)
   }
 
   if (uuidError) {
@@ -125,6 +131,14 @@ export function CarpoolList() {
                           className="bg-green-200 hover:bg-green-300"
                         >
                           <CalendarIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => carpool.id && handleViewCalendar(carpool.id)}
+                          className="bg-[#2B5335] hover:bg-[#1e3b25] text-white"
+                        >
+                          <CalendarDaysIcon className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="destructive"

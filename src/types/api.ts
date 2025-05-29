@@ -1,3 +1,11 @@
+export interface Schedule {
+  start_date: string;
+  end_date?: string;
+  schedule_type: 'one_time' | 'daily' | 'weekly';
+  start_time: string;
+  day_of_week?: number;
+}
+
 export interface Carpool {
   id?: string;
   carpool_name: string;
@@ -7,6 +15,7 @@ export interface Carpool {
   seats: number;
   created_by?: string;
   created_at?: string;
+  schedule?: Schedule;
 }
 
 export interface CompletedRide {

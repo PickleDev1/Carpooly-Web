@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import "react-day-picker/dist/style.css"
+import { addDays, addMonths, format } from 'date-fns'
 
 interface CarpoolFormProps {
   userId: string
@@ -30,11 +31,71 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
   const [startTime, setStartTime] = useState('09:00')
   const [dayOfWeek, setDayOfWeek] = useState<string>('MONDAY')
 
+  const createRidesForSchedule = async (carpoolId: string, scheduleData: any) => {
+    console.log('Starting ride creation process with data:', {
+      carpoolId,
+      scheduleType: scheduleData.scheduleType,
+      startDate: scheduleData.startDate,
+      endDate: scheduleData.endDate,
+      startTime: scheduleData.startTime,
+      dayOfWeek: scheduleData.dayOfWeek
+    })
+
+    const startDate = new Date(scheduleData.startDate)
+    const endDate = scheduleData.endDate ? new Date(scheduleData.endDate) : addMonths(startDate, 3)
+    
+    console.log('Calculated date range:', {
+      startDate: format(startDate, 'yyyy-MM-dd'),
+      endDate: format(endDate, 'yyyy-MM-dd')
+    })
+
+    let currentDate = startDate
+    const dates: Date[] = []
+
+    while (currentDate <= endDate) {
+      if (scheduleData.scheduleType === 'daily') {
+        dates.push(new Date(currentDate))
+        currentDate = addDays(currentDate, 1)
+      } else if (scheduleData.scheduleType === 'weekly') {
+        const currentDayOfWeek = format(currentDate, 'EEEE').toUpperCase()
+        console.log(`Checking weekly date: ${format(currentDate, 'yyyy-MM-dd')} (${currentDayOfWeek})`)
+        if (currentDayOfWeek === scheduleData.dayOfWeek) {
+          console.log(`Adding weekly date: ${format(currentDate, 'yyyy-MM-dd')}`)
+          dates.push(new Date(currentDate))
+        }
+        currentDate = addDays(currentDate, 1)
+      } else {
+        console.log(`One-time schedule, adding single date: ${format(currentDate, 'yyyy-MM-dd')}`)
+        dates.push(new Date(currentDate))
+        break
+      }
+    }
+
+    console.log(`Generated ${dates.length} dates for ride creation`)
+    console.log('Dates:', dates.map(date => format(date, 'yyyy-MM-dd')))
+
+    for (const date of dates) {
+      try {
+        console.log(`Creating ride for date: ${format(date, 'yyyy-MM-dd')} at time: ${scheduleData.startTime}`)
+        const ride = await api.createCarpoolRide(
+          carpoolId, 
+          format(date, 'yyyy-MM-dd'),
+          scheduleData.startTime
+        )
+        console.log(`Successfully created ride:`, ride)
+      } catch (error) {
+        console.error(`Failed to create ride for date ${format(date, 'yyyy-MM-dd')}:`, error)
+      }
+    }
+    console.log('Finished creating all rides')
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('Starting carpool creation process')
     
-    // Validate required date
     if (!startDate) {
+      console.warn('No start date selected')
       alert('Please select a start date')
       return
     }
@@ -42,7 +103,7 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
     setIsSubmitting(true)
 
     try {
-      // Only send carpool-specific data to createCarpool
+      // Create carpool
       const carpoolData = {
         carpool_name: carpoolName,
         seats: parseInt(seats),
@@ -52,9 +113,9 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
 
       console.log('Creating carpool with data:', carpoolData)
       const newCarpool = await api.createCarpool(carpoolData)
-      console.log('Carpool created:', newCarpool)
+      console.log('Carpool created successfully:', newCarpool)
 
-      // Create schedule with the new carpool ID
+      // Create schedule
       const scheduleData = {
         carpoolId: newCarpool.id,
         scheduleType,
@@ -65,8 +126,12 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
       }
 
       console.log('Creating schedule with data:', scheduleData)
-      await api.createCarpoolSchedule(scheduleData)
-      console.log('Schedule created successfully')
+      const schedule = await api.createCarpoolSchedule(scheduleData)
+      console.log('Schedule created successfully:', schedule)
+
+      console.log('Starting ride creation process')
+      await createRidesForSchedule(newCarpool.id, scheduleData)
+      console.log('All processes completed successfully')
 
       onSuccess()
     } catch (error) {
@@ -74,6 +139,7 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
       alert('Failed to create carpool and schedule')
     } finally {
       setIsSubmitting(false)
+      console.log('Form submission process completed')
     }
   }
 
