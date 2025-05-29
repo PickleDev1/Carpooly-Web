@@ -500,14 +500,22 @@ export const useApi = () => {
         return response.json()
       },
 
-      async setCarpoolDriver(carpoolId: string, date: string) {
+      async setCarpoolDriver(rideId: string, driverId: string) {
         const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/carpools/${carpoolId}/days/${date}/driver`, {
-          method: 'POST',
-          headers
+        const response = await fetch(`${API_URL}/carpools/rides/${rideId}/driver`, {
+          method: 'PUT',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            driver_id: driverId
+          })
         })
         if (!response.ok) throw new Error('Failed to set driver')
-        return response.json()
+        // If response is empty, return success status
+        const text = await response.text()
+        return text ? JSON.parse(text) : { success: true }
       },
 
       async removeCarpoolDriver(carpoolId: string, date: string) {

@@ -28,14 +28,15 @@ interface CarpoolMember {
 }
 
 interface DayDetails {
+  id: string
   driver?: {
     id: string
-    name: string
   }
   participants: {
     id: string
     clerk_id: string
     name: string
+    display_name: string
     email: string
   }[]
   comments: {
@@ -71,104 +72,69 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
   const { user } = useUser()
   const api = useApi()
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchDayDetails()
-    }
-  }, [isOpen, date, carpoolId])
-
   const fetchDayDetails = async () => {
     try {
       const formattedDate = format(date, 'yyyy-MM-dd')
-      console.log('Fetching ride details for date:', formattedDate)
       const rides = await api.getCarpoolRideByDate(carpoolId, formattedDate)
       console.log('Received rides:', rides)
       
       if (rides && rides.length > 0) {
-        const rideDetails = rides[0] // Get the first ride from the array
-        console.log('All participants:', rideDetails.participants) // Debug log
-        
+        const rideDetails = rides[0]
         setDayDetails({
-          driver: rideDetails.driver_id !== "00000000-0000-0000-0000-000000000000" 
-            ? { id: rideDetails.driver_id, name: "Driver" } 
-            : undefined,
-          participants: rideDetails.participants?.map((participant: Participant) => ({
-            id: participant.id,
-            clerk_id: participant.clerk_id,
-            name: participant.display_name || participant.name,
-            email: participant.email
-          })) || [],
-          comments: []
-        })
-      } else {
-        setDayDetails({
-          driver: undefined,
-          participants: [],
+          id: rideDetails.id,
+          driver: rideDetails.driver_id ? { id: rideDetails.driver_id } : undefined,
+          participants: rideDetails.participants || [],
           comments: []
         })
       }
     } catch (error) {
       console.error('Error fetching ride details:', error)
-      setDayDetails({
-        driver: undefined,
-        participants: [],
-        comments: []
-      })
     }
   }
 
   const handleSetDriver = async () => {
+    if (!user?.id || !dayDetails?.participants || !dayDetails?.id) return;
+    
     try {
       setIsLoading(true)
-      await api.setCarpoolDriver(carpoolId, format(date, 'yyyy-MM-dd'))
-      await fetchDayDetails()
+      const currentParticipant = dayDetails.participants.find(
+        p => p.clerk_id === user.id
+      );
+
+      if (!currentParticipant) {
+        console.error('Could not find participant record for current user');
+        return;
+      }
+
+      console.log('Setting driver with database ID:', currentParticipant.id);
+      console.log('For ride ID:', dayDetails.id);
+      
+      // Optimistically update the UI
+      setDayDetails(prev => prev ? {
+        ...prev,
+        driver: { id: currentParticipant.id }
+      } : null);
+
+      // Make the API call
+      await api.setCarpoolDriver(dayDetails.id, currentParticipant.id);
+      console.log('Successfully set driver');
+      
+      // Fetch the latest data in the background
+      fetchDayDetails();
     } catch (error) {
-      console.error('Error setting driver:', error)
+      console.error('Error setting driver:', error);
+      // Revert the optimistic update if there's an error
+      await fetchDayDetails();
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
-  const handleRemoveDriver = async () => {
-    try {
-      setIsLoading(true)
-      await api.removeCarpoolDriver(carpoolId, format(date, 'yyyy-MM-dd'))
-      await fetchDayDetails()
-    } catch (error) {
-      console.error('Error removing driver:', error)
-    } finally {
-      setIsLoading(false)
+  useEffect(() => {
+    if (isOpen) {
+      fetchDayDetails()
     }
-  }
-
-  const handleRemoveParticipant = async () => {
-    try {
-      setIsLoading(true)
-      await api.removeCarpoolParticipant(carpoolId, format(date, 'yyyy-MM-dd'))
-      await fetchDayDetails()
-    } catch (error) {
-      console.error('Error removing participant:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleAddComment = async () => {
-    if (!comment.trim()) return
-
-    try {
-      setIsLoading(true)
-      await api.addCarpoolComment(carpoolId, format(date, 'yyyy-MM-dd'), comment)
-      setComment('')
-      await fetchDayDetails()
-    } catch (error) {
-      console.error('Error adding comment:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const isUserDriver = dayDetails?.driver?.id === user?.id
+  }, [isOpen, date, carpoolId])
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -181,18 +147,33 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
           {/* Driver Section */}
           <div className="space-y-2">
             <h3 className="font-medium">Driver</h3>
-            {dayDetails?.driver ? (
-              <div className="flex items-center justify-between">
-                <span>{dayDetails.driver.name}</span>
-                {isUserDriver && (
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleRemoveDriver}
-                    disabled={isLoading}
-                  >
-                    Remove as Driver
-                  </Button>
-                )}
+            {dayDetails?.driver?.id && dayDetails.driver.id !== "00000000-0000-0000-0000-000000000000" ? (
+              <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  {(() => {
+                    const driverParticipant = dayDetails.participants.find(p => p.id === dayDetails.driver?.id);
+                    return driverParticipant ? (
+                      <>
+                        <div className="h-8 w-8 rounded-full bg-[#2B5335] flex items-center justify-center">
+                          <span className="text-white font-medium">
+                            {driverParticipant.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="flex items-center">
+                            <span className="font-medium text-gray-900">{driverParticipant.name}</span>
+                            {driverParticipant.clerk_id === user?.id && (
+                              <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-500">{driverParticipant.email}</span>
+                        </div>
+                      </>
+                    ) : null;
+                  })()}
+                </div>
               </div>
             ) : (
               <Button
@@ -200,7 +181,7 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
                 disabled={isLoading}
                 className="w-full bg-[#2B5335] hover:bg-[#1e3b25] text-white"
               >
-                Set as Driver
+                {isLoading ? "Signing up..." : "Sign Up as Driver"}
               </Button>
             )}
           </div>
@@ -209,49 +190,43 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
           <div className="space-y-3">
             <h3 className="font-semibold text-lg text-gray-800">Participants</h3>
             <div className="space-y-2">
-              {dayDetails?.participants.map(participant => {
-                console.log('Current participant clerk_id:', participant.clerk_id)
-                console.log('Logged in user id:', user?.id)
-                console.log('Do they match?', participant.clerk_id === user?.id)
-                
-                return (
-                  <div 
-                    key={participant.id} 
-                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 shadow-sm hover:border-gray-200 transition-colors"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="h-8 w-8 rounded-full bg-[#2B5335] flex items-center justify-center">
-                        <span className="text-white font-medium">
-                          {participant.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="flex items-center">
-                          <span className="font-medium text-gray-900">{participant.name}</span>
-                          {participant.clerk_id === user?.id && (
-                            <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
-                              You
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-sm text-gray-500">{participant.email}</span>
-                      </div>
+              {dayDetails?.participants.map(participant => (
+                <div 
+                  key={participant.id} 
+                  className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 shadow-sm hover:border-gray-200 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="h-8 w-8 rounded-full bg-[#2B5335] flex items-center justify-center">
+                      <span className="text-white font-medium">
+                        {participant.name.charAt(0).toUpperCase()}
+                      </span>
                     </div>
-                    {participant.clerk_id === user?.id && (
-                      <Button
-                        variant="destructive"
-                        onClick={() => {
-                          console.log('Remove participant clicked:', participant.id);
-                        }}
-                        size="sm"
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded transition-colors"
-                      >
-                        Leave Ride
-                      </Button>
-                    )}
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <span className="font-medium text-gray-900">{participant.name}</span>
+                        {participant.clerk_id === user?.id && (
+                          <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
+                            You
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-sm text-gray-500">{participant.email}</span>
+                    </div>
                   </div>
-                )
-              })}
+                  {participant.clerk_id === user?.id && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        console.log('Remove participant clicked:', participant.id);
+                      }}
+                      size="sm"
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded transition-colors"
+                    >
+                      Leave Ride
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -279,7 +254,7 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
                 className="flex-1"
               />
               <Button
-                onClick={handleAddComment}
+                onClick={() => {}} // handleAddComment will be implemented later
                 disabled={isLoading || !comment.trim()}
                 className="bg-[#2B5335] hover:bg-[#1e3b25] text-white"
               >
