@@ -1,0 +1,12 @@
+{
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next",
+      "config": {
+        "installCommand": "npm install --ignore-scripts && npm rebuild canvas --build-from-source",
+        "buildCommand": "npm run build"
+      }
+    }
+  ]
+} 
