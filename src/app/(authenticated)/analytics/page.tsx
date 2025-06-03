@@ -1,81 +1,96 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { Car, Calendar, Route, Leaf } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Car, Calendar, Route, Leaf, Trees } from 'lucide-react'
 import { useApi } from '@/services/api'
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  Legend
-} from 'recharts'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-interface TopCarpooler {
-  name: string
-  rides: number
-  co2_saved: string
-}
-
-interface Analytics {
-  total_carpools: number
-  total_rides: number
-  miles_saved: number
-  co2_reduced: number
-  top_carpoolers: TopCarpooler[]
-}
+import { useCarpools } from '@/hooks/useCarpools'
+import { useUser } from '@clerk/nextjs'
 
 export default function AnalyticsPage() {
-  const [data, setData] = useState<Analytics | null>(null)
   const [loading, setLoading] = useState(true)
+  const [totalUserRides, setTotalUserRides] = useState(0)
   const api = useApi()
+  const { carpools } = useCarpools()
+  const { user } = useUser()
 
   useEffect(() => {
-    async function fetchAnalytics() {
+    async function fetchData() {
       try {
-        const analyticsData = await api.getAnalytics()
-        setData(analyticsData)
+        if (user?.id) {
+          const userRides = await api.getUserTotalRides(user.id)
+          setTotalUserRides(userRides)
+        }
       } catch (error) {
-        console.error('Error fetching analytics:', error)
+        console.error('Error fetching data:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchAnalytics()
-  }, [])
+    fetchData()
+  }, [user?.id])
 
-  if (loading) return <div>Loading analytics...</div>
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2B5335]"></div>
+      </div>
+    )
+  }
+
+  const myCarpoolsCount = carpools?.length || 0
+  
+  // Calculate environmental impact based on rides
+  // Assume each ride saves 2.5 kg of CO2
+  const co2Saved = totalUserRides * 2.5 // in kg
+  
+  // Calculate leaves (1 leaf absorbs ~0.05 kg CO2/year)
+  const leavesCount = Math.round(co2Saved / 0.05)
+  
+  // Calculate trees (1 tree absorbs ~22 kg CO2/year)
+  const treesCount = Math.round(co2Saved / 22)
 
   const metrics = [
-    { title: 'Total Carpools', value: data?.total_carpools, icon: Car, color: 'bg-blue-50', textColor: 'text-blue-700', iconColor: 'text-blue-500' },
-    { title: 'Total Rides', value: data?.total_rides, icon: Calendar, color: 'bg-purple-50', textColor: 'text-purple-700', iconColor: 'text-purple-500' },
-    { title: 'Car Miles Saved', value: `${data?.miles_saved.toLocaleString()} mi`, icon: Route, color: 'bg-[#E8EDDF]', textColor: 'text-[#2B5335]', iconColor: 'text-[#2B5335]' },
-    { title: 'CO₂ Emissions Reduced', value: `${data?.co2_reduced.toLocaleString()} lbs`, icon: Leaf, color: 'bg-green-50', textColor: 'text-green-700', iconColor: 'text-green-500' },
-  ]
-
-  // Sample data for the chart - replace with real data when available
-  const monthlyData = [
-    { name: 'Jan', rides: 4 },
-    { name: 'Feb', rides: 6 },
-    { name: 'Mar', rides: 8 },
-    { name: 'Apr', rides: 12 },
-    { name: 'May', rides: 15 },
-    { name: 'Jun', rides: 18 },
+    { 
+      title: 'Total Carpools', 
+      value: myCarpoolsCount, 
+      icon: Car, 
+      color: 'bg-blue-50', 
+      textColor: 'text-blue-700', 
+      iconColor: 'text-blue-500' 
+    },
+    { 
+      title: 'Total Rides', 
+      value: totalUserRides, 
+      icon: Calendar, 
+      color: 'bg-purple-50', 
+      textColor: 'text-purple-700', 
+      iconColor: 'text-purple-500' 
+    },
+    { 
+      title: 'Miles Saved', 
+      value: 'Coming Soon', 
+      icon: Route, 
+      color: 'bg-[#E8EDDF]', 
+      textColor: 'text-[#2B5335]', 
+      iconColor: 'text-[#2B5335]' 
+    },
+    { 
+      title: 'Leaves Saved', 
+      value: 'Coming Soon', 
+      icon: Leaf, 
+      color: 'bg-green-50', 
+      textColor: 'text-green-700', 
+      iconColor: 'text-green-500' 
+    },
+    { 
+      title: 'Trees Equivalent', 
+      value: 'Coming Soon', 
+      icon: Trees, 
+      color: 'bg-emerald-50', 
+      textColor: 'text-emerald-700', 
+      iconColor: 'text-emerald-500' 
+    }
   ]
 
   return (
@@ -84,7 +99,7 @@ export default function AnalyticsPage() {
         <h1 className="text-3xl font-bold">Analytics</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
         {metrics.map((metric, index) => {
           const Icon = metric.icon
           return (
@@ -106,56 +121,6 @@ export default function AnalyticsPage() {
             </div>
           )
         })}
-      </div>
-
-      {/* Leaderboard Section */}
-      <Card className="mt-12">
-        <CardHeader>
-          <CardTitle>Top Carpoolers</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Rank</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Rides</TableHead>
-                <TableHead>CO₂ Saved</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data?.top_carpoolers.map((user, index) => (
-                <TableRow key={index}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{user.name}</TableCell>
-                  <TableCell>{user.rides}</TableCell>
-                  <TableCell>{user.co2_saved}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Monthly Trends Section with Chart */}
-      <div className="mt-12 bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">Monthly Trends</h2>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="rides" 
-                stroke="#2B5335" 
-                strokeWidth={2} 
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
       </div>
     </div>
   )

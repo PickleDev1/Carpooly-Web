@@ -75,7 +75,7 @@ export const useApi = () => {
         }
 
         const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/api/analytics`, {
+        const response = await fetch(`${API_URL}/api/analytics:1`, {
           method: 'GET',
           headers
         })
@@ -587,6 +587,22 @@ export const useApi = () => {
         })
         if (!response.ok) throw new Error('Failed to fetch ride details')
         return response.json()
+      },
+
+      async getUserTotalRides(userId: string) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/users/${userId}/rides/total`, {
+          method: 'GET',
+          headers
+        })
+
+        if (!response.ok) {
+          console.error('Total Rides API Error:', response.status, response.statusText)
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+        return data.total_rides || 0
       },
     }
   }, [getToken])

@@ -39,13 +39,6 @@ interface DayDetails {
     display_name: string
     email: string
   }[]
-  comments: {
-    id: string
-    userId: string
-    userName: string
-    text: string
-    timestamp: string
-  }[]
 }
 
 interface Participant {
@@ -67,7 +60,6 @@ interface RideDetails {
 
 export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDayModalProps) {
   const [dayDetails, setDayDetails] = useState<DayDetails | null>(null)
-  const [comment, setComment] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { user } = useUser()
   const api = useApi()
@@ -84,7 +76,6 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
           id: rideDetails.id,
           driver: rideDetails.driver_id ? { id: rideDetails.driver_id } : undefined,
           participants: rideDetails.participants || [],
-          comments: []
         })
       }
     } catch (error) {
@@ -127,6 +118,23 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
       await fetchDayDetails();
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  const handleRemoveParticipant = async () => {
+    if (!user?.id || !dayDetails?.id) return;
+    
+    try {
+      setIsLoading(true)
+      const formattedDate = format(date, 'yyyy-MM-dd')
+      await api.removeCarpoolParticipant(carpoolId, formattedDate)
+      
+      // Refresh the day details after removing participant
+      await fetchDayDetails()
+    } catch (error) {
+      console.error('Error removing participant:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -216,50 +224,16 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
                   {participant.clerk_id === user?.id && (
                     <Button
                       variant="destructive"
-                      onClick={() => {
-                        console.log('Remove participant clicked:', participant.id);
-                      }}
+                      onClick={handleRemoveParticipant}
                       size="sm"
+                      disabled={isLoading}
                       className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded transition-colors"
                     >
-                      Leave Ride
+                      {isLoading ? "Leaving..." : "Leave Ride"}
                     </Button>
                   )}
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Comments Section */}
-          <div className="space-y-2">
-            <h3 className="font-medium">Comments</h3>
-            <div className="max-h-40 overflow-y-auto space-y-2">
-              {dayDetails?.comments.map(comment => (
-                <div key={comment.id} className="bg-gray-50 p-2 rounded">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">{comment.userName}</span>
-                    <span className="text-gray-500">
-                      {format(new Date(comment.timestamp), 'MMM d, h:mm a')}
-                    </span>
-                  </div>
-                  <p className="text-sm mt-1">{comment.text}</p>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Add a comment..."
-                className="flex-1"
-              />
-              <Button
-                onClick={() => {}} // handleAddComment will be implemented later
-                disabled={isLoading || !comment.trim()}
-                className="bg-[#2B5335] hover:bg-[#1e3b25] text-white"
-              >
-                Send
-              </Button>
             </div>
           </div>
         </div>
