@@ -323,14 +323,16 @@ export const useApi = () => {
           return mockService.deleteCarpool(carpoolId)
         }
         const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/carpools/${carpoolId}`, {
           method: 'DELETE',
           headers
         })
 
         if (!response.ok) {
-          const errorText = await response.text()
-          throw new Error(`Failed to delete carpool: ${errorText}`)
+          const text = await response.text()
+          console.error('Delete Carpool Error:', response.status, response.statusText)
+          console.error('Response body:', text)
+          throw new Error(text || `Failed to delete carpool: ${response.statusText}`)
         }
 
         return true

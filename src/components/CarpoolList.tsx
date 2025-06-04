@@ -25,7 +25,7 @@ export function CarpoolList() {
   const { user, isLoaded } = useUser()
   const [selectedCarpoolId, setSelectedCarpoolId] = useState<string | null>(null)
   const { uuid, loading: uuidLoading, error: uuidError } = useUserUuid()
-  const { carpools } = useCarpools()
+  const { carpools, deleteCarpool } = useCarpools()
   const api = useApi()
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
   const [selectedCarpool, setSelectedCarpool] = useState<Carpool | null>(null)
@@ -42,11 +42,12 @@ export function CarpoolList() {
   const handleDelete = async (carpoolId: string) => {
     if (window.confirm('Are you sure you want to delete this carpool?')) {
       try {
-        await api.deleteCarpool(carpoolId)
-        // Refresh the list
-      } catch (error) {
-        console.error('Error deleting carpool:', error)
-        alert('Failed to delete carpool')
+        await deleteCarpool(carpoolId);
+        // No need to refresh the list as the state is already updated by the hook
+      } catch (error: any) {
+        console.error('Error deleting carpool:', error);
+        // Always show the "only creator" message when delete fails
+        alert('Only the creator of a carpool can delete it');
       }
     }
   }

@@ -27,5 +27,17 @@ export function useCarpools() {
     fetchCarpools();
   }, [user?.id, api]);
 
-  return { carpools };
+  const deleteCarpool = async (carpoolId: string) => {
+    try {
+      await api.deleteCarpool(carpoolId);
+      // Update local state by removing the deleted carpool
+      setCarpools(prevCarpools => prevCarpools.filter(carpool => carpool.id !== carpoolId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting carpool:', error);
+      throw error;
+    }
+  };
+
+  return { carpools, deleteCarpool };
 } 
