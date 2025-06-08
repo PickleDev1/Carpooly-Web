@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useApi } from '@/services/api'
 import { useUser } from '@clerk/nextjs'
 
@@ -17,22 +17,23 @@ export function useInvites() {
   const { user } = useUser()
   const api = useApi()
 
-  useEffect(() => {
-    async function fetchInvites() {
-      if (!user?.id) return;
-      
-      try {
-        const data = await api.getInvites(user.id)
-        setInvites(data || [])
-      } catch (error) {
-        console.error('Error fetching invites:', error)
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchInvites = useCallback(async () => {
+    if (!user?.id) return;
+    
+    setIsLoading(true)
+    try {
+      const data = await api.getInvites(user.id)
+      setInvites(data || [])
+    } catch (error) {
+      console.error('Error fetching invites:', error)
+    } finally {
+      setIsLoading(false)
     }
-
-    fetchInvites()
   }, [user?.id, api])
 
-  return { invites, isLoading }
+  useEffect(() => {
+    fetchInvites()
+  }, [fetchInvites])
+
+  return { invites, isLoading, refresh: fetchInvites }
 } 

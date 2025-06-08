@@ -13,7 +13,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 
 export function InvitesTable() {
-  const { invites, isLoading } = useInvites()
+  const { invites, isLoading, refresh } = useInvites()
   
   if (isLoading) {
     return <Card><CardContent className="py-4">Loading invites...</CardContent></Card>
@@ -42,7 +42,7 @@ export function InvitesTable() {
                 <InviteActions 
                   inviteId={invite.id}
                   status={parseInt(invite.status)}
-                  onStatusUpdate={() => {}}
+                  onStatusUpdate={refresh}
                 />
               </TableCell>
             </TableRow>

@@ -296,25 +296,30 @@ export const useApi = () => {
 
       async updateInviteStatus(inviteId: string, status: number) {
         const headers = await getHeaders()
+        const payload = { status }
+        
+        console.log('Sending updateInviteStatus request:', {
+          url: `${API_URL}/api/invites/${inviteId}/updateStatus`,
+          method: 'PUT',
+          headers,
+          payload
+        })
+
         const response = await fetch(`${API_URL}/api/invites/${inviteId}/updateStatus`, {
           method: 'PUT',
           headers,
-          body: JSON.stringify({ status })
+          body: JSON.stringify(payload)
         })
 
         if (!response.ok) {
           const errorText = await response.text()
-          throw new Error(`Failed to update invite status: ${errorText}`)
-        }
-
-        const text = await response.text()
-        if (!text) return null
-        
-        try {
-          return JSON.parse(text)
-        } catch (error) {
-          console.error('JSON Parse Error:', error, 'Response:', text)
-          return null
+          console.error('Update invite status error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText,
+            requestPayload: payload
+          })
+          throw new Error(errorText || 'Failed to update invite status')
         }
       },
 
@@ -418,11 +423,34 @@ export const useApi = () => {
 
       async inviteToCarpool(carpoolId: string, email: string): Promise<void> {
         const headers = await getHeaders()
-        await fetch(`${API_URL}/api/carpools/${carpoolId}/invite`, {
+        const response = await fetch(`${API_URL}/api/invites`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ email })
+          body: JSON.stringify({
+            carpool_id: carpoolId,
+            email: email
+          })
         });
+
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('Invite to carpool error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: text
+          })
+          
+          // Handle specific error cases
+          if (text.includes('not registered') || text.includes('user not found')) {
+            throw new Error('This email is not registered. Please ask them to create an account first.')
+          } else if (text.includes('already invited')) {
+            throw new Error('This user has already been invited to this carpool.')
+          } else if (text.includes('already a member')) {
+            throw new Error('This user is already a member of this carpool.')
+          }
+          
+          throw new Error(text || 'Failed to send invite')
+        }
       },
 
       async getUserActiveRides(userId: string) {
@@ -606,6 +634,24 @@ export const useApi = () => {
         const data = await response.json()
         return data.total_rides || 0
       },
+
+      async deleteInvite(inviteId: string): Promise<void> {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/api/invites/${inviteId}`, {
+          method: 'DELETE',
+          headers
+        });
+
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('Delete invite error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: text
+          })
+          throw new Error(text || 'Failed to delete invite')
+        }
+      }
     }
-  }, [getToken])
+  }, [])
 }
