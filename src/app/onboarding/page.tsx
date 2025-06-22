@@ -5,6 +5,12 @@ console.log("Onboarding page loaded");
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser, useAuth } from "@clerk/nextjs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Loader2 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -80,42 +86,60 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-16 bg-white rounded-xl shadow-lg p-8 space-y-8 border border-gray-200">
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">Welcome to Carpooly!</h1>
-      <p className="text-center text-gray-600 mb-6">Set your preferred start address for all carpools and choose if you want to share your location while using the website.</p>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Start Address</label>
-          <input
-            id="address"
-            type="text"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-800"
-            placeholder="123 Main St, City, State, ZIP"
-            value={address}
-            onChange={e => setAddress(e.target.value)}
-            required
-            autoComplete="address-line1"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            id="locationSharing"
-            type="checkbox"
-            checked={locationSharing}
-            onChange={e => setLocationSharing(e.target.checked)}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <label htmlFor="locationSharing" className="text-gray-700">Enable location sharing while using the website</label>
-        </div>
-        <button
-          type="submit"
-          className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={!address || loading}
-        >
-          {loading ? "Saving..." : "Save Preferences"}
-        </button>
-        {error && <div className="text-red-600 text-center mt-2">{error}</div>}
-      </form>
+    <div className="container max-w-md mx-auto mt-16">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center">Welcome to Carpooly!</CardTitle>
+          <CardDescription className="text-center">
+            Set your preferred start address for all carpools and choose if you want to share your location while using the website.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="address">Start Address</Label>
+              <Input
+                id="address"
+                type="text"
+                placeholder="123 Main St, City, State, ZIP"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                required
+                autoComplete="address-line1"
+              />
+            </div>
+            <div className="flex items-center justify-between space-x-2">
+              <Label htmlFor="locationSharing" className="flex-1">
+                Enable location sharing while using the website
+              </Label>
+              <Switch
+                id="locationSharing"
+                checked={locationSharing}
+                onCheckedChange={setLocationSharing}
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={!address || loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Preferences"
+              )}
+            </Button>
+            {error && (
+              <div className="text-sm text-red-500 text-center bg-red-50 p-3 rounded-md">
+                {error}
+              </div>
+            )}
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 } 

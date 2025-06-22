@@ -16,11 +16,6 @@ const navItems = [
     href: '/carpools/list',
     label: 'My Carpools',
     icon: List
-  },
-  {
-    href: '/carpools/details',
-    label: 'View Details',
-    icon: Info
   }
 ]
 

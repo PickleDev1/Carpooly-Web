@@ -15,7 +15,20 @@ export const useApi = () => {
       return {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
+        'X-User-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
       }
+    }
+
+    // Helper function to convert local time to UTC
+    const convertToUTC = (date: string, time: string): string => {
+      const localDateTime = new Date(`${date}T${time}:00`)
+      return localDateTime.toISOString()
+    }
+
+    // Helper function to convert UTC to local time for display
+    const convertFromUTC = (utcTime: string): string => {
+      const date = new Date(utcTime)
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
 
     return {
@@ -358,12 +371,18 @@ export const useApi = () => {
           'THURSDAY': 4, 'FRIDAY': 5, 'SATURDAY': 6
         }
 
+        // Convert start date to YYYY-MM-DD format
+        const startDateStr = schedule.startDate.toISOString().split('T')[0]
+        
+        // Convert local time to UTC
+        const startTimeUTC = convertToUTC(startDateStr, schedule.startTime)
+
         const requestBody = {
           carpool_id: schedule.carpoolId,
           schedule_type: schedule.scheduleType.toLowerCase(),
           start_date: schedule.startDate.toISOString(),
           end_date: schedule.endDate?.toISOString(),
-          start_time: new Date(`2025-03-25T${schedule.startTime}:00.000Z`).toISOString(),
+          start_time: startTimeUTC,
           day_of_week: schedule.dayOfWeek ? dayOfWeekMap[schedule.dayOfWeek] : undefined
         }
 
@@ -397,12 +416,18 @@ export const useApi = () => {
           'THURSDAY': 4, 'FRIDAY': 5, 'SATURDAY': 6
         }
 
+        // Convert start date to YYYY-MM-DD format
+        const startDateStr = schedule.startDate.toISOString().split('T')[0]
+        
+        // Convert local time to UTC
+        const startTimeUTC = convertToUTC(startDateStr, schedule.startTime)
+
         const requestBody = {
           carpool_id: schedule.carpoolId,
           schedule_type: schedule.scheduleType.toLowerCase(),
           start_date: schedule.startDate.toISOString(),
           end_date: schedule.endDate?.toISOString(),
-          start_time: new Date(`2025-03-25T${schedule.startTime}:00.000Z`).toISOString(),
+          start_time: startTimeUTC,
           day_of_week: schedule.dayOfWeek ? dayOfWeekMap[schedule.dayOfWeek] : undefined
         }
 
@@ -461,7 +486,44 @@ export const useApi = () => {
         console.log('Making request with headers:', headers)
         console.log('Fetching active rides for userId:', userId)
         
-        const response = await fetch(`${API_URL}/users/${userId}/active-rides`, { 
+        const response = await fetch(`${API_URL}/api/users/${userId}/active-rides`, { 
+          method: 'GET',
+          headers 
+        })
+
+        if (!response.ok) {
+          console.error('Active Rides API Error:', response.status, response.statusText)
+          const responseText = await response.text()
+          console.error('Response body:', responseText)
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const text = await response.text()
+        console.log('Raw active rides response:', text)
+        
+        if (!text) {
+          console.log('Empty response received')
+          return []
+        }
+
+        try {
+          const data = JSON.parse(text)
+          console.log('Parsed active rides:', data)
+          return data || []
+        } catch (error) {
+          console.error('JSON Parse Error:', error, 'Response:', text)
+          return []
+        }
+      },
+
+      async getActiveRides() {
+        if (useMockApi) {
+          return mockService.getActiveRide('mock-user-id')
+        }
+        const headers = await getHeaders()
+        console.log('Making request to /api/rides/active with headers:', headers)
+        
+        const response = await fetch(`${API_URL}/api/rides/active`, { 
           method: 'GET',
           headers 
         })
@@ -494,7 +556,7 @@ export const useApi = () => {
       async getCarpool(carpoolId: string) {
         const headers = await getHeaders()
         
-        const response = await fetch(`${API_URL}/carpools/${carpoolId}`, {
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}`, {
           method: 'GET',
           headers
         })
@@ -523,7 +585,7 @@ export const useApi = () => {
 
       async getCarpoolDayDetails(carpoolId: string, date: string) {
         const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/carpools/${carpoolId}/rides/${date}`, {
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/rides/${date}`, {
           headers
         })
         if (!response.ok) throw new Error('Failed to fetch day details')
@@ -550,7 +612,7 @@ export const useApi = () => {
 
       async removeCarpoolDriver(carpoolId: string, date: string) {
         const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/carpools/${carpoolId}/days/${date}/driver`, {
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/days/${date}/driver`, {
           method: 'DELETE',
           headers
         })
@@ -560,7 +622,7 @@ export const useApi = () => {
 
       async removeCarpoolParticipant(carpoolId: string, date: string) {
         const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/carpools/${carpoolId}/days/${date}/participants`, {
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/days/${date}/participants`, {
           method: 'DELETE',
           headers
         })
@@ -570,7 +632,7 @@ export const useApi = () => {
 
       async addCarpoolComment(carpoolId: string, date: string, comment: string) {
         const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/carpools/${carpoolId}/days/${date}/comments`, {
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/days/${date}/comments`, {
           method: 'POST',
           headers,
           body: JSON.stringify({ text: comment })
@@ -581,7 +643,7 @@ export const useApi = () => {
 
       async getCarpoolMembers(carpoolId: string) {
         const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/carpools/${carpoolId}/members`, {
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/members`, {
           headers
         })
         if (!response.ok) throw new Error('Failed to fetch carpool members')
@@ -591,18 +653,18 @@ export const useApi = () => {
       async createCarpoolRide(carpoolId: string, date: string, startTime: string) {
         const headers = await getHeaders()
         
-        // Create start_time by combining date and time
-        const startDateTime = new Date(`${date}T${startTime}:00Z`)
+        // Convert local time to UTC using the helper function
+        const startDateTimeUTC = convertToUTC(date, startTime)
         
-        // Create end_time (1 hour after start)
-        const endDateTime = new Date(startDateTime)
+        // Create end_time (1 hour after start) in UTC
+        const endDateTime = new Date(startDateTimeUTC)
         endDateTime.setHours(endDateTime.getHours() + 1)
 
-        const response = await fetch(`${API_URL}/carpools/${carpoolId}/rides`, {
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/rides`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
-            start_time: startDateTime.toISOString(),
+            start_time: startDateTimeUTC,
             end_time: endDateTime.toISOString()
           })
         })
@@ -612,7 +674,7 @@ export const useApi = () => {
 
       async getCarpoolRideByDate(carpoolId: string, date: string) {
         const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/carpools/${carpoolId}/rides/${date}`, {
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/rides/${date}`, {
           headers
         })
         if (!response.ok) throw new Error('Failed to fetch ride details')
@@ -650,6 +712,43 @@ export const useApi = () => {
             body: text
           })
           throw new Error(text || 'Failed to delete invite')
+        }
+      },
+
+      async getRideDetails(rideId: string) {
+        if (useMockApi) {
+          return mockService.getActiveRide('mock-user-id')
+        }
+        const headers = await getHeaders()
+        console.log('Making request to get ride details for:', rideId)
+        
+        const response = await fetch(`${API_URL}/api/rides/${rideId}`, { 
+          method: 'GET',
+          headers 
+        })
+
+        if (!response.ok) {
+          console.error('Ride Details API Error:', response.status, response.statusText)
+          const responseText = await response.text()
+          console.error('Response body:', responseText)
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const text = await response.text()
+        console.log('Raw ride details response:', text)
+        
+        if (!text) {
+          console.log('Empty response received')
+          return null
+        }
+
+        try {
+          const data = JSON.parse(text)
+          console.log('Parsed ride details:', data)
+          return data
+        } catch (error) {
+          console.error('JSON Parse Error:', error, 'Response:', text)
+          return null
         }
       }
     }

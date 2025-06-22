@@ -11,7 +11,7 @@ export function DesktopHeader() {
 
   const links = [
     { href: '/carpools', label: 'Carpools' },
-    { href: '/history', label: 'History' },
+    { href: '/maps', label: 'Track Locations' },
     { href: '/analytics', label: 'Analytics' }
   ]
 
