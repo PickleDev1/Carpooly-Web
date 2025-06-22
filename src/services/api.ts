@@ -374,15 +374,15 @@ export const useApi = () => {
         // Convert start date to YYYY-MM-DD format
         const startDateStr = schedule.startDate.toISOString().split('T')[0]
         
-        // Convert local time to UTC
-        const startTimeUTC = convertToUTC(startDateStr, schedule.startTime)
+        // Create a local date object, then convert to UTC
+        const startTimeLocal = new Date(`${startDateStr}T${schedule.startTime}:00`)
 
         const requestBody = {
           carpool_id: schedule.carpoolId,
           schedule_type: schedule.scheduleType.toLowerCase(),
           start_date: schedule.startDate.toISOString(),
           end_date: schedule.endDate?.toISOString(),
-          start_time: startTimeUTC,
+          start_time: startTimeLocal.toISOString(),
           day_of_week: schedule.dayOfWeek ? dayOfWeekMap[schedule.dayOfWeek] : undefined
         }
 
@@ -419,15 +419,15 @@ export const useApi = () => {
         // Convert start date to YYYY-MM-DD format
         const startDateStr = schedule.startDate.toISOString().split('T')[0]
         
-        // Convert local time to UTC
-        const startTimeUTC = convertToUTC(startDateStr, schedule.startTime)
+        // Create a local date object, then convert to UTC
+        const startTimeLocal = new Date(`${startDateStr}T${schedule.startTime}:00`)
 
         const requestBody = {
           carpool_id: schedule.carpoolId,
           schedule_type: schedule.scheduleType.toLowerCase(),
           start_date: schedule.startDate.toISOString(),
           end_date: schedule.endDate?.toISOString(),
-          start_time: startTimeUTC,
+          start_time: startTimeLocal.toISOString(),
           day_of_week: schedule.dayOfWeek ? dayOfWeekMap[schedule.dayOfWeek] : undefined
         }
 
@@ -653,18 +653,18 @@ export const useApi = () => {
       async createCarpoolRide(carpoolId: string, date: string, startTime: string) {
         const headers = await getHeaders()
         
-        // Convert local time to UTC using the helper function
-        const startDateTimeUTC = convertToUTC(date, startTime)
+        // Create start_time by combining date and time in the user's local timezone
+        const startDateTime = new Date(`${date}T${startTime}:00`)
         
-        // Create end_time (1 hour after start) in UTC
-        const endDateTime = new Date(startDateTimeUTC)
+        // Create end_time (1 hour after start)
+        const endDateTime = new Date(startDateTime)
         endDateTime.setHours(endDateTime.getHours() + 1)
 
         const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/rides`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
-            start_time: startDateTimeUTC,
+            start_time: startDateTime.toISOString(),
             end_time: endDateTime.toISOString()
           })
         })

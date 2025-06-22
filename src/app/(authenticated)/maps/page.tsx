@@ -33,9 +33,14 @@ export default function TrackLocationsPage() {
         setIsLoading(true)
         const ridesData = await api.getActiveRides()
 
-        if (ridesData && ridesData.length > 0) {
+        // Filter out rides that have no participants before processing them.
+        const validRides = ridesData?.filter(
+          (ride: any) => ride.participants && ride.participants.length > 0
+        )
+
+        if (validRides && validRides.length > 0) {
           const enhancedRides = await Promise.all(
-            ridesData.map(async (ride: any) => {
+            validRides.map(async (ride: any) => {
               try {
                 // The active rides endpoint does not return carpool name/destination.
                 // We need to fetch it separately for each ride.
