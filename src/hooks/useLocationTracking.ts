@@ -7,6 +7,18 @@ interface UseLocationTrackingOptions {
   rideId: string
 }
 
+function getInitialSharingEnabled(settings: LocationSettings | null): boolean {
+  if (typeof window !== 'undefined' && navigator.permissions) {
+    // Check geolocation permission
+    // This is async, so we will also check in useEffect
+    // For now, default to false if permission is not granted
+    // (We will update in useEffect)
+    return false
+  }
+  // Fallback to backend setting if available
+  return settings?.location_sharing_enabled ?? false
+}
+
 export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
   const [locations, setLocations] = useState<LocationData[]>([])
   const [locationSettings, setLocationSettings] = useState<LocationSettings | null>(null)
@@ -17,6 +29,7 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
   const api = useApi()
   const { user } = useUser()
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const hasCheckedPermission = useRef(false)
 
   // Fetch location settings on mount
   useEffect(() => {
@@ -24,7 +37,10 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
       try {
         const settings = await api.getLocationSettings()
         setLocationSettings(settings)
-        setIsSharingEnabled(settings.location_sharing_enabled)
+        // Only set sharing enabled if not checked permission yet
+        if (!hasCheckedPermission.current) {
+          setIsSharingEnabled(getInitialSharingEnabled(settings))
+        }
       } catch (err) {
         setError('Failed to fetch location settings')
       } finally {
@@ -34,6 +50,21 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
     fetchSettings()
   }, [api])
 
+  // Check geolocation permission on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((result) => {
+        hasCheckedPermission.current = true
+        if (result.state === 'granted') {
+          setIsSharingEnabled(locationSettings?.location_sharing_enabled ?? false)
+        } else {
+          setIsSharingEnabled(false)
+        }
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Main interval for POST and GET
   useEffect(() => {
     if (!isSharingEnabled || !user) {
@@ -41,17 +72,14 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
       return
     }
     intervalRef.current = setInterval(() => {
-      // 1. Get current position
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
-            // 2. POST: update user location
             await api.updateUserLocation(
               rideId,
               position.coords.latitude,
               position.coords.longitude
             )
-            // 3. GET: fetch all latest locations
             const latestLocations = await api.getLatestLocations(rideId)
             setLocations(Array.isArray(latestLocations) ? latestLocations : [])
           } catch (err) {
@@ -63,7 +91,6 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
         }
       )
     }, 5000)
-    // Cleanup
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }

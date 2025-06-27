@@ -18,6 +18,21 @@ const mapContainerStyle = {
   height: '600px',
 }
 
+function getUserInitial(user: any) {
+  if (!user) return 'M';
+  return user.firstName?.[0]?.toUpperCase() || user.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() || 'M';
+}
+
+function getMarkerIcon(initial: string, color: string) {
+  const svg = `
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="24" cy="24" r="20" fill="${color}" />
+      <text x="24" y="30" text-anchor="middle" font-size="20" font-family="Arial" fill="white" font-weight="bold">${initial}</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 export function LiveMap({ rideId }: LiveMapProps) {
   const { user, isLoaded } = useUser()
   const {
@@ -144,7 +159,8 @@ export function LiveMap({ rideId }: LiveMapProps) {
                   key={loc.id}
                   position={{ lat: loc.latitude, lng: loc.longitude }}
                   onClick={() => setSelectedMarker(loc.id)}
-                  label={loc.user_id === user?.id ? 'You' : `${idx + 1}`}
+                  label={getUserInitial(loc.user_id === user?.id ? user : null)}
+                  icon={getMarkerIcon(getUserInitial(loc.user_id === user?.id ? user : null), loc.user_id === user?.id ? '#ec4899' : '#2B5335')}
                 >
                   {selectedMarker === loc.id && (
                     <InfoWindow onCloseClick={() => setSelectedMarker(null)}>
@@ -182,7 +198,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-[#2B5335] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      {location.user_id === user?.id ? 'You' : 'M'}
+                      {getUserInitial(location.user_id === user?.id ? user : null)}
                     </div>
                     <div>
                       <p className="font-medium">
