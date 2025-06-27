@@ -750,7 +750,152 @@ export const useApi = () => {
           console.error('JSON Parse Error:', error, 'Response:', text)
           return null
         }
-      }
+      },
+
+      // Location tracking methods
+      async updateUserLocation(rideId: string, latitude: number, longitude: number, timestamp?: string) {
+        const headers = await getHeaders()
+        const body = {
+          latitude,
+          longitude,
+          ...(timestamp && { timestamp })
+        }
+
+        const response = await fetch(`${API_URL}/api/location/update/${rideId}`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(body)
+        })
+
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('Update location error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: text
+          })
+          throw new Error(text || 'Failed to update location')
+        }
+      },
+
+      async getLatestLocations(rideId: string) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/api/location/latest/${rideId}`, {
+          method: 'GET',
+          headers
+        })
+
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('Get latest locations error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: text
+          })
+          throw new Error(text || 'Failed to get latest locations')
+        }
+
+        const data = await response.json()
+        console.log('Latest locations response:', data)
+        
+        // Handle different response formats
+        if (Array.isArray(data)) {
+          return data
+        } else if (data && Array.isArray(data.locations)) {
+          return data.locations
+        } else if (data && data.count === 0) {
+          // Backend returned empty result
+          return []
+        } else {
+          console.warn('Unexpected response format for latest locations:', data)
+          return []
+        }
+      },
+
+      async getUserLatestLocation(userId: string, rideId: string) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/api/location/latest/${userId}/${rideId}`, {
+          method: 'GET',
+          headers
+        })
+
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('Get user latest location error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: text
+          })
+          throw new Error(text || 'Failed to get user latest location')
+        }
+
+        return response.json()
+      },
+
+      async getLocationHistory(userId: string, rideId: string, limit: number = 100) {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/api/location/history/${userId}/${rideId}?limit=${limit}`, {
+          method: 'GET',
+          headers
+        })
+
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('Get location history error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: text
+          })
+          throw new Error(text || 'Failed to get location history')
+        }
+
+        return response.json()
+      },
+
+      async updateLocationSettings(locationSharingEnabled: boolean, homeLatitude?: number, homeLongitude?: number) {
+        const headers = await getHeaders()
+        const body = {
+          location_sharing_enabled: locationSharingEnabled,
+          ...(homeLatitude !== undefined && { home_latitude: homeLatitude }),
+          ...(homeLongitude !== undefined && { home_longitude: homeLongitude })
+        }
+
+        const response = await fetch(`${API_URL}/api/location/settings`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(body)
+        })
+
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('Update location settings error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: text
+          })
+          throw new Error(text || 'Failed to update location settings')
+        }
+      },
+
+      async getLocationSettings() {
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/api/location/settings`, {
+          method: 'GET',
+          headers
+        })
+
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('Get location settings error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: text
+          })
+          throw new Error(text || 'Failed to get location settings')
+        }
+
+        return response.json()
+      },
     }
   }, [])
 }

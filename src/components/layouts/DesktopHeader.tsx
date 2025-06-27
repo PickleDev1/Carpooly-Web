@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { SignInButton, useUser, useClerk } from "@clerk/nextjs"
 import { useState } from 'react'
+import { MapPin } from 'lucide-react'
 
 export function DesktopHeader() {
   const { isSignedIn, user } = useUser()
@@ -43,6 +44,14 @@ export function DesktopHeader() {
                 </button>
                 {showDropdown && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                    <Link
+                      href="/location-settings"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <MapPin className="h-4 w-4" />
+                      Location Settings
+                    </Link>
                     <button
                       onClick={() => signOut()}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

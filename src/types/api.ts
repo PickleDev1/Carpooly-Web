@@ -50,3 +50,31 @@ export interface ActiveRide {
   created_at: string;
   updated_at: string;
 }
+
+export interface LocationData {
+  id: string
+  user_id: string
+  carpool_ride_id: string
+  latitude: number
+  longitude: number
+  timestamp: string
+  created_at: string
+}
+
+export interface LocationSettings {
+  location_sharing_enabled: boolean
+  home_latitude?: number
+  home_longitude?: number
+}
+
+export interface LocationUpdateRequest {
+  latitude: number
+  longitude: number
+  timestamp?: string
+}
+
+export interface LocationSettingsUpdateRequest {
+  location_sharing_enabled: boolean
+  home_latitude?: number
+  home_longitude?: number
+}

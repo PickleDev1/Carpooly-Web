@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useUser, useClerk } from "@clerk/nextjs"
-import { Home, Car, BarChart2, User } from 'lucide-react'
+import { Home, Car, BarChart2, User, MapPin } from 'lucide-react'
 import { useState } from 'react'
 
 export function MobileNavigation() {
@@ -25,13 +25,18 @@ export function MobileNavigation() {
       href: '/analytics', 
       label: 'Analytics',
       icon: <BarChart2 className="w-6 h-6" />
+    },
+    { 
+      href: '/location-settings', 
+      label: 'Location',
+      icon: <MapPin className="w-6 h-6" />
     }
   ]
 
   return (
     <>
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-top border-t border-gray-200">
-        <div className="grid grid-cols-4 h-16">
+        <div className="grid grid-cols-5 h-16">
           {links.map(link => (
             <Link 
               key={link.href}

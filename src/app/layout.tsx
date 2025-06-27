@@ -1,6 +1,7 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import 'leaflet/dist/leaflet.css'
 import { UserProvider } from '@/contexts/UserContext'
 import { Metadata, Viewport } from 'next'
 import { MainLayout } from '@/components/layouts/MainLayout'

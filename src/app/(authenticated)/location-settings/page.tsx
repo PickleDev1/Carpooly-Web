@@ -1,25 +1,21 @@
 'use client'
 
-import { LiveMap } from '@/components/LiveMap'
+import { LocationSettings } from '@/components/LocationSettings'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
 
-export default function RideMapPage() {
-  const params = useParams()
-  const rideId = params.id as string
-
+export default function LocationSettingsPage() {
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/maps"
+          href="/dashboard"
           className="flex items-center gap-2 text-[#2B5335] hover:text-[#1a3a24] transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
-          Back to Maps
+          Back to Dashboard
         </Link>
       </div>
 
@@ -27,16 +23,16 @@ export default function RideMapPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-[#2B5335]">
-            Live Location Tracking
+            Location Settings
           </CardTitle>
           <p className="text-gray-600">
-            Real-time location sharing for carpool members
+            Manage your location sharing preferences and privacy settings
           </p>
         </CardHeader>
       </Card>
 
-      {/* Live Map Component */}
-      <LiveMap rideId={rideId} />
+      {/* Location Settings Component */}
+      <LocationSettings />
     </div>
   )
 } 
