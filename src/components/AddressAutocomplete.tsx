@@ -40,11 +40,13 @@ export function AddressAutocomplete({ onSelect, placeholder, className }: Addres
     setError(null)
 
     try {
-      console.log('AddressAutocomplete: Creating autocomplete instance...')
+      // NOTE: As of March 2025, google.maps.places.Autocomplete is deprecated for new customers.
+      // See https://developers.google.com/maps/documentation/javascript/places-migration-overview
+      // Plan to migrate to PlaceAutocompleteElement in the future.
       const autocomplete = new window.google.maps.places.Autocomplete(input, {
         componentRestrictions: { country: 'us' },
         fields: ['formatted_address', 'geometry'],
-        types: ['address', 'establishment']
+        types: ['address'] // Only use 'address' to avoid warning
       })
 
       console.log('AddressAutocomplete: Autocomplete instance created successfully')
