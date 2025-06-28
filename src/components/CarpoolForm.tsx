@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { AddressAutocomplete } from "@/components/AddressAutocomplete"
 import "react-day-picker/dist/style.css"
 import { addDays, addMonths, format } from 'date-fns'
 
@@ -21,15 +22,25 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
 
   // Carpool fields
   const [carpoolName, setCarpoolName] = useState('')
-  const [seats, setSeats] = useState('')
+  const [seats, setSeats] = useState('2')
   const [destinationAddress, setDestinationAddress] = useState('')
+  const [destinationLat, setDestinationLat] = useState<number | null>(null)
+  const [destinationLng, setDestinationLng] = useState<number | null>(null)
 
   // Schedule fields
   const [scheduleType, setScheduleType] = useState('one_time')
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
   const [startTime, setStartTime] = useState('09:00')
+  const [endTime, setEndTime] = useState('18:00')
+  const [selectedDays, setSelectedDays] = useState<Date[]>([])
   const [dayOfWeek, setDayOfWeek] = useState<string>('MONDAY')
+
+  const handleDestinationSelect = (location: { address: string; lat: number; lng: number }) => {
+    setDestinationAddress(location.address)
+    setDestinationLat(location.lat)
+    setDestinationLng(location.lng)
+  }
 
   const createRidesForSchedule = async (carpoolId: string, scheduleData: any) => {
     console.log('Starting ride creation process with data:', {
@@ -108,6 +119,8 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
         carpool_name: carpoolName,
         seats: parseInt(seats),
         destination_address: destinationAddress,
+        destination_lat: destinationLat,
+        destination_lng: destinationLng,
         created_by: userId
       }
 
@@ -122,6 +135,7 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
         startDate,
         endDate: scheduleType !== 'one_time' ? endDate : undefined,
         startTime,
+        endTime,
         dayOfWeek: scheduleType === 'weekly' ? dayOfWeek : undefined
       }
 
@@ -172,11 +186,9 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
 
         <div>
           <Label htmlFor="destinationAddress">Destination Address</Label>
-          <Input
-            id="destinationAddress"
-            value={destinationAddress}
-            onChange={(e) => setDestinationAddress(e.target.value)}
-            required
+          <AddressAutocomplete
+            onSelect={handleDestinationSelect}
+            placeholder="Enter destination address"
           />
         </div>
       </div>

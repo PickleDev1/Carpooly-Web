@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { Loader2 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -24,24 +25,23 @@ export default function OnboardingPage() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
 
-  const geocodeAddress = async (address: string) => {
-    // Use OpenStreetMap Nominatim API
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data && data.length > 0) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-    }
-    throw new Error("Address not found. Please enter a valid address.");
+  const handleAddressSelect = (locationData: { address: string; lat: number; lng: number }) => {
+    setAddress(locationData.address);
+    setLocation({ lat: locationData.lat, lng: locationData.lng });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    
+    if (!location) {
+      setError("Please select a valid address from the suggestions");
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const coords = await geocodeAddress(address);
-      setLocation(coords);
       const token = await getToken();
       console.log("Clerk token:", token);
       
@@ -53,8 +53,8 @@ export default function OnboardingPage() {
           "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
-          home_latitude: coords.lat,
-          home_longitude: coords.lng,
+          home_latitude: location.lat,
+          home_longitude: location.lng,
           location_sharing_enabled: locationSharing,
         }),
       });
@@ -98,14 +98,9 @@ export default function OnboardingPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="address">Start Address</Label>
-              <Input
-                id="address"
-                type="text"
+              <AddressAutocomplete
+                onSelect={handleAddressSelect}
                 placeholder="123 Main St, City, State, ZIP"
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-                required
-                autoComplete="address-line1"
               />
             </div>
             <div className="flex items-center justify-between space-x-2">
@@ -121,7 +116,7 @@ export default function OnboardingPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={!address || loading}
+              disabled={!address || !location || loading}
             >
               {loading ? (
                 <>

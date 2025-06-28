@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { AddressAutocomplete } from "@/components/AddressAutocomplete"
 import { Settings, MapPin, Shield, Info } from 'lucide-react'
 import { LocationSettings as LocationSettingsType } from '@/types/api'
 
@@ -18,6 +19,7 @@ export function LocationSettings() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   
+  const [homeAddress, setHomeAddress] = useState<string>('')
   const [homeLatitude, setHomeLatitude] = useState<string>('')
   const [homeLongitude, setHomeLongitude] = useState<string>('')
   const [locationSharingEnabled, setLocationSharingEnabled] = useState(false)
@@ -47,6 +49,12 @@ export function LocationSettings() {
 
     fetchSettings()
   }, [api, isLoaded, user])
+
+  const handleAddressSelect = (locationData: { address: string; lat: number; lng: number }) => {
+    setHomeAddress(locationData.address)
+    setHomeLatitude(locationData.lat.toString())
+    setHomeLongitude(locationData.lng.toString())
+  }
 
   // Show loading if user is not loaded yet
   if (!isLoaded) {
@@ -188,28 +196,38 @@ export function LocationSettings() {
             Set your home location for better carpool matching and route planning.
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="latitude">Latitude</Label>
-              <Input
-                id="latitude"
-                type="number"
-                step="any"
-                placeholder="e.g., 37.7749"
-                value={homeLatitude}
-                onChange={(e) => setHomeLatitude(e.target.value)}
+              <Label htmlFor="address">Address</Label>
+              <AddressAutocomplete
+                onSelect={handleAddressSelect}
+                placeholder="Enter your home address"
               />
             </div>
-            <div>
-              <Label htmlFor="longitude">Longitude</Label>
-              <Input
-                id="longitude"
-                type="number"
-                step="any"
-                placeholder="e.g., -122.4194"
-                value={homeLongitude}
-                onChange={(e) => setHomeLongitude(e.target.value)}
-              />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="latitude">Latitude</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="any"
+                  placeholder="e.g., 37.7749"
+                  value={homeLatitude}
+                  onChange={(e) => setHomeLatitude(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="longitude">Longitude</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="any"
+                  placeholder="e.g., -122.4194"
+                  value={homeLongitude}
+                  onChange={(e) => setHomeLongitude(e.target.value)}
+                />
+              </div>
             </div>
           </div>
 
