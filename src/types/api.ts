@@ -12,6 +12,8 @@ export interface Carpool {
   recurring_option: string;
   available_seats: number;
   destination_address: string;
+  destination_lat?: number;
+  destination_lng?: number;
   seats: number;
   created_by?: string;
   created_at?: string;

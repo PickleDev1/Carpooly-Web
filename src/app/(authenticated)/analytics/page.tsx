@@ -6,9 +6,27 @@ import { useApi } from '@/services/api'
 import { useCarpools } from '@/hooks/useCarpools'
 import { useUser } from '@clerk/nextjs'
 
+// Haversine formula to calculate distance in miles between two lat/lng points
+function haversineMiles(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const toRad = (x: number) => (x * Math.PI) / 180
+  const R = 3958.8 // Radius of Earth in miles
+  const dLat = toRad(lat2 - lat1)
+  const dLon = toRad(lon2 - lon1)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [totalUserRides, setTotalUserRides] = useState(0)
+  const [homeLat, setHomeLat] = useState<number | null>(null)
+  const [homeLng, setHomeLng] = useState<number | null>(null)
+  const [milesSaved, setMilesSaved] = useState<number | null>(null)
+  const [membersLoading, setMembersLoading] = useState(true)
   const api = useApi()
   const { carpools } = useCarpools()
   const { user } = useUser()
@@ -20,17 +38,57 @@ export default function AnalyticsPage() {
           const userRides = await api.getUserTotalRides(user.id)
           setTotalUserRides(userRides)
         }
+        // Fetch home location
+        const locationSettings = await api.getLocationSettings()
+        setHomeLat(locationSettings.home_latitude ?? null)
+        setHomeLng(locationSettings.home_longitude ?? null)
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
         setLoading(false)
       }
     }
-
     fetchData()
   }, [user?.id])
 
-  if (loading) {
+  useEffect(() => {
+    // Calculate miles saved once we have home location and carpools
+    async function calculateMilesSaved() {
+      if (homeLat && homeLng && carpools && carpools.length > 0) {
+        setMembersLoading(true)
+        let totalMiles = 0
+        for (const carpool of carpools) {
+          if (
+            typeof carpool.destination_lat === 'number' &&
+            typeof carpool.destination_lng === 'number' &&
+            carpool.id
+          ) {
+            try {
+              const members = await api.getCarpoolMembers(carpool.id)
+              const numParticipants = Array.isArray(members) ? members.length : 1
+              if (numParticipants > 1) {
+                const miles = haversineMiles(
+                  homeLat,
+                  homeLng,
+                  carpool.destination_lat,
+                  carpool.destination_lng
+                )
+                // Miles saved = (participants - 1) * distance
+                totalMiles += (numParticipants - 1) * miles
+              }
+            } catch (err) {
+              console.error('Error fetching carpool members:', err)
+            }
+          }
+        }
+        setMilesSaved(Math.round(totalMiles))
+        setMembersLoading(false)
+      }
+    }
+    calculateMilesSaved()
+  }, [homeLat, homeLng, carpools, api])
+
+  if (loading || membersLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2B5335]"></div>
@@ -40,15 +98,11 @@ export default function AnalyticsPage() {
 
   const myCarpoolsCount = carpools?.length || 0
   
-  // Calculate environmental impact based on rides
-  // Assume each ride saves 2.5 kg of CO2
-  const co2Saved = totalUserRides * 2.5 // in kg
-  
-  // Calculate leaves (1 leaf absorbs ~0.05 kg CO2/year)
-  const leavesCount = Math.round(co2Saved / 0.05)
-  
-  // Calculate trees (1 tree absorbs ~22 kg CO2/year)
-  const treesCount = Math.round(co2Saved / 22)
+  // Environmental impact calculations based on research
+  // 1 leaf = 0.5 miles saved (based on average CO2 absorption of a leaf)
+  // 1 tree = 100 leaves = 50 miles saved
+  const leavesSaved = milesSaved !== null ? Math.round(milesSaved / 0.5) : 0
+  const treesSaved = Math.round(leavesSaved / 100)
 
   const metrics = [
     { 
@@ -69,7 +123,7 @@ export default function AnalyticsPage() {
     },
     { 
       title: 'Miles Saved', 
-      value: 'Coming Soon', 
+      value: milesSaved !== null ? milesSaved : 'N/A', 
       icon: Route, 
       color: 'bg-[#E8EDDF]', 
       textColor: 'text-[#2B5335]', 
@@ -77,7 +131,7 @@ export default function AnalyticsPage() {
     },
     { 
       title: 'Leaves Saved', 
-      value: 'Coming Soon', 
+      value: leavesSaved, 
       icon: Leaf, 
       color: 'bg-green-50', 
       textColor: 'text-green-700', 
@@ -85,7 +139,7 @@ export default function AnalyticsPage() {
     },
     { 
       title: 'Trees Equivalent', 
-      value: 'Coming Soon', 
+      value: treesSaved, 
       icon: Trees, 
       color: 'bg-emerald-50', 
       textColor: 'text-emerald-700', 
