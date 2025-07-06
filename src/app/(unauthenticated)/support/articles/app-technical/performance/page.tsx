@@ -13,7 +13,7 @@ export default function PerformanceArticle() {
         <Smartphone className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Performance</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">Want CarPooly to run faster and smoother? Here's how to optimize performance in your web browser.</p>
+      <p className="text-lg text-gray-700 mb-8">Want CarPooly to run faster and smoother? Here&apos;s how to optimize performance in your web browser.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">Tips for Better Performance</h2>
@@ -43,7 +43,7 @@ export default function PerformanceArticle() {
       <div className="flex items-start gap-3 bg-green-50 border-l-4 border-green-400 rounded-lg p-4 mb-6">
         <CheckCircle className="w-5 h-5 text-green-500 mt-1" />
         <div>
-          <span className="font-semibold">Support:</span> We're here to help with any performance issues.
+          <span className="font-semibold">Support:</span> We&apos;re here to help with any performance issues.
         </div>
       </div>
     </div>

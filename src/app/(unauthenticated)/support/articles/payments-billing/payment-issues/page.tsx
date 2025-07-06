@@ -13,7 +13,7 @@ export default function PaymentIssuesArticle() {
         <CreditCard className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Payment Issues</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">Having trouble with payments? Here's how to resolve common payment issues in CarPooly.</p>
+      <p className="text-lg text-gray-700 mb-8">Having trouble with payments? Here&apos;s how to resolve common payment issues in CarPooly.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Fix Payment Issues</h2>

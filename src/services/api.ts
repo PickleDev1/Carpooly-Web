@@ -907,5 +907,5 @@ export const useApi = () => {
         return response.json();
       },
     }
-  }, [])
+  }, [getToken])
 }

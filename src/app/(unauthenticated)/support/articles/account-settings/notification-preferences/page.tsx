@@ -13,7 +13,7 @@ export default function NotificationPreferencesArticle() {
         <Bell className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Notification Preferences</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">Stay informed your way! Here's how to customize your CarPooly notifications for rides, messages, and more.</p>
+      <p className="text-lg text-gray-700 mb-8">Stay informed your way! Here&apos;s how to customize your CarPooly notifications for rides, messages, and more.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Set Notification Preferences</h2>

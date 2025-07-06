@@ -1,4 +1,5 @@
 import * as React from "react"
+import Image from "next/image"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
@@ -143,10 +144,11 @@ const CardImage = React.forwardRef<
     className={cn("relative overflow-hidden rounded-t-xl", className)}
     {...props}
   >
-    <img
+    <Image
       src={src}
       alt={alt}
       className="w-full h-full object-cover"
+      fill
     />
   </div>
 ))

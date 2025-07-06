@@ -13,7 +13,7 @@ export default function UpdateIssuesArticle() {
         <Smartphone className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Update Issues</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">Having trouble seeing the latest features or updates on CarPooly? Here's how to resolve update issues in your browser.</p>
+      <p className="text-lg text-gray-700 mb-8">Having trouble seeing the latest features or updates on CarPooly? Here&apos;s how to resolve update issues in your browser.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Fix Update Issues</h2>

@@ -13,7 +13,7 @@ export default function DataManagementArticle() {
         <Database className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Data Management</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">You're in control of your data on CarPooly. Here's how to view, download, or delete your information.</p>
+      <p className="text-lg text-gray-700 mb-8">You&apos;re in control of your data on CarPooly. Here&apos;s how to view, download, or delete your information.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Manage Your Data</h2>

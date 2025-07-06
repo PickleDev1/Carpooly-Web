@@ -13,7 +13,7 @@ export default function ReportingIssuesArticle() {
         <Users className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Reporting Issues</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">If you experience a problem or need help, CarPooly makes it easy to get support. Here's how to report issues and get help quickly.</p>
+      <p className="text-lg text-gray-700 mb-8">If you experience a problem or need help, CarPooly makes it easy to get support. Here&apos;s how to report issues and get help quickly.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Report an Issue</h2>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useApi } from '@/services/api';
 
 export interface Activity {
@@ -19,7 +19,7 @@ export function useRecentActivity(limit = 20) {
   const api = useApi();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchActivity = async () => {
+  const fetchActivity = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -30,7 +30,7 @@ export function useRecentActivity(limit = 20) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [api, limit]);
 
   useEffect(() => {
     fetchActivity();
@@ -38,7 +38,7 @@ export function useRecentActivity(limit = 20) {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [limit, api]);
+  }, [fetchActivity]);
 
   return { activity, isLoading, error, refresh: fetchActivity };
 } 

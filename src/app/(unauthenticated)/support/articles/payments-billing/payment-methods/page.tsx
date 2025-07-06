@@ -13,7 +13,7 @@ export default function PaymentMethodsArticle() {
         <CreditCard className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Payment Methods</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">CarPooly supports multiple payment methods for your convenience. Here's how to add, update, or remove payment options.</p>
+      <p className="text-lg text-gray-700 mb-8">CarPooly supports multiple payment methods for your convenience. Here&apos;s how to add, update, or remove payment options.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Manage Payment Methods</h2>

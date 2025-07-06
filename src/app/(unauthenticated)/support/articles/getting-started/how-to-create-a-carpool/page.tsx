@@ -7,13 +7,13 @@ export default function HowToCreateCarpool() {
       <div className="prose prose-lg">
         <ol>
           <li><strong>Go to the Dashboard:</strong> Log in to your CarPooly account and navigate to your dashboard.</li>
-          <li><strong>Click "Create Carpool":</strong> Find and click the <b>Create Carpool</b> button, usually at the top or in the main navigation.</li>
+          <li><strong>Click &quot;Create Carpool&quot;:</strong> Find and click the <b>Create Carpool</b> button, usually at the top or in the main navigation.</li>
           <li><strong>Enter Your Details:</strong>
             <ul>
               <li><b>Start Location:</b> Enter your pickup address (use the address autocomplete for accuracy).</li>
               <li><b>Destination:</b> Enter your drop-off address.</li>
               <li><b>Date & Time:</b> Select when you want the carpool to start.</li>
-              <li><b>Seats Needed:</b> Specify how many seats you're offering or need.</li>
+              <li><b>Seats Needed:</b> Specify how many seats you&apos;re offering or need.</li>
               <li><b>Additional Info:</b> Add notes for riders (e.g., music preference, luggage space, etc.).</li>
             </ul>
           </li>

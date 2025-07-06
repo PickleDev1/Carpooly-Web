@@ -13,7 +13,7 @@ export default function AddressIssuesArticle() {
         <MapPin className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Address Issues</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">Having trouble with addresses in CarPooly? Here's how to fix common issues and ensure accurate pickup and drop-off locations.</p>
+      <p className="text-lg text-gray-700 mb-8">Having trouble with addresses in CarPooly? Here&apos;s how to fix common issues and ensure accurate pickup and drop-off locations.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Fix Address Issues</h2>
@@ -22,13 +22,13 @@ export default function AddressIssuesArticle() {
             <span className="font-semibold">Use autocomplete:</span> Always select addresses from the suggestions to avoid typos.
           </li>
           <li>
-            <span className="font-semibold">Check your location permissions:</span> Make sure CarPooly can access your device's location.
+            <span className="font-semibold">Check your location permissions:</span> Make sure CarPooly can access your device&apos;s location.
           </li>
           <li>
             <span className="font-semibold">Enter full addresses:</span> Include street, city, and zip code for best results.
           </li>
           <li>
-            <span className="font-semibold">Update the app:</span> Make sure you're using the latest version of CarPooly for the best address support.
+            <span className="font-semibold">Update the app:</span> Make sure you&apos;re using the latest version of CarPooly for the best address support.
           </li>
         </ol>
       </div>
@@ -36,7 +36,7 @@ export default function AddressIssuesArticle() {
       <div className="flex items-start gap-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-6">
         <AlertTriangle className="w-5 h-5 text-yellow-500 mt-1" />
         <div>
-          <span className="font-semibold">Trouble?</span> If an address isn't recognized, try a nearby landmark or check for spelling errors.
+          <span className="font-semibold">Trouble?</span> If an address isn&apos;t recognized, try a nearby landmark or check for spelling errors.
         </div>
       </div>
 
@@ -50,7 +50,7 @@ export default function AddressIssuesArticle() {
       <div className="flex items-start gap-3 bg-green-50 border-l-4 border-green-400 rounded-lg p-4 mb-6">
         <CheckCircle className="w-5 h-5 text-green-500 mt-1" />
         <div>
-          <span className="font-semibold">Support:</span> If you're still having trouble, contact support for help with address issues.
+          <span className="font-semibold">Support:</span> If you&apos;re still having trouble, contact support for help with address issues.
         </div>
       </div>
     </div>

@@ -59,9 +59,9 @@ export default function SafetyPage() {
     {
       category: "During Your Carpool",
       tips: [
-        "Be punctual and communicate if you're running late.",
+        "Be punctual and communicate if you&apos;re running late.",
         "Wear seatbelts and encourage others to do the same.",
-        "Respect each other's preferences for music, conversation, and temperature.",
+        "Respect each other&apos;s preferences for music, conversation, and temperature.",
         "Drive safely and follow all traffic laws."
       ]
     },
@@ -130,7 +130,7 @@ export default function SafetyPage() {
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-            We've built comprehensive safety features into every aspect of CarPooly to ensure you have a secure and comfortable carpooling experience.
+            We&apos;ve built comprehensive safety features into every aspect of CarPooly to ensure you have a secure and comfortable carpooling experience.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -230,7 +230,7 @@ export default function SafetyPage() {
             Building Trust in Our Community
           </h2>
           <p className="text-xl text-gray-600">
-            We're committed to creating a safe, trustworthy carpooling community.
+            We&apos;re committed to creating a safe, trustworthy carpooling community.
           </p>
         </div>
 

@@ -13,7 +13,7 @@ export default function RealTimeTrackingArticle() {
         <Eye className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Real-time Tracking</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">Stay updated on your carpool's location and progress with CarPooly's real-time tracking. Here's how to use this feature for peace of mind.</p>
+      <p className="text-lg text-gray-700 mb-8">Stay updated on your carpool&apos;s location and progress with CarPooly&apos;s real-time tracking. Here&apos;s how to use this feature for peace of mind.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Use Real-time Tracking</h2>
@@ -25,7 +25,7 @@ export default function RealTimeTrackingArticle() {
             <span className="font-semibold">Open the ride details</span> and look for the <b>Live Map</b> or <b>Track Ride</b> button.
           </li>
           <li>
-            <span className="font-semibold">View the live map</span> to see the car's current location, route, and estimated arrival time.
+            <span className="font-semibold">View the live map</span> to see the car&apos;s current location, route, and estimated arrival time.
           </li>
           <li>
             <span className="font-semibold">Share your trip</span> with friends or family for added safety.

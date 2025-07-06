@@ -13,7 +13,7 @@ export default function UserVerificationArticle() {
         <Shield className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">User Verification</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">CarPooly verifies users to keep the community safe and trustworthy. Here's how to complete your verification and why it matters.</p>
+      <p className="text-lg text-gray-700 mb-8">CarPooly verifies users to keep the community safe and trustworthy. Here&apos;s how to complete your verification and why it matters.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Verify Your Account</h2>
@@ -28,7 +28,7 @@ export default function UserVerificationArticle() {
             <span className="font-semibold">Follow the prompts</span> to verify your email and phone number.
           </li>
           <li>
-            <span className="font-semibold">Wait for confirmation</span>—you'll get a notification when your account is verified.
+            <span className="font-semibold">Wait for confirmation</span>—you&apos;ll get a notification when your account is verified.
           </li>
         </ol>
       </div>

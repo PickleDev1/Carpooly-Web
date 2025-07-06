@@ -1,8 +1,8 @@
 'use client'
 
-import { SignUpButton, useAuth } from "@clerk/nextjs"
+import { SignUpButton, useAuth } from "@clerk/nextjs";
 import Link from 'next/link'
-import Image from "next/image"
+import Image from "next/image";
 import { 
   Car, 
   Users, 
@@ -16,7 +16,7 @@ import {
   CheckCircle,
   Calendar,
   Route
-} from "lucide-react"
+} from "lucide-react";
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
@@ -73,7 +73,7 @@ export default function HomePage() {
     {
       name: "Mike Chen",
       role: "Daily Commuter",
-      content: "I've been using CarPooly for 6 months and it's made my commute so much more enjoyable and affordable.",
+      content: "I've been using CarPooly for 6 months and it&apos;s made my commute so much more enjoyable and affordable.",
       rating: 5
     },
     {
@@ -266,7 +266,7 @@ export default function HomePage() {
                   <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
                 ))}
               </div>
-              <p className="text-gray-700 mb-6 italic">"{testimonial.content}"</p>
+              <p className="text-gray-700 mb-6 italic">&quot;{testimonial.content}&quot;</p>
               <div>
                 <div className="font-semibold text-gray-900">{testimonial.name}</div>
                 <div className="text-sm text-gray-600">{testimonial.role}</div>

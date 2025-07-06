@@ -13,7 +13,7 @@ export default function AppTroubleshootingArticle() {
         <Smartphone className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Website Troubleshooting</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">If CarPooly isn't working as expected in your browser, try these troubleshooting steps to quickly resolve common issues.</p>
+      <p className="text-lg text-gray-700 mb-8">If CarPooly isn&apos;t working as expected in your browser, try these troubleshooting steps to quickly resolve common issues.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">Quick Fixes</h2>

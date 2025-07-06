@@ -13,7 +13,7 @@ export default function AccountSettingsArticle() {
         <Settings className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Account Settings</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">Manage your CarPooly account details, preferences, and security settings all in one place. Here's how to update your account settings.</p>
+      <p className="text-lg text-gray-700 mb-8">Manage your CarPooly account details, preferences, and security settings all in one place. Here&apos;s how to update your account settings.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Update Account Settings</h2>

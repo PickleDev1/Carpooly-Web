@@ -13,7 +13,7 @@ export default function RouteOptimizationArticle() {
         <MapPin className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Route Optimization</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">CarPooly helps you find the fastest and most efficient routes for your carpool. Here's how to use route optimization features for a smoother ride.</p>
+      <p className="text-lg text-gray-700 mb-8">CarPooly helps you find the fastest and most efficient routes for your carpool. Here&apos;s how to use route optimization features for a smoother ride.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Optimize Your Route</h2>

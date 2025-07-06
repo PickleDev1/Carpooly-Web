@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { SignInButton, useUser, useClerk } from "@clerk/nextjs"
 import { useState, useEffect, useRef } from 'react'
 import { 
@@ -74,10 +75,12 @@ export function DesktopHeader() {
             className="flex items-center gap-3 group"
           >
             <div className="relative">
-              <img 
+              <Image 
                 src="/assets/logo/carpooly-logo.jpg" 
                 alt="CarPooly" 
                 className="h-8 w-8 rounded-lg shadow-sm group-hover:shadow-md transition-shadow" 
+                width={32}
+                height={32}
               />
             </div>
             <span className={`font-bold text-xl transition-colors ${

@@ -7,7 +7,7 @@ export default function TermsPage() {
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-4">Terms of Service</h1>
       <p className="mb-8 text-gray-700 text-lg">
-        Welcome to CarPooly! These Terms of Service ("Terms") govern your use of the CarPooly website and services. By accessing or using CarPooly, you agree to these Terms. Please read them carefully.
+        Welcome to CarPooly! These Terms of Service (&quot;Terms&quot;) govern your use of the CarPooly website and services. By accessing or using CarPooly, you agree to these Terms. Please read them carefully.
       </p>
 
       {/* Table of Contents */}
@@ -89,7 +89,7 @@ export default function TermsPage() {
         <section id="disclaimers">
           <h2 className="text-2xl font-semibold mb-2"><span className="font-bold text-primary">7.</span> Disclaimers</h2>
           <div className="border-b border-gray-200 mb-4" />
-          <p className="text-gray-700 text-base">CarPooly is provided "as is" without warranties of any kind. We do not guarantee the accuracy, reliability, or availability of the service. Use CarPooly at your own risk.</p>
+          <p className="text-gray-700 text-base">CarPooly is provided &quot;as is&quot; without warranties of any kind. We do not guarantee the accuracy, reliability, or availability of the service. Use CarPooly at your own risk.</p>
         </section>
 
         {/* Section 8 */}

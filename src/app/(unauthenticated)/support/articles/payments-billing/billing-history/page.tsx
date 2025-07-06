@@ -13,7 +13,7 @@ export default function BillingHistoryArticle() {
         <FileText className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Billing History</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">View and manage your past payments and ride receipts in CarPooly. Here's how to access your billing history.</p>
+      <p className="text-lg text-gray-700 mb-8">View and manage your past payments and ride receipts in CarPooly. Here&apos;s how to access your billing history.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to View Billing History</h2>

@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   Mail, 
   Phone, 
@@ -46,10 +49,12 @@ export function DesktopFooter() {
           {/* Brand Section - Made wider */}
           <div className="md:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-3 mb-6">
-              <img 
+              <Image 
                 src="/assets/logo/carpooly-logo.jpg" 
                 alt="CarPooly" 
-                className="h-12 w-12 rounded-lg shadow-sm" 
+                width={48}
+                height={48}
+                className="rounded-lg shadow-sm" 
               />
               <div>
                 <span className="font-bold text-2xl">CarPooly</span>

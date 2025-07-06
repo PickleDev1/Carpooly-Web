@@ -149,7 +149,7 @@ export default function SupportPage() {
         <div className="text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
             <HelpCircle className="w-4 h-4" />
-            We're Here to Help
+            We&apos;re Here to Help
           </div>
           
           <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
@@ -160,7 +160,7 @@ export default function SupportPage() {
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-            Find answers to your questions, get help with any issues, or connect with our support team. We're here to make your carpooling experience smooth and enjoyable.
+            Find answers to your questions, get help with any issues, or connect with our support team. We&apos;re here to make your carpooling experience smooth and enjoyable.
           </p>
           
           {/* Search Bar */}

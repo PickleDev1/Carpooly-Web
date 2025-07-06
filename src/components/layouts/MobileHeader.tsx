@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useUser, useClerk } from "@clerk/nextjs"
 import { useState, useRef, useEffect } from 'react'
 import { 
@@ -81,10 +82,12 @@ export function MobileHeader() {
               className="flex items-center gap-2 group"
             >
               <div className="relative">
-                <img 
+                <Image 
                   src="/assets/logo/carpooly-logo.jpg" 
                   alt="CarPooly" 
                   className="h-7 w-7 rounded-lg shadow-sm group-hover:shadow-md transition-shadow" 
+                  width={28}
+                  height={28}
                 />
               </div>
               <span className={`font-bold text-lg transition-colors ${

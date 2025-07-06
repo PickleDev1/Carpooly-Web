@@ -13,7 +13,7 @@ export default function LocationPermissionsArticle() {
         <MapPin className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Location Permissions</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">Allowing CarPooly to access your location helps you find rides, set pickup points, and get real-time updates. Here's how to enable location permissions for the best experience.</p>
+      <p className="text-lg text-gray-700 mb-8">Allowing CarPooly to access your location helps you find rides, set pickup points, and get real-time updates. Here&apos;s how to enable location permissions for the best experience.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">Step-by-Step: Enable Location Permissions</h2>

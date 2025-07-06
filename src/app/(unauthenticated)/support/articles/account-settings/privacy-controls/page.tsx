@@ -13,7 +13,7 @@ export default function PrivacyControlsArticle() {
         <Shield className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Privacy Controls</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">Take control of your privacy on CarPooly. Here's how to manage who can see your information and how your data is used.</p>
+      <p className="text-lg text-gray-700 mb-8">Take control of your privacy on CarPooly. Here&apos;s how to manage who can see your information and how your data is used.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">How to Adjust Privacy Settings</h2>

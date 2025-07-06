@@ -10,8 +10,8 @@ export default function FirstRideTips() {
           <li><strong>Be On Time:</strong> Arrive at the pickup spot a few minutes early.</li>
           <li><strong>Bring Essentials:</strong> Have your phone, payment method, and any personal items you need.</li>
           <li><strong>Introduce Yourself:</strong> Greet your driver and fellow riders politely.</li>
-          <li><strong>Follow Safety Guidelines:</strong> Buckle up, follow the driver's instructions, and respect others' preferences.</li>
-          <li><strong>Communicate:</strong> Use the app's chat to update your driver if you're running late or need help.</li>
+          <li><strong>Follow Safety Guidelines:</strong> Buckle up, follow the driver&apos;s instructions, and respect others&apos; preferences.</li>
+          <li><strong>Communicate:</strong> Use the app&apos;s chat to update your driver if you&apos;re running late or need help.</li>
           <li><strong>Rate Your Experience:</strong> After the ride, leave a rating and feedback to help the community.</li>
         </ol>
         <h2>Extra Tips</h2>

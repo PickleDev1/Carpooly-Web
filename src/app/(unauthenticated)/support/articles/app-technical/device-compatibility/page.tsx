@@ -13,7 +13,7 @@ export default function DeviceCompatibilityArticle() {
         <Smartphone className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Browser Compatibility</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">CarPooly works on most modern web browsers. Here's how to check if your browser is supported and get the best experience.</p>
+      <p className="text-lg text-gray-700 mb-8">CarPooly works on most modern web browsers. Here&apos;s how to check if your browser is supported and get the best experience.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">Supported Browsers</h2>
@@ -42,7 +42,7 @@ export default function DeviceCompatibilityArticle() {
       <div className="flex items-start gap-3 bg-green-50 border-l-4 border-green-400 rounded-lg p-4 mb-6">
         <CheckCircle className="w-5 h-5 text-green-500 mt-1" />
         <div>
-          <span className="font-semibold">Support:</span> Contact us if you're unsure about browser compatibility.
+          <span className="font-semibold">Support:</span> Contact us if you&apos;re unsure about browser compatibility.
         </div>
       </div>
     </div>

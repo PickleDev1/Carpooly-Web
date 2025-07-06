@@ -280,7 +280,7 @@ export default function Dashboard() {
             Welcome back, {user?.firstName || 'there'}! 👋
           </h1>
           <p className="text-gray-600 mt-1">
-            Here's what's happening with your carpools today
+            Here&apos;s what&apos;s happening with your carpools today
           </p>
         </div>
         <div className="flex items-center gap-3">

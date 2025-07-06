@@ -13,7 +13,7 @@ export default function SafetyFeaturesArticle() {
         <Shield className="w-8 h-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Safety Features</h1>
       </div>
-      <p className="text-lg text-gray-700 mb-8">CarPooly is designed with your safety in mind. Here's an overview of the key safety features and how to use them.</p>
+      <p className="text-lg text-gray-700 mb-8">CarPooly is designed with your safety in mind. Here&apos;s an overview of the key safety features and how to use them.</p>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">Key Safety Features</h2>
