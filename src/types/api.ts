@@ -51,6 +51,9 @@ export interface ActiveRide {
   miles_saved: number;
   created_at: string;
   updated_at: string;
+  start_time: string;
+  destination_address?: string;
+  carpool_name?: string;
 }
 
 export interface LocationData {

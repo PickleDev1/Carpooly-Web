@@ -6,14 +6,22 @@ import { DesktopFooter } from '@/components/layouts/DesktopFooter'
 import { MobileNavigation } from '@/components/layouts/MobileNavigation'
 import { useUser } from "@clerk/nextjs"
 import { usePathname } from 'next/navigation'
+import { NetworkStatus } from '@/components/NetworkStatus'
+import { UpdatePrompt } from '@/components/UpdatePrompt'
+import { PWAPrompt } from '@/components/PWAPrompt'
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const { isSignedIn } = useUser()
   const pathname = usePathname()
   const isHomePage = pathname === '/'
+  const isAuthenticatedPage = pathname.startsWith('/(authenticated)')
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Network status indicator */}
+      <NetworkStatus />
+      
+      {/* Headers */}
       {isSignedIn ? (
         <>
           <DesktopHeader />
@@ -23,14 +31,27 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <DesktopHeader />
       )}
       
-      <main className="flex-1 pt-16 pb-16 md:pb-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {children}
-        </div>
+      {/* Main content */}
+      <main className={`flex-1 ${isHomePage ? '' : 'pt-16 pb-16 md:pb-0'}`}>
+        {isHomePage ? (
+          children
+        ) : (
+          <div className="container-responsive py-6">
+            {children}
+          </div>
+        )}
       </main>
 
-      {/* Only show footer on home page or desktop */}
-      {(isHomePage || !isSignedIn) ? (
+      {/* PWA and Update prompts */}
+      {isAuthenticatedPage && (
+        <>
+          <PWAPrompt />
+          <UpdatePrompt />
+        </>
+      )}
+
+      {/* Footer and Navigation */}
+      {isHomePage || !isSignedIn ? (
         <DesktopFooter />
       ) : (
         <>

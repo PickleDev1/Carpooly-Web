@@ -13,14 +13,23 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 
 export function InvitesTable() {
-  const { invites, isLoading, refresh } = useInvites()
+  const { invites, isLoading, isRefreshing, refresh } = useInvites()
   
   if (isLoading) {
     return <Card><CardContent className="py-4">Loading invites...</CardContent></Card>
   }
 
   if (!invites?.length) {
-    return <Card><CardContent className="py-4">No pending invites</CardContent></Card>
+    return (
+      <Card>
+        <CardContent className="py-4 flex items-center justify-center gap-2">
+          {isRefreshing && (
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          )}
+          No pending invites
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -30,7 +39,12 @@ export function InvitesTable() {
           <TableRow>
             <TableHead>Sender Email</TableHead>
             <TableHead>Carpool</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="flex items-center gap-2">
+              Actions
+              {isRefreshing && (
+                <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              )}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

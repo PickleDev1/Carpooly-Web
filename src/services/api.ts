@@ -4,7 +4,7 @@ import { mockService } from '@/mocks/mockService'
 import { useMemo } from 'react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
-const useMockApi = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true'
+const useMockApi = false // Use real backend endpoints
 
 export const useApi = () => {
   const { getToken } = useAuth()
@@ -486,7 +486,7 @@ export const useApi = () => {
         console.log('Making request with headers:', headers)
         console.log('Fetching active rides for userId:', userId)
         
-        const response = await fetch(`${API_URL}/api/users/${userId}/active-rides`, { 
+        const response = await fetch(`${API_URL}/api/active-ride/user_${userId}`, { 
           method: 'GET',
           headers 
         })
@@ -895,6 +895,16 @@ export const useApi = () => {
         }
 
         return response.json()
+      },
+
+      async getRecentActivity(limit = 20) {
+        const headers = await getHeaders();
+        const url = `${API_URL}/api/activity?limit=${limit}`;
+        const response = await fetch(url, { headers });
+        if (!response.ok) {
+          throw new Error('Failed to fetch recent activity');
+        }
+        return response.json();
       },
     }
   }, [])
