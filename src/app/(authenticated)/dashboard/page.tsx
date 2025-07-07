@@ -448,7 +448,14 @@ export default function Dashboard() {
           <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="text-lg sm:text-2xl font-bold">{stats.totalCarpools}</div>
             <p className="text-xs text-muted-foreground">
-              +2 from last week
+              {stats.totalCarpools === 0 
+                ? "Start your first carpool" 
+                : stats.totalCarpools === 1 
+                ? "Your carpool journey begins" 
+                : stats.totalCarpools < 5 
+                ? "Building your carpool network" 
+                : "Active carpool community"
+              }
             </p>
           </CardContent>
         </Card>
