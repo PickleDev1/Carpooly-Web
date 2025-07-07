@@ -111,8 +111,16 @@ export default function Dashboard() {
     let retryCount = 0;
     const maxRetries = 3;
     
+    console.log('🚀 Dashboard: Profile check effect started');
+    console.log('🚀 Dashboard: User ID:', user?.id);
+    console.log('🚀 Dashboard: API URL:', API_URL);
+    console.log('🚀 Dashboard: Is mobile device:', isMobileDevice());
+    console.log('🚀 Dashboard: Is iOS device:', isIOSDevice());
+    
     async function checkProfile() {
       try {
+        console.log(`🚀 Dashboard: Profile check attempt ${retryCount + 1}/${maxRetries + 1}`);
+        
         if (!user?.id) {
           console.log("No user ID available, waiting...");
           // Wait a bit more for user to load on mobile
@@ -122,7 +130,15 @@ export default function Dashboard() {
             return;
           }
           console.log("User ID still not available after retries, redirecting to onboarding");
-          if (isMounted) router.replace('/onboarding');
+          if (isMounted) {
+            console.log('🚀 Dashboard: Attempting router.replace to onboarding');
+            router.replace('/onboarding');
+            // Fallback to window.location if router doesn't work
+            setTimeout(() => {
+              console.log('🚀 Dashboard: Fallback to window.location');
+              window.location.href = '/onboarding';
+            }, 1000);
+          }
           return;
         }
 
@@ -131,21 +147,40 @@ export default function Dashboard() {
         
         if (!token) {
           console.log("No token available, redirecting to onboarding");
-          if (isMounted) router.replace('/onboarding');
+          if (isMounted) {
+            console.log('🚀 Dashboard: No token, attempting router.replace to onboarding');
+            router.replace('/onboarding');
+            // Fallback to window.location if router doesn't work
+            setTimeout(() => {
+              console.log('🚀 Dashboard: Fallback to window.location (no token)');
+              window.location.href = '/onboarding';
+            }, 1000);
+          }
           return;
         }
         
+        console.log('🚀 Dashboard: Making API call to:', `${API_URL}/api/users/${user.id}`);
         const res = await fetch(`${API_URL}/api/users/${user.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         });
         
+        console.log('🚀 Dashboard: API response status:', res.status);
+        
         if (!res.ok) {
           console.error('User data fetch failed:', res.status, res.statusText);
           if (res.status === 404 || res.status === 401) {
             console.log('User not found or unauthorized, redirecting to onboarding');
-            if (isMounted) router.replace('/onboarding');
+            if (isMounted) {
+              console.log('🚀 Dashboard: User not found, attempting router.replace to onboarding');
+              router.replace('/onboarding');
+              // Fallback to window.location if router doesn't work
+              setTimeout(() => {
+                console.log('🚀 Dashboard: Fallback to window.location (user not found)');
+                window.location.href = '/onboarding';
+              }, 1000);
+            }
             return;
           }
           throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -157,7 +192,15 @@ export default function Dashboard() {
         // Check if user data is valid
         if (!userData || typeof userData !== 'object') {
           console.log('Invalid user data received, redirecting to onboarding');
-          if (isMounted) router.replace('/onboarding');
+          if (isMounted) {
+            console.log('🚀 Dashboard: Invalid user data, attempting router.replace to onboarding');
+            router.replace('/onboarding');
+            // Fallback to window.location if router doesn't work
+            setTimeout(() => {
+              console.log('🚀 Dashboard: Fallback to window.location (invalid data)');
+              window.location.href = '/onboarding';
+            }, 1000);
+          }
           return;
         }
         
@@ -172,8 +215,14 @@ export default function Dashboard() {
         ) {
           console.log('Home location not set, redirecting to onboarding');
           if (isMounted) {
+            console.log('🚀 Dashboard: Home location not set, attempting router.push to onboarding');
             // Use push instead of replace for better mobile compatibility
             router.push('/onboarding');
+            // Fallback to window.location if router doesn't work
+            setTimeout(() => {
+              console.log('🚀 Dashboard: Fallback to window.location (no home location)');
+              window.location.href = '/onboarding';
+            }, 1000);
           }
         } else {
           console.log('Home location set, staying on dashboard');
@@ -191,7 +240,15 @@ export default function Dashboard() {
         
         // If all retries failed or it's not a network error, redirect to onboarding
         console.log('Profile check failed after retries, redirecting to onboarding');
-        if (isMounted) router.push('/onboarding');
+        if (isMounted) {
+          console.log('🚀 Dashboard: Profile check failed, attempting router.push to onboarding');
+          router.push('/onboarding');
+          // Fallback to window.location if router doesn't work
+          setTimeout(() => {
+            console.log('🚀 Dashboard: Fallback to window.location (profile check failed)');
+            window.location.href = '/onboarding';
+          }, 1000);
+        }
       } finally {
         if (isMounted) setCheckingProfile(false);
       }
@@ -199,6 +256,7 @@ export default function Dashboard() {
     
     // Add a small delay for mobile devices to ensure everything is loaded
     const delay = isMobileDevice() ? 500 : 0;
+    console.log('🚀 Dashboard: Setting up profile check with delay:', delay, 'ms');
     setTimeout(checkProfile, delay);
     
     return () => { isMounted = false; };
@@ -299,6 +357,39 @@ export default function Dashboard() {
               : "Please wait while we load your data"
             }
           </p>
+          
+          {/* Manual redirect fallback for mobile users */}
+          {isMobileDevice() && (
+            <div className="mt-6">
+              <p className="text-sm text-gray-500 mb-3">
+                Taking too long? You can manually navigate:
+              </p>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => {
+                    console.log('🚀 Dashboard: Manual redirect to onboarding');
+                    router.push('/onboarding');
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  Go to Onboarding
+                </Button>
+                <Button
+                  onClick={() => {
+                    console.log('🚀 Dashboard: Manual window.location redirect to onboarding');
+                    window.location.href = '/onboarding';
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  Force Redirect (Onboarding)
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

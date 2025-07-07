@@ -1,6 +1,8 @@
 "use client";
 
 console.log("Onboarding page loaded");
+console.log("Onboarding: User agent:", typeof window !== 'undefined' ? navigator.userAgent : 'Server side');
+console.log("Onboarding: Is mobile device:", typeof window !== 'undefined' ? /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) : 'Unknown');
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
