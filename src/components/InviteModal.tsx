@@ -27,6 +27,7 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
   const [success, setSuccess] = useState(false)
   const [emailValidation, setEmailValidation] = useState<{ isValid: boolean; error?: string }>({ isValid: false })
   const [hasInteracted, setHasInteracted] = useState(false)
+  const [members, setMembers] = useState<any[]>([])
   const api = useApi()
 
   // Reset state when modal opens/closes
@@ -51,6 +52,17 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
     setEmailValidation(validation)
   }, [email])
 
+  // Fetch carpool members when modal opens
+  useEffect(() => {
+    if (isOpen && carpoolId) {
+      api.getCarpoolMembers(carpoolId)
+        .then((members) => setMembers(members || []))
+        .catch(() => setMembers([]))
+    } else {
+      setMembers([])
+    }
+  }, [isOpen, carpoolId, api])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -64,15 +76,23 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
       return
     }
 
-    setIsSubmitting(true)
+    // Check if email is already a member (case-insensitive)
+    const emailLower = email.trim().toLowerCase()
+    const isAlreadyMember = members.some(
+      (m) => (m.email || '').toLowerCase() === emailLower
+    )
+    if (isAlreadyMember) {
+      setError('This user is already a member of this carpool.')
+      return
+    }
 
+    setIsSubmitting(true)
     try {
       // Check if carpool has available seats before sending invite
       const availability = await api.checkCarpoolAvailability(carpoolId)
       if (!availability.has_available_seats) {
         throw new Error('Cannot send invite: This carpool is full. No available seats.')
       }
-
       await api.inviteToCarpool(carpoolId, email.trim())
       setSuccess(true)
       setTimeout(() => {
