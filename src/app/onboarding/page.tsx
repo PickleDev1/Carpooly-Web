@@ -171,11 +171,11 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="container max-w-md mx-auto mt-16">
+    <div className="container max-w-md mx-auto mt-8 sm:mt-16 px-4 sm:px-0">
       <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-center">Welcome to Carpooly!</CardTitle>
-          <CardDescription className="text-center">
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="text-2xl sm:text-3xl font-bold text-center">Welcome to Carpooly!</CardTitle>
+          <CardDescription className="text-center text-sm sm:text-base">
             Set your preferred start address for all carpools and choose if you want to share your location while using the website.
             {isMobileDevice() && (
               <span className="block text-sm text-blue-600 mt-2">
@@ -184,17 +184,17 @@ export default function OnboardingPage() {
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="px-4 sm:px-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="address">Start Address</Label>
+              <Label htmlFor="address" className="text-sm sm:text-base">Start Address</Label>
               <AddressAutocomplete
                 onSelect={handleAddressSelect}
                 placeholder="123 Main St, City, State, ZIP"
               />
             </div>
             <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="locationSharing" className="flex-1">
+              <Label htmlFor="locationSharing" className="flex-1 text-sm sm:text-base">
                 Enable location sharing while using the website
               </Label>
               <Switch
@@ -225,14 +225,14 @@ export default function OnboardingPage() {
             
             {/* Manual redirect option for mobile users */}
             <div className="text-center mt-4">
-              <p className="text-sm text-gray-500 mb-2">
+              <p className="text-xs sm:text-sm text-gray-500 mb-2">
                 Having trouble? You can also:
               </p>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.push('/dashboard')}
-                className="text-sm"
+                className="text-xs sm:text-sm"
               >
                 Skip for now and go to dashboard
               </Button>

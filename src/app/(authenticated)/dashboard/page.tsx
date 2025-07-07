@@ -422,14 +422,14 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Welcome Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Welcome back, {user?.firstName || 'there'}! 👋
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Here&apos;s what&apos;s happening with your carpools today
           </p>
         </div>
@@ -439,14 +439,14 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Carpools</CardTitle>
-            <Car className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Carpools</CardTitle>
+            <Car className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalCarpools}</div>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold">{stats.totalCarpools}</div>
             <p className="text-xs text-muted-foreground">
               +2 from last week
             </p>
@@ -454,18 +454,18 @@ export default function Dashboard() {
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Rides</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Active Rides</CardTitle>
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeRides}</div>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold">{stats.activeRides}</div>
             <p className="text-xs text-muted-foreground">
               Currently in progress
             </p>
             {stats.activeRides > 0 && (
               <Link href="/maps">
-                <Button variant="outline" size="sm" className="mt-2 w-full">
+                <Button variant="outline" size="sm" className="mt-2 w-full text-xs">
                   View Active Rides
                 </Button>
               </Link>
@@ -474,17 +474,17 @@ export default function Dashboard() {
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Invites</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Pending Invites</CardTitle>
             <div className="flex items-center gap-2">
               {isRefreshing && (
-                <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-2 h-2 sm:w-3 sm:h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
               )}
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingInvites}</div>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold">{stats.pendingInvites}</div>
             <button
               className="text-xs text-muted-foreground underline hover:text-primary focus:outline-none"
               onClick={() => setShowInvitesModal(true)}
@@ -496,12 +496,12 @@ export default function Dashboard() {
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Miles Saved</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Miles Saved</CardTitle>
+            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.milesSaved}</div>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold">{stats.milesSaved}</div>
             <p className="text-xs text-muted-foreground">
               This month
             </p>
@@ -511,19 +511,19 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {quickActions.map((action) => {
             const Icon = action.icon
             return (
               <Link key={action.title} href={action.href}>
                 <Card className="card-interactive group">
-                  <CardContent className="p-6">
-                    <div className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                      <Icon className="w-6 h-6" />
+                  <CardContent className="p-4 sm:p-6">
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 ${action.color} rounded-lg flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <h3 className="font-semibold mb-2">{action.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-3">{action.description}</p>
+                    <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">{action.title}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">{action.description}</p>
                     <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                   </CardContent>
                 </Card>
@@ -534,33 +534,33 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
         {/* Recent Activity */}
         <div className="lg:col-span-1">
           <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your latest carpool activities</CardDescription>
+            <CardHeader className="px-4 sm:px-6">
+              <CardTitle className="text-base sm:text-lg">Recent Activity</CardTitle>
+              <CardDescription className="text-sm">Your latest carpool activities</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 sm:px-6">
               {isActivityLoading ? (
-                <div className="py-4 text-center text-gray-500">Loading activity...</div>
+                <div className="py-4 text-center text-gray-500 text-sm">Loading activity...</div>
               ) : activityError ? (
-                <div className="py-4 text-center text-red-500">Failed to load activity</div>
+                <div className="py-4 text-center text-red-500 text-sm">Failed to load activity</div>
               ) : recentActivity.length === 0 ? (
-                <div className="py-4 text-center text-gray-500">No recent activity</div>
+                <div className="py-4 text-center text-gray-500 text-sm">No recent activity</div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {recentActivity.map((activity, index) => {
                     const { icon: Icon, title, subtitle } = getActivityDetails(activity);
                     const timestamp = activity.timestamp || activity.time || '';
                     return (
                       <div key={index} className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-4 h-4 text-primary" />
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">{title}</p>
+                          <p className="text-xs sm:text-sm font-medium">{title}</p>
                           {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
                           <p className="text-xs text-muted-foreground">{timestamp ? timeAgo(timestamp) : ''}</p>
                         </div>
@@ -574,13 +574,13 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Pending Invites Section */}
           <Card>
-            <CardHeader>
+            <CardHeader className="px-4 sm:px-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CardTitle>Pending Invites</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">Pending Invites</CardTitle>
                   {isRefreshing && (
                     <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                   )}
@@ -597,11 +597,11 @@ export default function Dashboard() {
                   )}
                 </Button>
               </div>
-              <CardDescription>Respond to carpool invitations</CardDescription>
+              <CardDescription className="text-sm">Respond to carpool invitations</CardDescription>
             </CardHeader>
             
             {isInvitesOpen && (
-              <CardContent>
+              <CardContent className="px-4 sm:px-6">
                 <InvitesTable />
               </CardContent>
             )}
@@ -609,11 +609,11 @@ export default function Dashboard() {
 
           {/* Active Ride Section */}
           <Card>
-            <CardHeader>
+            <CardHeader className="px-4 sm:px-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Active Carpool Rides</CardTitle>
-                  <CardDescription>Currently active rides and their status</CardDescription>
+                  <CardTitle className="text-base sm:text-lg">Active Carpool Rides</CardTitle>
+                  <CardDescription className="text-sm">Currently active rides and their status</CardDescription>
                 </div>
                 <Button
                   variant="ghost"
@@ -630,7 +630,7 @@ export default function Dashboard() {
             </CardHeader>
             
             {isActiveRideOpen && (
-              <CardContent>
+              <CardContent className="px-4 sm:px-6">
                 <ActiveRideSection />
               </CardContent>
             )}
@@ -640,17 +640,17 @@ export default function Dashboard() {
 
       {/* Pending Invites Modal */}
       <Dialog open={showInvitesModal} onOpenChange={setShowInvitesModal}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-md sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Pending Carpool Invites</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">Pending Carpool Invites</DialogTitle>
           </DialogHeader>
           {invites && invites.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {invites.map((invite) => (
-                <div key={invite.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-b pb-3 last:border-b-0 last:pb-0">
+                <div key={invite.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b pb-3 last:border-b-0 last:pb-0">
                   <div>
-                    <div className="font-medium text-gray-900">{invite.carpool_name || 'Unknown Carpool'}</div>
-                    <div className="text-sm text-gray-500">From: {invite.sender_email || 'Unknown Sender'}</div>
+                    <div className="font-medium text-gray-900 text-sm sm:text-base">{invite.carpool_name || 'Unknown Carpool'}</div>
+                    <div className="text-xs sm:text-sm text-gray-500">From: {invite.sender_email || 'Unknown Sender'}</div>
                   </div>
                   <div>
                     <InviteActions inviteId={invite.id} status={parseInt(invite.status)} onStatusUpdate={refreshInvites} />
@@ -659,7 +659,7 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="text-center text-gray-500">No pending invites</div>
+            <div className="text-center text-gray-500 text-sm sm:text-base">No pending invites</div>
           )}
         </DialogContent>
       </Dialog>
