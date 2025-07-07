@@ -32,6 +32,7 @@ import { useApi } from '@/services/api'
 import { useRecentActivity, Activity } from '@/hooks/useRecentActivity'
 import { useActiveRides } from '@/hooks/useActiveRides'
 import { NotificationPopup } from '@/components/NotificationPopup'
+import { isMobileDevice, isIOSDevice } from '@/lib/utils'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -107,42 +108,99 @@ export default function Dashboard() {
 
   useEffect(() => {
     let isMounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
     async function checkProfile() {
       try {
         if (!user?.id) {
-          console.log("No user ID available");
+          console.log("No user ID available, waiting...");
+          // Wait a bit more for user to load on mobile
+          if (retryCount < maxRetries) {
+            retryCount++;
+            setTimeout(checkProfile, 1000);
+            return;
+          }
+          console.log("User ID still not available after retries, redirecting to onboarding");
+          if (isMounted) router.replace('/onboarding');
           return;
         }
 
         const token = await getToken();
-        console.log("Checking user data with token:", token);
+        console.log("Checking user data with token:", token ? "Token received" : "No token");
+        
+        if (!token) {
+          console.log("No token available, redirecting to onboarding");
+          if (isMounted) router.replace('/onboarding');
+          return;
+        }
+        
         const res = await fetch(`${API_URL}/api/users/${user.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         });
-        if (!res.ok) throw new Error('User data not found');
-        const userData = await res.json();
-        console.log('User data:', userData);
         
-        // Only redirect if home coordinates are 0
+        if (!res.ok) {
+          console.error('User data fetch failed:', res.status, res.statusText);
+          if (res.status === 404 || res.status === 401) {
+            console.log('User not found or unauthorized, redirecting to onboarding');
+            if (isMounted) router.replace('/onboarding');
+            return;
+          }
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
+        const userData = await res.json();
+        console.log('User data received:', userData);
+        
+        // Check if user data is valid
+        if (!userData || typeof userData !== 'object') {
+          console.log('Invalid user data received, redirecting to onboarding');
+          if (isMounted) router.replace('/onboarding');
+          return;
+        }
+        
+        // Only redirect if home coordinates are 0 or null/undefined
         if (
           userData.home_latitude === 0 ||
-          userData.home_longitude === 0
+          userData.home_longitude === 0 ||
+          userData.home_latitude === null ||
+          userData.home_longitude === null ||
+          userData.home_latitude === undefined ||
+          userData.home_longitude === undefined
         ) {
           console.log('Home location not set, redirecting to onboarding');
-          if (isMounted) router.replace('/onboarding');
+          if (isMounted) {
+            // Use push instead of replace for better mobile compatibility
+            router.push('/onboarding');
+          }
         } else {
           console.log('Home location set, staying on dashboard');
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error('Error fetching user data:', e);
-        if (isMounted) router.replace('/onboarding');
+        
+        // Retry logic for network errors
+        if (retryCount < maxRetries && e.message && e.message.includes('fetch')) {
+          retryCount++;
+          console.log(`Retrying profile check (${retryCount}/${maxRetries})...`);
+          setTimeout(checkProfile, 2000);
+          return;
+        }
+        
+        // If all retries failed or it's not a network error, redirect to onboarding
+        console.log('Profile check failed after retries, redirecting to onboarding');
+        if (isMounted) router.push('/onboarding');
       } finally {
         if (isMounted) setCheckingProfile(false);
       }
     }
-    checkProfile();
+    
+    // Add a small delay for mobile devices to ensure everything is loaded
+    const delay = isMobileDevice() ? 500 : 0;
+    setTimeout(checkProfile, delay);
+    
     return () => { isMounted = false; };
   }, [router, getToken, user?.id]);
 
@@ -235,6 +293,12 @@ export default function Dashboard() {
         <div className="text-center">
           <div className="loading-spinner h-12 w-12 mx-auto mb-4"></div>
           <p className="text-lg text-gray-600">Loading your dashboard...</p>
+          <p className="text-sm text-gray-500 mt-2">
+            {isMobileDevice() 
+              ? "This may take a moment on mobile devices" 
+              : "Please wait while we load your data"
+            }
+          </p>
         </div>
       </div>
     );

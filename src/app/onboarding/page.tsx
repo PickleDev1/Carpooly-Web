@@ -2,7 +2,7 @@
 
 console.log("Onboarding page loaded");
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { Loader2 } from "lucide-react";
+import { isMobileDevice, isIOSDevice } from "@/lib/utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -21,9 +22,45 @@ export default function OnboardingPage() {
   const [locationSharing, setLocationSharing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
+
+  // Add a fallback to redirect to dashboard if user already has location set
+  useEffect(() => {
+    if (isLoaded && user?.id) {
+      checkIfUserAlreadyHasLocation();
+    }
+  }, [isLoaded, user?.id]);
+
+  const checkIfUserAlreadyHasLocation = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const res = await fetch(`${API_URL}/api/users/${user?.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const userData = await res.json();
+        if (
+          userData.home_latitude &&
+          userData.home_longitude &&
+          userData.home_latitude !== 0 &&
+          userData.home_longitude !== 0
+        ) {
+          console.log('User already has location set, redirecting to dashboard');
+          router.replace('/dashboard');
+        }
+      }
+    } catch (e) {
+      console.error('Error checking user location:', e);
+    }
+  };
 
   const handleAddressSelect = (locationData: { address: string; lat: number; lng: number }) => {
     setAddress(locationData.address);
@@ -43,7 +80,13 @@ export default function OnboardingPage() {
     
     try {
       const token = await getToken();
-      console.log("Clerk token:", token);
+      console.log("Clerk token:", token ? "Token received" : "No token");
+      
+      if (!token) {
+        setError("Authentication failed. Please try refreshing the page.");
+        setLoading(false);
+        return;
+      }
       
       // Update the profile
       const updateRes = await fetch(`${API_URL}/api/profile`, {
@@ -58,7 +101,12 @@ export default function OnboardingPage() {
           location_sharing_enabled: locationSharing,
         }),
       });
-      if (!updateRes.ok) throw new Error(await updateRes.text());
+      
+      if (!updateRes.ok) {
+        const errorText = await updateRes.text();
+        console.error('Profile update failed:', updateRes.status, errorText);
+        throw new Error(`Failed to update profile: ${updateRes.status}`);
+      }
 
       // Verify the profile was updated
       const verifyRes = await fetch(`${API_URL}/api/users/${user?.id}`, {
@@ -66,20 +114,42 @@ export default function OnboardingPage() {
           "Authorization": `Bearer ${token}`,
         },
       });
-      if (!verifyRes.ok) throw new Error('Failed to verify profile update');
+      
+      if (!verifyRes.ok) {
+        console.error('Profile verification failed:', verifyRes.status);
+        throw new Error('Failed to verify profile update');
+      }
       
       const userData = await verifyRes.json();
+      console.log('Profile verification data:', userData);
+      
       if (
         userData.home_latitude === 0 ||
-        userData.home_longitude === 0
+        userData.home_longitude === 0 ||
+        userData.home_latitude === null ||
+        userData.home_longitude === null ||
+        userData.home_latitude === undefined ||
+        userData.home_longitude === undefined
       ) {
         throw new Error('Profile update verification failed');
       }
 
       // Only redirect after verifying the update
+      console.log('Profile updated successfully, redirecting to dashboard');
       router.push("/dashboard");
     } catch (e: any) {
-      setError(e.message || "Failed to save preferences");
+      console.error('Onboarding error:', e);
+      setError(e.message || "Failed to save preferences. Please try again.");
+      
+      // Retry logic for network errors
+      if (retryCount < 2 && e.message && e.message.includes('fetch')) {
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => {
+          setError(null);
+          handleSubmit(e);
+        }, 2000);
+        return;
+      }
     } finally {
       setLoading(false);
     }
@@ -92,6 +162,11 @@ export default function OnboardingPage() {
           <CardTitle className="text-3xl font-bold text-center">Welcome to Carpooly!</CardTitle>
           <CardDescription className="text-center">
             Set your preferred start address for all carpools and choose if you want to share your location while using the website.
+            {isMobileDevice() && (
+              <span className="block text-sm text-blue-600 mt-2">
+                📱 Mobile optimized for better experience
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -132,6 +207,21 @@ export default function OnboardingPage() {
                 {error}
               </div>
             )}
+            
+            {/* Manual redirect option for mobile users */}
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-500 mb-2">
+                Having trouble? You can also:
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push('/dashboard')}
+                className="text-sm"
+              >
+                Skip for now and go to dashboard
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
