@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
+import { Tooltip } from '@/components/ui/tooltip'
 
 export function CarpoolList() {
   const { user, isLoaded } = useUser()
@@ -129,42 +130,51 @@ export function CarpoolList() {
                     <TableCell>{carpool.destination_address}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="secondary"
-                          onClick={() => carpool.id && handleInvite(carpool.id)}
-                          disabled={carpool.available_seats <= 0}
-                          className={`${
-                            carpool.available_seats <= 0 
-                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                              : 'bg-blue-200 hover:bg-blue-300'
-                          }`}
-                          title={carpool.available_seats <= 0 ? 'Carpool is full' : 'Invite someone'}
-                        >
-                          {carpool.available_seats <= 0 ? 'Full' : 'Invite'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleUpdateSchedule(carpool)}
-                          size="icon"
-                          className="bg-green-200 hover:bg-green-300"
-                        >
-                          <CalendarIcon className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => carpool.id && handleViewCalendar(carpool.id)}
-                          className="bg-[#2B5335] hover:bg-[#1e3b25] text-white"
-                        >
-                          <CalendarDaysIcon className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => carpool.id && handleDelete(carpool.id)}
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
+                        <Tooltip content={carpool.available_seats <= 0
+                          ? 'Invite someone to join this carpool. Disabled when the carpool is full.'
+                          : 'Invite someone to join this carpool.'}>
+                          <Button
+                            variant="secondary"
+                            onClick={() => carpool.id && handleInvite(carpool.id)}
+                            disabled={carpool.available_seats <= 0}
+                            className={`$${
+                              carpool.available_seats <= 0 
+                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                                : 'bg-blue-200 hover:bg-blue-300'
+                            }`}
+                          >
+                            {carpool.available_seats <= 0 ? 'Full' : 'Invite'}
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content={"Edit the schedule for this carpool (dates, times, frequency)."}>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleUpdateSchedule(carpool)}
+                            size="icon"
+                            className="bg-green-200 hover:bg-green-300"
+                          >
+                            <CalendarIcon className="h-4 w-4" />
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content={"View the carpool calendar and manage participants."}>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => carpool.id && handleViewCalendar(carpool.id)}
+                            className="bg-[#2B5335] hover:bg-[#1e3b25] text-white"
+                          >
+                            <CalendarDaysIcon className="h-4 w-4" />
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content={"Delete this carpool. Only the creator can delete."}>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => carpool.id && handleDelete(carpool.id)}
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </Button>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>
