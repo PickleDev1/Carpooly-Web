@@ -67,6 +67,12 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
     setIsSubmitting(true)
 
     try {
+      // Check if carpool has available seats before sending invite
+      const availability = await api.checkCarpoolAvailability(carpoolId)
+      if (!availability.has_available_seats) {
+        throw new Error('Cannot send invite: This carpool is full. No available seats.')
+      }
+
       await api.inviteToCarpool(carpoolId, email.trim())
       setSuccess(true)
       setTimeout(() => {

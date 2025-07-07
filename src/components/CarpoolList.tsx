@@ -114,16 +114,33 @@ export function CarpoolList() {
                   <TableRow key={carpool.id}>
                     <TableCell className="font-medium">{carpool.carpool_name}</TableCell>
                     <TableCell>{carpool.recurring_option || 'One-time'}</TableCell>
-                    <TableCell>{carpool.available_seats} of {carpool.seats}</TableCell>
+                    <TableCell>
+                      <span className={`${
+                        carpool.available_seats <= 0 
+                          ? 'text-red-600 font-semibold' 
+                          : carpool.available_seats <= 1 
+                            ? 'text-orange-600 font-medium' 
+                            : 'text-gray-900'
+                      }`}>
+                        {carpool.available_seats} of {carpool.seats}
+                        {carpool.available_seats <= 0 && ' (Full)'}
+                      </span>
+                    </TableCell>
                     <TableCell>{carpool.destination_address}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="secondary"
                           onClick={() => carpool.id && handleInvite(carpool.id)}
-                          className="bg-blue-200 hover:bg-blue-300"
+                          disabled={carpool.available_seats <= 0}
+                          className={`${
+                            carpool.available_seats <= 0 
+                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                              : 'bg-blue-200 hover:bg-blue-300'
+                          }`}
+                          title={carpool.available_seats <= 0 ? 'Carpool is full' : 'Invite someone'}
                         >
-                          Invite
+                          {carpool.available_seats <= 0 ? 'Full' : 'Invite'}
                         </Button>
                         <Button
                           variant="outline"
