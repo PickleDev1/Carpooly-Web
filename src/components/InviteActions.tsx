@@ -7,10 +7,12 @@ import { useRouter } from 'next/navigation'
 interface InviteActionsProps {
   inviteId: string
   status?: number
+  carpoolId?: string
+  currentAvailableSeats?: number
   onStatusUpdate: () => void
 }
 
-export function InviteActions({ inviteId, status, onStatusUpdate }: InviteActionsProps) {
+export function InviteActions({ inviteId, status, carpoolId, currentAvailableSeats, onStatusUpdate }: InviteActionsProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const api = useApi()
@@ -20,7 +22,35 @@ export function InviteActions({ inviteId, status, onStatusUpdate }: InviteAction
     setIsLoading(true)
     setError(null)
     try {
+      // Check if carpool has available seats before accepting
+      if (carpoolId) {
+        try {
+          const availability = await api.checkCarpoolAvailability(carpoolId)
+          if (!availability.has_available_seats) {
+            throw new Error('Sorry, this carpool is full. No available seats.')
+          }
+        } catch (availabilityError) {
+          console.error('Error checking carpool availability:', availabilityError)
+          // Continue with invite acceptance even if availability check fails
+          // The backend should handle the validation
+        }
+      }
+
+      // Update invite status to accepted
       await api.updateInviteStatus(inviteId, 1)
+      
+      // Decrement available seats if carpoolId is provided
+      if (carpoolId) {
+        try {
+          await api.decrementCarpoolAvailableSeats(carpoolId)
+          console.log(`Decremented available seats for carpool ${carpoolId}`)
+        } catch (seatsError) {
+          console.error('Error updating available seats:', seatsError)
+          // Don't fail the entire operation if seats update fails
+          // The invite was already accepted
+        }
+      }
+      
       onStatusUpdate() // Refresh the list
       router.push('/carpools/list')
     } catch (error) {
@@ -35,7 +65,12 @@ export function InviteActions({ inviteId, status, onStatusUpdate }: InviteAction
     setIsLoading(true)
     setError(null)
     try {
+      // Delete the invite
       await api.deleteInvite(inviteId)
+      
+      // Note: We don't increment available seats on reject since the seat was never actually taken
+      // The available seats only decrease when someone actually accepts and joins
+      
       onStatusUpdate() // Refresh the list after deleting
     } catch (error) {
       console.error('Failed to reject invite:', error)

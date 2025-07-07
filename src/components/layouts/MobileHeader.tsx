@@ -12,7 +12,7 @@ import {
   LogOut, 
   MapPin,
   Bell,
-  Search
+  HelpCircle
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { NotificationPopup } from '@/components/NotificationPopup'
@@ -29,8 +29,8 @@ export function MobileHeader() {
     { href: '/dashboard', label: 'Dashboard', icon: '🏠' },
     { href: '/carpools', label: 'Carpools', icon: '🚗' },
     { href: '/maps', label: 'Live Map', icon: '📍' },
-    { href: '/analytics', label: 'Analytics', icon: '📊' },
-    { href: '/search', label: 'Search', icon: '🔍' },
+    { href: '/analytics', label: 'Analytics', icon: '��' },
+    { href: '/support', label: 'Support', icon: '❓' },
   ]
 
   // Handle scroll effect

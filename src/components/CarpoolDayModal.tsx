@@ -129,6 +129,10 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
       const formattedDate = format(date, 'yyyy-MM-dd')
       await api.removeCarpoolParticipant(carpoolId, formattedDate)
       
+      // Increment available seats when user leaves
+      await api.incrementCarpoolAvailableSeats(carpoolId)
+      console.log(`Incremented available seats for carpool ${carpoolId} when user left`)
+      
       // Refresh the day details after removing participant
       await fetchDayDetails()
     } catch (error) {

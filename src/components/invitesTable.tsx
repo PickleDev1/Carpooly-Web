@@ -56,6 +56,8 @@ export function InvitesTable() {
                 <InviteActions 
                   inviteId={invite.id}
                   status={parseInt(invite.status)}
+                  carpoolId={invite.carpool_id}
+                  currentAvailableSeats={invite.current_available_seats}
                   onStatusUpdate={refresh}
                 />
               </TableCell>

@@ -9,6 +9,9 @@ interface Invite {
   sender_email: string
   carpool_name: string
   status: string
+  carpool_id?: string
+  current_available_seats?: number
+  total_seats?: number
 }
 
 export function useInvites() {

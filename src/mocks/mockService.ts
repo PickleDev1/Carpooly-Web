@@ -65,4 +65,37 @@ export const mockService = {
     console.log('Mock: Deleting carpool', carpoolId)
     return true
   },
+
+  updateCarpoolAvailableSeats: async (carpoolId: string, availableSeats: number) => {
+    console.log('Mock: Updating carpool available seats', { carpoolId, availableSeats })
+    return {
+      id: carpoolId,
+      available_seats: availableSeats
+    }
+  },
+
+  incrementCarpoolAvailableSeats: async (carpoolId: string) => {
+    console.log('Mock: Incrementing carpool available seats', { carpoolId })
+    return {
+      id: carpoolId,
+      available_seats: 4 // Mock increment
+    }
+  },
+
+  decrementCarpoolAvailableSeats: async (carpoolId: string) => {
+    console.log('Mock: Decrementing carpool available seats', { carpoolId })
+    return {
+      id: carpoolId,
+      available_seats: 2 // Mock decrement
+    }
+  },
+
+  checkCarpoolAvailability: async (carpoolId: string) => {
+    console.log('Mock: Checking carpool availability', { carpoolId })
+    return {
+      available_seats: 3,
+      total_seats: 4,
+      has_available_seats: true
+    }
+  },
 }

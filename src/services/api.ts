@@ -336,6 +336,116 @@ export const useApi = () => {
         }
       },
 
+      async updateCarpoolAvailableSeats(carpoolId: string, availableSeats: number) {
+        if (useMockApi) {
+          return mockService.updateCarpoolAvailableSeats(carpoolId, availableSeats)
+        }
+        const headers = await getHeaders()
+        const payload = { available_seats: availableSeats }
+        
+        console.log('Sending updateCarpoolAvailableSeats request:', {
+          url: `${API_URL}/api/carpools/${carpoolId}`,
+          method: 'PUT',
+          headers,
+          payload
+        })
+
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(payload)
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Update carpool available seats error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText,
+            requestPayload: payload
+          })
+          throw new Error(errorText || 'Failed to update carpool available seats')
+        }
+
+        // Check if response has content before trying to parse JSON
+        const text = await response.text()
+        if (!text) {
+          console.log('Empty response received from updateCarpoolAvailableSeats')
+          return { success: true, carpoolId, availableSeats }
+        }
+
+        try {
+          return JSON.parse(text)
+        } catch (error) {
+          console.error('JSON Parse Error:', error, 'Response:', text)
+          // Return a success object if parsing fails but response was ok
+          return { success: true, carpoolId, availableSeats }
+        }
+      },
+
+      async incrementCarpoolAvailableSeats(carpoolId: string) {
+        if (useMockApi) {
+          return mockService.incrementCarpoolAvailableSeats(carpoolId)
+        }
+        
+        // First get current carpool details to check current available seats
+        const carpool = await this.getCarpool(carpoolId)
+        if (!carpool) {
+          throw new Error('Carpool not found')
+        }
+
+        const currentAvailableSeats = carpool.available_seats || 0
+        const totalSeats = carpool.seats || 0
+        
+        // Don't increment beyond the original total seats
+        if (currentAvailableSeats >= totalSeats) {
+          console.log('Available seats already at maximum, no increment needed')
+          return carpool
+        }
+
+        const newAvailableSeats = currentAvailableSeats + 1
+        return this.updateCarpoolAvailableSeats(carpoolId, newAvailableSeats)
+      },
+
+      async decrementCarpoolAvailableSeats(carpoolId: string) {
+        if (useMockApi) {
+          return mockService.decrementCarpoolAvailableSeats(carpoolId)
+        }
+        
+        // First get current carpool details to check current available seats
+        const carpool = await this.getCarpool(carpoolId)
+        if (!carpool) {
+          throw new Error('Carpool not found')
+        }
+
+        const currentAvailableSeats = carpool.available_seats || 0
+        
+        // Don't decrement below 0
+        if (currentAvailableSeats <= 0) {
+          throw new Error('No available seats in this carpool')
+        }
+
+        const newAvailableSeats = currentAvailableSeats - 1
+        return this.updateCarpoolAvailableSeats(carpoolId, newAvailableSeats)
+      },
+
+      async checkCarpoolAvailability(carpoolId: string) {
+        if (useMockApi) {
+          return mockService.checkCarpoolAvailability(carpoolId)
+        }
+        
+        const carpool = await this.getCarpool(carpoolId)
+        if (!carpool) {
+          throw new Error('Carpool not found')
+        }
+
+        return {
+          available_seats: carpool.available_seats || 0,
+          total_seats: carpool.seats || 0,
+          has_available_seats: (carpool.available_seats || 0) > 0
+        }
+      },
+
       async deleteCarpool(carpoolId: string) {
         if (useMockApi) {
           return mockService.deleteCarpool(carpoolId)

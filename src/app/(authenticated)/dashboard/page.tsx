@@ -660,7 +660,13 @@ export default function Dashboard() {
                     <div className="text-xs sm:text-sm text-gray-500">From: {invite.sender_email || 'Unknown Sender'}</div>
                   </div>
                   <div>
-                    <InviteActions inviteId={invite.id} status={parseInt(invite.status)} onStatusUpdate={refreshInvites} />
+                    <InviteActions 
+                      inviteId={invite.id} 
+                      status={parseInt(invite.status)} 
+                      carpoolId={invite.carpool_id}
+                      currentAvailableSeats={invite.current_available_seats}
+                      onStatusUpdate={refreshInvites} 
+                    />
                   </div>
                 </div>
               ))}

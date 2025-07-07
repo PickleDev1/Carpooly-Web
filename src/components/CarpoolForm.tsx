@@ -118,6 +118,7 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
       const carpoolData = {
         carpool_name: carpoolName,
         seats: parseInt(seats),
+        available_seats: parseInt(seats), // Initially all seats are available
         destination_address: destinationAddress,
         destination_lat: destinationLat,
         destination_lng: destinationLng,
