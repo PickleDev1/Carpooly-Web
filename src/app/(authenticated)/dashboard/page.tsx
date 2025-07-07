@@ -292,37 +292,33 @@ export default function Dashboard() {
 
   useEffect(() => {
     console.log('🔔 Dashboard: Browser notification effect triggered')
-    console.log('🔔 Dashboard: Notification API available:', 'Notification' in window)
-    console.log('🔔 Dashboard: Notification permission:', Notification.permission)
-    
-    if (!('Notification' in window)) {
+    const notificationApiAvailable = typeof window !== 'undefined' && 'Notification' in window;
+    console.log('🔔 Dashboard: Notification API available:', notificationApiAvailable)
+    if (!notificationApiAvailable) {
       console.log('🔔 Dashboard: Notification API not available, skipping')
       return;
     }
+    // Now safe to reference Notification
+    console.log('🔔 Dashboard: Notification permission:', Notification.permission)
     if (Notification.permission !== 'granted') {
       console.log('🔔 Dashboard: Notification permission not granted, skipping')
       return;
     }
     
     console.log('🔔 Dashboard: Setting up notification interval, active rides count:', activeRides.length)
-    
     const interval = setInterval(() => {
       console.log('🔔 Dashboard: Notification interval triggered, checking rides...')
       const now = new Date();
       console.log('🔔 Dashboard: Current time:', now.toISOString())
-      
       activeRides.forEach((ride, index) => {
         console.log(`🔔 Dashboard: Checking ride ${index + 1}:`, ride)
-        
         if (!ride.start_time || !ride.id) {
           console.log(`🔔 Dashboard: Skipping ride ${index + 1} - missing start_time or id`)
           return;
         }
-        
         const start = new Date(ride.start_time);
         const diff = (start.getTime() - now.getTime()) / 60000; // minutes
         console.log(`🔔 Dashboard: Ride ${index + 1} - Start: ${start.toISOString()}, Diff: ${diff} minutes, Already notified: ${notifiedRidesRef.current.has(ride.id)}`)
-        
         if (diff > 0 && diff < 15 && !notifiedRidesRef.current.has(ride.id)) {
           console.log(`🔔 Dashboard: Sending browser notification for ride ${ride.id}`)
           const carpoolName = ride.carpool_name || 'your carpool'
@@ -337,7 +333,6 @@ export default function Dashboard() {
         }
       });
     }, 60000); // check every minute
-    
     console.log('🔔 Dashboard: Notification interval set up successfully')
     return () => {
       console.log('🔔 Dashboard: Cleaning up notification interval')

@@ -15,8 +15,10 @@ import { Switch } from "@/components/ui/switch";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { Loader2 } from "lucide-react";
 import { isMobileDevice, isIOSDevice } from "@/lib/utils";
+import { useLoadScript } from '@react-google-maps/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const libraries: ("places")[] = ["places"];
 
 export default function OnboardingPage() {
   const [address, setAddress] = useState("");
@@ -28,6 +30,10 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
+  const { isLoaded: loadIsLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    libraries,
+  });
 
   // Add a fallback to redirect to dashboard if user already has location set
   useEffect(() => {
@@ -156,6 +162,13 @@ export default function OnboardingPage() {
       setLoading(false);
     }
   };
+
+  if (loadError) {
+    return <div className="text-center text-red-600 mt-16">Error loading Google Maps: {loadError.message}</div>;
+  }
+  if (!loadIsLoaded) {
+    return <div className="text-center mt-16">Loading Google Maps...</div>;
+  }
 
   return (
     <div className="container max-w-md mx-auto mt-16">

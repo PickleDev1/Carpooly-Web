@@ -6,8 +6,7 @@ const isProtectedRoute = createRouteMatcher([
   '/create-carpool(.*)',
   '/search(.*)',
   '/invite(.*)',
-  '/schedule(.*)',
-  '/onboarding(.*)'
+  '/schedule(.*)'
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
