@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css'
 import { UserProvider } from '@/contexts/UserContext'
 import { Metadata, Viewport } from 'next'
 import { MainLayout } from '@/components/layouts/MainLayout'
+import { ToastProvider } from '@/components/ui/toast'
+import { ActivityNotificationsClient } from '@/components/ActivityNotificationsClient'
 
 // Enhanced font configuration
 const inter = Inter({ 
@@ -127,32 +129,35 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
       </head>
       <body className={`${inter.className} antialiased`}>
-        <ClerkProvider 
-          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-          appearance={{
-            elements: {
-              formButtonPrimary: 'btn-primary',
-              card: 'card',
-              headerTitle: 'text-xl font-semibold',
-              headerSubtitle: 'text-muted-foreground',
-              socialButtonsBlockButton: 'btn-secondary',
-              formFieldInput: 'input',
-              footerActionLink: 'text-primary hover:text-primary/80',
-            },
-            variables: {
-              colorPrimary: '#22c55e',
-              colorBackground: '#ffffff',
-              colorInputBackground: '#ffffff',
-              colorInputText: '#000000',
-            },
-          }}
-        >
-          <UserProvider>
-            <MainLayout>
-              {children}
-            </MainLayout>
-          </UserProvider>
-        </ClerkProvider>
+        <ToastProvider>
+          <ClerkProvider 
+            publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+            appearance={{
+              elements: {
+                formButtonPrimary: 'btn-primary',
+                card: 'card',
+                headerTitle: 'text-xl font-semibold',
+                headerSubtitle: 'text-muted-foreground',
+                socialButtonsBlockButton: 'btn-secondary',
+                formFieldInput: 'input',
+                footerActionLink: 'text-primary hover:text-primary/80',
+              },
+              variables: {
+                colorPrimary: '#22c55e',
+                colorBackground: '#ffffff',
+                colorInputBackground: '#ffffff',
+                colorInputText: '#000000',
+              },
+            }}
+          >
+            <UserProvider>
+              <ActivityNotificationsClient />
+              <MainLayout>
+                {children}
+              </MainLayout>
+            </UserProvider>
+          </ClerkProvider>
+        </ToastProvider>
       </body>
     </html>
   )

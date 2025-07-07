@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useApi } from '@/services/api'
 import { useRouter } from 'next/navigation'
+import { addInviteAcceptedNotification } from '@/components/NotificationPopup'
+import { useToast } from '@/components/ui/toast'
 
 interface InviteActionsProps {
   inviteId: string
@@ -17,6 +19,7 @@ export function InviteActions({ inviteId, status, carpoolId, currentAvailableSea
   const [error, setError] = useState<string | null>(null)
   const api = useApi()
   const router = useRouter()
+  const { showToast } = useToast();
 
   const handleAccept = async () => {
     setIsLoading(true)
@@ -50,6 +53,16 @@ export function InviteActions({ inviteId, status, carpoolId, currentAvailableSea
           // The invite was already accepted
         }
       }
+
+      // Notify inviter (if inviterId is available in the invite object)
+      // This is a placeholder; you may need to pass inviterId as a prop or fetch it
+      const inviterId = undefined; // TODO: get inviterId from invite or context
+      const inviteeName = 'You'; // Or get from user context
+      const carpoolName = carpoolId || 'Carpool'; // Or fetch carpool name
+      if (inviterId && typeof addInviteAcceptedNotification === 'function') {
+        addInviteAcceptedNotification(inviterId, inviteeName, carpoolName)
+      }
+      showToast(`${inviteeName} accepted your invite to ${carpoolName}!`)
       
       onStatusUpdate() // Refresh the list
       router.push('/carpools/list')

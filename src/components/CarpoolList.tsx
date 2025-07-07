@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Carpool } from '@/types/api'
 import { InviteModal } from '@/components/InviteModal'
 import { useUserUuid } from '@/contexts/UserContext'
@@ -22,6 +22,20 @@ import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { Tooltip } from '@/components/ui/tooltip'
 
+// Helper for avatar color
+function stringToColor(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  let color = '#';
+  for (let i = 0; i < 3; i++) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += ('00' + value.toString(16)).slice(-2);
+  }
+  return color;
+}
+
 export function CarpoolList() {
   const { user, isLoaded } = useUser()
   const [selectedCarpoolId, setSelectedCarpoolId] = useState<string | null>(null)
@@ -32,10 +46,29 @@ export function CarpoolList() {
   const [selectedCarpool, setSelectedCarpool] = useState<Carpool | null>(null)
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const router = useRouter()
+  const [membersMap, setMembersMap] = useState<Record<string, any[]>>({});
 
-  console.log('CarpoolList render:', { user, isLoaded, carpools})
+  useEffect(() => {
+    async function fetchMembers() {
+      if (!carpools) return;
+      const map: Record<string, any[]> = {};
+      await Promise.all(
+        carpools.map(async (carpool) => {
+          if (carpool.id) {
+            try {
+              const members = await api.getCarpoolMembers(carpool.id);
+              map[carpool.id] = members || [];
+            } catch (e) {
+              map[carpool.id] = [];
+            }
+          }
+        })
+      );
+      setMembersMap(map);
+    }
+    fetchMembers();
+  }, [carpools, api]);
 
-  // Only check for user authentication
   if (!isLoaded || !user) {
     return null;
   }
@@ -106,6 +139,7 @@ export function CarpoolList() {
                   <TableHead>Name</TableHead>
                   <TableHead>Schedule</TableHead>
                   <TableHead>Available Seats</TableHead>
+                  <TableHead>Members</TableHead>
                   <TableHead>Destination</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -116,7 +150,7 @@ export function CarpoolList() {
                     <TableCell className="font-medium">{carpool.carpool_name}</TableCell>
                     <TableCell>{carpool.recurring_option || 'One-time'}</TableCell>
                     <TableCell>
-                      <span className={`${
+                      <span className={`$${
                         carpool.available_seats <= 0 
                           ? 'text-red-600 font-semibold' 
                           : carpool.available_seats <= 1 
@@ -126,6 +160,39 @@ export function CarpoolList() {
                         {carpool.available_seats} of {carpool.seats}
                         {carpool.available_seats <= 0 && ' (Full)'}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      {carpool.id && membersMap[carpool.id]?.length ? (
+                        <Tooltip content={
+                          <div className="text-left">
+                            <div className="font-semibold mb-1">Members:</div>
+                            {(membersMap[carpool.id] as any[]).map((m: any, i: number) => (
+                              <div key={m.id || m.email || i} className="text-xs">
+                                {m.name || m.display_name || m.email}
+                              </div>
+                            ))}
+                          </div>
+                        }>
+                          <div className="flex items-center space-x-1">
+                            {(membersMap[carpool.id] as any[]).slice(0, 3).map((m: any, i: number) => (
+                              <span
+                                key={m.id || m.email || i}
+                                className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold text-white border-2 border-white shadow"
+                                style={{ background: stringToColor(m.email || m.name || m.display_name || 'U') }}
+                              >
+                                {(m.name || m.display_name || m.email || 'U')[0].toUpperCase()}
+                              </span>
+                            ))}
+                            {(membersMap[carpool.id] as any[]).length > 3 && (
+                              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-300 text-xs font-bold text-gray-700 border-2 border-white shadow">
+                                +{(membersMap[carpool.id] as any[]).length - 3}
+                              </span>
+                            )}
+                          </div>
+                        </Tooltip>
+                      ) : (
+                        <span className="text-xs text-gray-400">No members</span>
+                      )}
                     </TableCell>
                     <TableCell>{carpool.destination_address}</TableCell>
                     <TableCell className="text-right">

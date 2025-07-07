@@ -8,7 +8,7 @@ import { useActiveRides } from '@/hooks/useActiveRides'
 
 interface Notification {
   id: string
-  type: 'ride_reminder' | 'invite_received' | 'ride_started' | 'location_update'
+  type: 'ride_reminder' | 'invite_received' | 'ride_started' | 'location_update' | 'invite_accepted'
   title: string
   message: string
   timestamp: Date
@@ -16,11 +16,16 @@ interface Notification {
   rideId?: string
   destination?: string
   startTime?: string
+  inviterId?: string
+  inviteeName?: string
+  carpoolName?: string
 }
 
 interface NotificationPopupProps {
   variant?: 'default' | 'mobile'
 }
+
+let addInviteAcceptedNotification: ((inviterId: string, inviteeName: string, carpoolName: string) => void) | undefined;
 
 export function NotificationPopup({ variant = 'default' }: NotificationPopupProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -142,6 +147,8 @@ export function NotificationPopup({ variant = 'default' }: NotificationPopupProp
         return <Users className="w-4 h-4 text-purple-500" />
       case 'location_update':
         return <MapPin className="w-4 h-4 text-orange-500" />
+      case 'invite_accepted':
+        return <Bell className="w-4 h-4 text-green-600" />
       default:
         return <Bell className="w-4 h-4 text-gray-500" />
     }
@@ -157,6 +164,25 @@ export function NotificationPopup({ variant = 'default' }: NotificationPopupProp
     if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`
     return date.toLocaleDateString()
   }
+
+  useEffect(() => {
+    addInviteAcceptedNotification = (inviterId: string, inviteeName: string, carpoolName: string) => {
+      setNotifications(prev => [
+        {
+          id: `invite-accepted-${Date.now()}`,
+          type: 'invite_accepted',
+          title: 'Invite Accepted',
+          message: `${inviteeName} accepted your invite to ${carpoolName}!`,
+          timestamp: new Date(),
+          read: false,
+          inviterId,
+          inviteeName,
+          carpoolName,
+        },
+        ...prev,
+      ])
+    }
+  }, [])
 
   if (variant === 'mobile') {
     return (
@@ -368,4 +394,6 @@ export function NotificationPopup({ variant = 'default' }: NotificationPopupProp
       )}
     </div>
   )
-} 
+}
+
+export { addInviteAcceptedNotification }; 
