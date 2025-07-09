@@ -63,6 +63,7 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
   const [isLoading, setIsLoading] = useState(false)
   const { user } = useUser()
   const api = useApi()
+  const [carpoolCreatorId, setCarpoolCreatorId] = useState<string | null>(null);
 
   const fetchDayDetails = async () => {
     try {
@@ -70,18 +71,69 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
       const rides = await api.getCarpoolRideByDate(carpoolId, formattedDate)
       console.log('Received rides:', rides)
       
+      // Fetch participants separately since the ride endpoint doesn't include them
+      let participants = []
+      try {
+        const participantsData = await api.getCarpoolParticipantsByDate(carpoolId, formattedDate)
+        console.log('Participants data:', participantsData)
+        
+        // Handle different response formats
+        if (Array.isArray(participantsData)) {
+          participants = participantsData
+        } else if (participantsData && Array.isArray(participantsData.participants)) {
+          participants = participantsData.participants
+        } else if (participantsData && Array.isArray(participantsData.members)) {
+          participants = participantsData.members
+        } else if (participantsData && participantsData.data && Array.isArray(participantsData.data)) {
+          participants = participantsData.data
+        } else {
+          console.log('No participants found in response:', participantsData)
+          participants = []
+        }
+      } catch (error) {
+        console.error('Error fetching participants:', error)
+        participants = []
+      }
+      
       if (rides && rides.length > 0) {
         const rideDetails = rides[0]
+        console.log('Ride details:', rideDetails)
+        console.log('Participants from separate call:', participants)
+        
         setDayDetails({
           id: rideDetails.id,
           driver: rideDetails.driver_id ? { id: rideDetails.driver_id } : undefined,
-          participants: rideDetails.participants || [],
+          participants: participants,
+        })
+      } else {
+        // No ride exists yet, but we can still show participants
+        console.log('No ride exists, showing participants only')
+        setDayDetails({
+          id: '',
+          driver: undefined,
+          participants: participants,
         })
       }
     } catch (error) {
       console.error('Error fetching ride details:', error)
     }
   }
+
+  // Fetch the carpool creator using the new endpoint
+  const fetchCarpoolCreator = async () => {
+    try {
+      const headers = await api.getHeaders ? await api.getHeaders() : {};
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/carpools/${carpoolId}/creator`, {
+        headers
+      });
+      if (!response.ok) throw new Error('Failed to fetch carpool creator');
+      const data = await response.json();
+      setCarpoolCreatorId(data.creator_id);
+      console.log('Carpool Creator UUID:', data.creator_id);
+    } catch (error) {
+      console.error('Error fetching carpool creator:', error);
+    }
+  };
 
   const handleSetDriver = async () => {
     if (!user?.id || !dayDetails?.participants || !dayDetails?.id) return;
@@ -144,9 +196,10 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
 
   useEffect(() => {
     if (isOpen) {
-      fetchDayDetails()
+      fetchDayDetails();
+      fetchCarpoolCreator();
     }
-  }, [isOpen, date, carpoolId])
+  }, [isOpen, date, carpoolId]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -164,6 +217,13 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
                 <div className="flex items-center space-x-3">
                   {(() => {
                     const driverParticipant = dayDetails.participants.find(p => p.id === dayDetails.driver?.id);
+                    console.log('=== DRIVER DEBUG ===');
+                    console.log('Driver participant found:', driverParticipant);
+                    console.log('Driver ID:', driverParticipant?.id);
+                    console.log('Carpool Creator ID:', carpoolCreatorId);
+                    console.log('Are they equal?', driverParticipant?.id === carpoolCreatorId);
+                    console.log('===================');
+                    
                     return driverParticipant ? (
                       <>
                         <div className="h-8 w-8 rounded-full bg-[#2B5335] flex items-center justify-center">
@@ -177,6 +237,11 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
                             {driverParticipant.clerk_id === user?.id && (
                               <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
                                 You
+                              </span>
+                            )}
+                            {driverParticipant.id === carpoolCreatorId && (
+                              <span className="ml-2 px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full flex items-center">
+                                <span className="mr-1">👑</span> Creator
                               </span>
                             )}
                           </div>
@@ -202,42 +267,56 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
           <div className="space-y-3">
             <h3 className="font-semibold text-lg text-gray-800">Participants</h3>
             <div className="space-y-2">
-              {dayDetails?.participants.map(participant => (
-                <div 
-                  key={participant.id} 
-                  className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 shadow-sm hover:border-gray-200 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 rounded-full bg-[#2B5335] flex items-center justify-center">
-                      <span className="text-white font-medium">
-                        {participant.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center">
-                        <span className="font-medium text-gray-900">{participant.name}</span>
-                        {participant.clerk_id === user?.id && (
-                          <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
-                            You
-                          </span>
-                        )}
+              {dayDetails?.participants.map(participant => {
+                console.log('=== PARTICIPANT DEBUG ===');
+                console.log('Participant ID:', participant.id);
+                console.log('Carpool Creator ID:', carpoolCreatorId);
+                console.log('Are they equal?', participant.id === carpoolCreatorId);
+                console.log('Participant data:', participant);
+                console.log('========================');
+                
+                return (
+                  <div 
+                    key={participant.id} 
+                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 shadow-sm hover:border-gray-200 transition-colors"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="h-8 w-8 rounded-full bg-[#2B5335] flex items-center justify-center">
+                        <span className="text-white font-medium">
+                          {participant.name.charAt(0).toUpperCase()}
+                        </span>
                       </div>
-                      <span className="text-sm text-gray-500">{participant.email}</span>
+                      <div className="flex flex-col">
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-900">{participant.name}</span>
+                          {participant.clerk_id === user?.id && (
+                            <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
+                              You
+                            </span>
+                          )}
+                          {participant.id === carpoolCreatorId && (
+                            <span className="ml-2 px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full flex items-center">
+                              <span className="mr-1">👑</span> Creator
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-sm text-gray-500">{participant.email}</span>
+                      </div>
                     </div>
+                    {participant.clerk_id === user?.id && (
+                      <Button
+                        variant="destructive"
+                        onClick={handleRemoveParticipant}
+                        size="sm"
+                        disabled={isLoading}
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded transition-colors"
+                      >
+                        {isLoading ? "Leaving..." : "Leave Ride"}
+                      </Button>
+                    )}
                   </div>
-                  {participant.clerk_id === user?.id && (
-                    <Button
-                      variant="destructive"
-                      onClick={handleRemoveParticipant}
-                      size="sm"
-                      disabled={isLoading}
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded transition-colors"
-                    >
-                      {isLoading ? "Leaving..." : "Leave Ride"}
-                    </Button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

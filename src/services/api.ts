@@ -32,6 +32,7 @@ export const useApi = () => {
     }
 
     return {
+      getHeaders, // <-- add this line so api.getHeaders is available
       async getInvites(userId: string) {
         if (useMockApi) {
           return mockService.getInvites(userId)
@@ -760,6 +761,40 @@ export const useApi = () => {
         return response.json()
       },
 
+      async getCarpoolParticipantsByDate(carpoolId: string, date: string) {
+        const headers = await getHeaders()
+        console.log('Fetching participants for carpool:', carpoolId, 'date:', date)
+        
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/days/${date}/participants`, {
+          method: 'GET',
+          headers
+        })
+        
+        if (!response.ok) {
+          console.error('Participants API Error:', response.status, response.statusText)
+          // If the endpoint doesn't exist, fall back to carpool members
+          console.log('Falling back to carpool members')
+          return this.getCarpoolMembers(carpoolId)
+        }
+        
+        const text = await response.text()
+        console.log('Raw participants response:', text)
+        
+        if (!text) {
+          console.log('Empty participants response, falling back to carpool members')
+          return this.getCarpoolMembers(carpoolId)
+        }
+        
+        try {
+          const data = JSON.parse(text)
+          console.log('Parsed participants data:', data)
+          return data
+        } catch (error) {
+          console.error('JSON Parse Error for participants:', error, 'Response:', text)
+          return this.getCarpoolMembers(carpoolId)
+        }
+      },
+
       async createCarpoolRide(carpoolId: string, date: string, startTime: string) {
         const headers = await getHeaders()
         
@@ -784,11 +819,33 @@ export const useApi = () => {
 
       async getCarpoolRideByDate(carpoolId: string, date: string) {
         const headers = await getHeaders()
+        console.log('Fetching ride by date for carpool:', carpoolId, 'date:', date)
+        
         const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/rides/${date}`, {
           headers
         })
-        if (!response.ok) throw new Error('Failed to fetch ride details')
-        return response.json()
+        
+        if (!response.ok) {
+          console.error('Ride by date API Error:', response.status, response.statusText)
+          throw new Error('Failed to fetch ride details')
+        }
+        
+        const text = await response.text()
+        console.log('Raw ride by date response:', text)
+        
+        if (!text) {
+          console.log('Empty response received')
+          return []
+        }
+        
+        try {
+          const data = JSON.parse(text)
+          console.log('Parsed ride by date data:', data)
+          return data
+        } catch (error) {
+          console.error('JSON Parse Error:', error, 'Response:', text)
+          return []
+        }
       },
 
       async getUserTotalRides(userId: string) {

@@ -47,26 +47,34 @@ export function CarpoolList() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const router = useRouter()
   const [membersMap, setMembersMap] = useState<Record<string, any[]>>({});
+  const [carpoolDetailsMap, setCarpoolDetailsMap] = useState<Record<string, Carpool>>({});
 
   useEffect(() => {
-    async function fetchMembers() {
+    async function fetchMembersAndDetails() {
       if (!carpools) return;
-      const map: Record<string, any[]> = {};
+      const membersMapTemp: Record<string, any[]> = {};
+      const detailsMapTemp: Record<string, Carpool> = {};
       await Promise.all(
         carpools.map(async (carpool) => {
           if (carpool.id) {
             try {
-              const members = await api.getCarpoolMembers(carpool.id);
-              map[carpool.id] = members || [];
+              const [members, carpoolDetails] = await Promise.all([
+                api.getCarpoolMembers(carpool.id),
+                api.getCarpool(carpool.id)
+              ]);
+              membersMapTemp[carpool.id] = members || [];
+              detailsMapTemp[carpool.id] = carpoolDetails;
             } catch (e) {
-              map[carpool.id] = [];
+              membersMapTemp[carpool.id] = [];
+              detailsMapTemp[carpool.id] = carpool;
             }
           }
         })
       );
-      setMembersMap(map);
+      setMembersMap(membersMapTemp);
+      setCarpoolDetailsMap(detailsMapTemp);
     }
-    fetchMembers();
+    fetchMembersAndDetails();
   }, [carpools, api]);
 
   if (!isLoaded || !user) {
@@ -145,22 +153,24 @@ export function CarpoolList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {carpools?.map((carpool) => (
-                  <TableRow key={carpool.id}>
-                    <TableCell className="font-medium">{carpool.carpool_name}</TableCell>
-                    <TableCell>{carpool.recurring_option || 'One-time'}</TableCell>
-                    <TableCell>
-                      <span className={`$${
-                        carpool.available_seats <= 0 
-                          ? 'text-red-600 font-semibold' 
-                          : carpool.available_seats <= 1 
-                            ? 'text-orange-600 font-medium' 
-                            : 'text-gray-900'
-                      }`}>
-                        {carpool.available_seats} of {carpool.seats}
-                        {carpool.available_seats <= 0 && ' (Full)'}
-                      </span>
-                    </TableCell>
+                {carpools?.map((carpool) => {
+                  const details = carpoolDetailsMap[carpool.id || ''] || carpool;
+                  return (
+                    <TableRow key={carpool.id}>
+                      <TableCell className="font-medium">{carpool.carpool_name}</TableCell>
+                      <TableCell>{carpool.recurring_option || 'One-time'}</TableCell>
+                      <TableCell>
+                        <span className={`$${
+                          details.available_seats <= 0 
+                            ? 'text-red-600 font-semibold' 
+                            : details.available_seats <= 1 
+                              ? 'text-orange-600 font-medium' 
+                              : 'text-gray-900'
+                        }`}>
+                          {details.available_seats} of {details.seats}
+                          {details.available_seats <= 0 && ' (Full)'}
+                        </span>
+                      </TableCell>
                     <TableCell>
                       {carpool.id && membersMap[carpool.id]?.length ? (
                         <Tooltip content={
@@ -197,20 +207,20 @@ export function CarpoolList() {
                     <TableCell>{carpool.destination_address}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Tooltip content={carpool.available_seats <= 0
+                        <Tooltip content={details.available_seats <= 0
                           ? 'Invite someone to join this carpool. Disabled when the carpool is full.'
                           : 'Invite someone to join this carpool.'}>
                           <Button
                             variant="secondary"
                             onClick={() => carpool.id && handleInvite(carpool.id)}
-                            disabled={carpool.available_seats <= 0}
+                            disabled={details.available_seats <= 0}
                             className={`$${
-                              carpool.available_seats <= 0 
+                              details.available_seats <= 0 
                                 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                                 : 'bg-blue-200 hover:bg-blue-300'
                             }`}
                           >
-                            {carpool.available_seats <= 0 ? 'Full' : 'Invite'}
+                            {details.available_seats <= 0 ? 'Full' : 'Invite'}
                           </Button>
                         </Tooltip>
                         <Tooltip content={"Edit the schedule for this carpool (dates, times, frequency)."}>
@@ -245,7 +255,7 @@ export function CarpoolList() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                )})}
               </TableBody>
             </Table>
           </div>
