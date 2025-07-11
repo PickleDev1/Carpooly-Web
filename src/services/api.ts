@@ -274,6 +274,47 @@ export const useApi = () => {
         }
       },
 
+      getUserById: async (userId: string) => {
+        try {
+          const token = await getToken({template: "carpooly"})
+          const response = await fetch(`${API_URL}/api/users/${userId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+
+          if (!response.ok) {
+            throw new Error('Failed to get user data')
+          }
+
+          return response.json()
+        } catch (error) {
+          console.error('Get user by ID error:', error)
+          throw error
+        }
+      },
+
+      deleteUser: async (userId: string) => {
+        try {
+          const token = await getToken({template: "carpooly"})
+          const response = await fetch(`${API_URL}/api/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+
+          if (!response.ok) {
+            throw new Error('Failed to delete user account')
+          }
+
+          return response.json()
+        } catch (error) {
+          console.error('Delete user error:', error)
+          throw error
+        }
+      },
+
       async getCurrentUser() {
         if (useMockApi) {
           return mockService.getCurrentUser()
