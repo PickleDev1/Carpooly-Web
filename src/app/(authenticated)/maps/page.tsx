@@ -60,7 +60,15 @@ export default function TrackLocationsPage() {
               }
             })
           )
-          setActiveRides(enhancedRides)
+          // Deduplicate rides by carpool_id, start_time, and destination_address
+          const uniqueRides = enhancedRides.filter((ride, index, self) =>
+            index === self.findIndex((r) =>
+              r.carpool_id === ride.carpool_id &&
+              r.start_time === ride.start_time &&
+              r.destination_address === ride.destination_address
+            )
+          )
+          setActiveRides(uniqueRides)
         } else {
           setActiveRides([])
         }
