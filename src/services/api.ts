@@ -315,7 +315,7 @@ export const useApi = () => {
         }
       },
 
-      // Calculate miles saved based on completed rides where user was a participant
+      // Calculate miles saved based on active rides that started at least 45 minutes ago (and remain counted)
       async calculateMilesSaved(userId: string) {
         try {
           // Get user's home location for distance calculations
@@ -328,40 +328,60 @@ export const useApi = () => {
             return 0
           }
 
-          // Get completed rides where user was a participant
-          const rideHistory = await this.getRideHistory()
+          // Get active rides where user is a participant
+          const activeRides = await this.getActiveRides()
+          const now = new Date()
           
           let totalMilesSaved = 0
-          let totalRidesCompleted = 0
+          let totalRidesCounted = 0
 
-          for (const ride of rideHistory) {
-            // Check if this ride has destination coordinates
-            if (ride.destination_lat && ride.destination_lng) {
-              // Calculate distance from home to destination
-              const distance = this.calculateDistance(
-                homeLat, 
-                homeLng, 
-                ride.destination_lat, 
-                ride.destination_lng
-              )
+          for (const ride of activeRides) {
+            // Check if this ride's start_time is at least 45 minutes ago
+            if (ride.start_time) {
+              const startTime = new Date(ride.start_time)
+              const timeDiff = (now.getTime() - startTime.getTime()) / (1000 * 60) // minutes
               
-              // Miles saved calculation:
-              // - Each passenger in a carpool saves the equivalent of one car trip
-              // - If there are N passengers, that's N-1 cars saved (since one car is still used)
-              // - Each saved car trip = round trip distance (there and back)
-              const passengers = parseInt(ride.passengers) || 1
-              const carsSaved = Math.max(0, passengers - 1) // At least 1 car is still used
-              const roundTripDistance = distance * 2 // There and back
-              const milesSavedForThisRide = carsSaved * roundTripDistance
-              
-              totalMilesSaved += milesSavedForThisRide
-              totalRidesCompleted++
-              
-              console.log(`Ride: ${ride.carpool_name}, Distance: ${distance.toFixed(1)}mi, Passengers: ${passengers}, Cars Saved: ${carsSaved}, Miles Saved: ${milesSavedForThisRide.toFixed(1)}`)
+              // Only count rides that started at least 45 minutes ago
+              if (timeDiff >= 45) {
+                // Check if the current user is a participant in this ride
+                const isUserParticipant = ride.participants && Array.isArray(ride.participants) && 
+                  ride.participants.some((participant: any) => participant.id === userId)
+                
+                if (isUserParticipant) {
+                  // Check if this ride has destination coordinates
+                  if (ride.destination_lat && ride.destination_lng) {
+                    // Calculate distance from home to destination
+                    const distance = this.calculateDistance(
+                      homeLat, 
+                      homeLng, 
+                      ride.destination_lat, 
+                      ride.destination_lng
+                    )
+                    
+                    // Miles saved calculation:
+                    // - Each passenger in a carpool saves the equivalent of one car trip
+                    // - If there are N passengers, that's N-1 cars saved (since one car is still used)
+                    // - Each saved car trip = round trip distance (there and back)
+                    const passengers = parseInt(ride.passengers) || 1
+                    const carsSaved = Math.max(0, passengers - 1) // At least 1 car is still used
+                    const roundTripDistance = distance * 2 // There and back
+                    const milesSavedForThisRide = carsSaved * roundTripDistance
+                    
+                    totalMilesSaved += milesSavedForThisRide
+                    totalRidesCounted++
+                    
+                    console.log(`Active Ride: ${ride.carpool_name}, Started ${timeDiff.toFixed(1)}min ago, Distance: ${distance.toFixed(1)}mi, Passengers: ${passengers}, Cars Saved: ${carsSaved}, Miles Saved: ${milesSavedForThisRide.toFixed(1)}`)
+                  }
+                } else {
+                  console.log(`Ride ${ride.carpool_name} started ${timeDiff.toFixed(1)}min ago, but user is not a participant`)
+                }
+              } else {
+                console.log(`Ride ${ride.carpool_name} started ${timeDiff.toFixed(1)}min ago, not yet eligible for miles saved (needs 45+ min)`)
+              }
             }
           }
 
-          console.log(`Total miles saved: ${totalMilesSaved.toFixed(1)} from ${totalRidesCompleted} completed rides`)
+          console.log(`Total miles saved: ${totalMilesSaved.toFixed(1)} from ${totalRidesCounted} rides (45+ min after start, user is participant)`)
           return Math.round(totalMilesSaved)
         } catch (error) {
           console.error('Error calculating miles saved:', error)
