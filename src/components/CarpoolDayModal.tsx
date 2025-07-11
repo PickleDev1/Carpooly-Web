@@ -65,41 +65,28 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
   const { user } = useUser()
   const api = useApi()
   const [carpoolCreatorId, setCarpoolCreatorId] = useState<string | null>(null);
+  const [hasJoinedBack, setHasJoinedBack] = useState(false);
 
   const fetchDayDetails = async () => {
     try {
-      const formattedDate = format(date, 'yyyy-MM-dd')
-      const rides = await api.getCarpoolRideByDate(carpoolId, formattedDate)
+      console.log('Fetching day details for date:', format(date, 'yyyy-MM-dd'))
+      
+      // Fetch rides for the specific date
+      const rides = await api.getCarpoolRideByDate(carpoolId, format(date, 'yyyy-MM-dd'))
       console.log('Received rides:', rides)
       
-      // Fetch participants separately since the ride endpoint doesn't include them
+      // Use participants from the ride data instead of separate call
       let participants = []
-      try {
-        const participantsData = await api.getCarpoolParticipantsByDate(carpoolId, formattedDate)
-        console.log('Participants data:', participantsData)
-        
-        // Handle different response formats
-        if (Array.isArray(participantsData)) {
-          participants = participantsData
-        } else if (participantsData && Array.isArray(participantsData.participants)) {
-          participants = participantsData.participants
-        } else if (participantsData && Array.isArray(participantsData.members)) {
-          participants = participantsData.members
-        } else if (participantsData && participantsData.data && Array.isArray(participantsData.data)) {
-          participants = participantsData.data
-        } else {
-          console.log('No participants found in response:', participantsData)
-          participants = []
-        }
-      } catch (error) {
-        console.error('Error fetching participants:', error)
-        participants = []
-      }
-      
       if (rides && rides.length > 0) {
         const rideDetails = rides[0]
         console.log('Ride details:', rideDetails)
-        console.log('Participants from separate call:', participants)
+        
+        // Extract participants from the ride data
+        if (rideDetails.participants && Array.isArray(rideDetails.participants)) {
+          participants = rideDetails.participants;
+        }
+        
+        console.log('Participants from ride data:', participants)
         
         setDayDetails({
           id: rideDetails.id,
@@ -107,8 +94,30 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
           participants: participants,
         })
       } else {
-        // No ride exists yet, but we can still show participants
-        console.log('No ride exists, showing participants only')
+        // No ride exists yet, try to get participants from separate call as fallback
+        console.log('No ride exists, trying separate participants call')
+        try {
+          const participantsData = await api.getCarpoolParticipantsByDate(carpoolId, format(date, 'yyyy-MM-dd'))
+          console.log('Fallback participants data:', participantsData)
+          
+          // Always extract the .participants array if present
+          if (participantsData && Array.isArray(participantsData.participants)) {
+            participants = participantsData.participants;
+          } else if (Array.isArray(participantsData)) {
+            participants = participantsData;
+          } else if (participantsData && Array.isArray(participantsData.members)) {
+            participants = participantsData.members;
+          } else if (participantsData && participantsData.data && Array.isArray(participantsData.data)) {
+            participants = participantsData.data;
+          } else {
+            participants = [];
+          }
+          console.log('Fallback participants array:', participants);
+        } catch (error) {
+          console.error('Error fetching fallback participants:', error)
+          participants = []
+        }
+        
         setDayDetails({
           id: '',
           driver: undefined,
@@ -236,12 +245,65 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
     }
   };
 
+  // Handler to join back the ride
+  const handleJoinBack = async () => {
+    if (!user?.id || !dayDetails?.id) return;
+    try {
+      setIsLoading(true);
+      console.log('[JoinBackButton] Clicked');
+      setHasJoinedBack(true); // Hide button immediately
+      setDayDetails(prev => {
+        const updated = prev ? {
+          ...prev,
+          participants: [
+            ...prev.participants,
+            {
+              id: user.id,
+              clerk_id: user.id, // fallback if needed
+              name: user.firstName || user.fullName || (user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress) || 'You',
+              display_name: user.fullName || user.firstName || (user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress) || 'You',
+              email: user.primaryEmailAddress?.emailAddress || user.emailAddresses?.[0]?.emailAddress || '',
+            }
+          ]
+        } : null;
+        console.log('[JoinBackButton] Optimistic participants:', updated?.participants.map(p => p.id));
+        return updated;
+      });
+      await api.addCarpoolParticipantById(dayDetails.id, user.id);
+      await fetchDayDetails();
+      setHasJoinedBack(false); // Reset after refresh
+    } catch (error) {
+      setHasJoinedBack(false);
+      console.error('Error joining back the ride:', error);
+      await fetchDayDetails();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchDayDetails();
       fetchCarpoolCreator();
     }
   }, [isOpen, date, carpoolId]);
+
+  // Debug log when dayDetails changes
+  useEffect(() => {
+    if (user && dayDetails) {
+      const isParticipant = dayDetails.participants.some(p => p.clerk_id === user.id);
+      console.log('[JoinBackButton] DEBUG - Button condition check:', {
+        user: !!user,
+        dayDetails: !!dayDetails,
+        hasJoinedBack,
+        isParticipant,
+        dayDetailsId: dayDetails.id,
+        participants: dayDetails.participants.map(p => ({ id: p.id, clerk_id: p.clerk_id, name: p.name })),
+        userId: user.id,
+        shouldShowButton: !hasJoinedBack && !dayDetails.participants.some(p => p.clerk_id === user.id) && dayDetails.id
+      });
+    }
+  }, [user, dayDetails, hasJoinedBack]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -309,6 +371,16 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
           <div className="space-y-3">
             <h3 className="font-semibold text-lg text-gray-800">Participants</h3>
             <div className="space-y-2">
+              {/* Show Join Back button if user is not a participant */}
+              {user && dayDetails && !hasJoinedBack && !dayDetails.participants.some(p => p.clerk_id === user.id) && dayDetails.id && (
+                <Button
+                  onClick={handleJoinBack}
+                  disabled={isLoading}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white mb-2"
+                >
+                  {isLoading ? 'Joining...' : 'Join Back'}
+                </Button>
+              )}
               {dayDetails?.participants.map(participant => {
                 const isCreator = participant.id === carpoolCreatorId;
                 const isSelf = participant.clerk_id === user?.id;

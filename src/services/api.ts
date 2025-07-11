@@ -752,6 +752,16 @@ export const useApi = () => {
         return response.json();
       },
 
+      async addCarpoolParticipantById(rideId: string, userId: string) {
+        const headers = await getHeaders();
+        const response = await fetch(`${API_URL}/api/carpools/rides/${rideId}/participants/${userId}`, {
+          method: 'POST',
+          headers
+        });
+        if (!response.ok) throw new Error('Failed to add participant by ID');
+        return response.json();
+      },
+
       async addCarpoolComment(carpoolId: string, date: string, comment: string) {
         const headers = await getHeaders()
         const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/days/${date}/comments`, {
