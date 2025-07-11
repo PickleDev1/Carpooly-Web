@@ -8,7 +8,10 @@ interface RideHistory {
   date: string
   time: string
   destination_address: string
-  passengers: string
+  destination_lat?: number
+  destination_lng?: number
+  passengers: number
+  user_id?: string
 }
 
 export default function HistoryPage() {

@@ -26,7 +26,10 @@ export interface CompletedRide {
   date: string;
   time: string;
   destination_address: string;
+  destination_lat?: number;
+  destination_lng?: number;
   passengers: number;
+  user_id?: string; // To track which user participated in this ride
 }
 
 export interface Analytics {

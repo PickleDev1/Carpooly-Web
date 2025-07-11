@@ -46,6 +46,24 @@ export default function ProfilePage() {
 
   const [editedAdditionalInfo, setEditedAdditionalInfo] = useState(additionalInfo);
 
+  // Stats and Activity state
+  const [userStats, setUserStats] = useState({
+    totalRides: 0,
+    totalCarpools: 0,
+    milesSaved: 0,
+    memberSince: '',
+    rating: 0,
+    completedRides: 0,
+    cancelledRides: 0
+  });
+
+  const recentActivity = [
+    { type: 'ride', action: 'Joined carpool', date: '2024-01-20', details: 'Work commute - 8:00 AM' },
+    { type: 'carpool', action: 'Created carpool', date: '2024-01-18', details: 'Weekend trip to beach' },
+    { type: 'rating', action: 'Received 5-star rating', date: '2024-01-15', details: 'From Sarah M.' },
+    { type: 'ride', action: 'Completed ride', date: '2024-01-12', details: 'Airport pickup' }
+  ];
+
   // Fetch user data from API
   useEffect(() => {
     const fetchUserData = async () => {
@@ -66,23 +84,24 @@ export default function ProfilePage() {
     fetchUserData();
   }, [user?.id, api]);
 
-  // Mock data - replace with real data from your API
-  const userStats = {
-    totalRides: 24,
-    totalCarpools: 8,
-    milesSaved: 156,
-    memberSince: userData?.created_at || '2024-01-15',
-    rating: 4.8,
-    completedRides: 22,
-    cancelledRides: 2
-  };
+  // Fetch miles saved and other stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const calculatedMilesSaved = await api.calculateMilesSaved(user.id);
+        setUserStats(prev => ({
+          ...prev,
+          milesSaved: calculatedMilesSaved
+        }));
+      } catch (error) {
+        console.error('Error calculating miles saved:', error);
+      }
+    };
 
-  const recentActivity = [
-    { type: 'ride', action: 'Joined carpool', date: '2024-01-20', details: 'Work commute - 8:00 AM' },
-    { type: 'carpool', action: 'Created carpool', date: '2024-01-18', details: 'Weekend trip to beach' },
-    { type: 'rating', action: 'Received 5-star rating', date: '2024-01-15', details: 'From Sarah M.' },
-    { type: 'ride', action: 'Completed ride', date: '2024-01-12', details: 'Airport pickup' }
-  ];
+    fetchStats();
+  }, [user?.id, api]);
 
   const handleSave = async () => {
     // TODO: Implement profile update logic
@@ -204,7 +223,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="text-sm text-gray-500">
-                Member since {formatMemberSince(userStats.memberSince)}
+                Member since {formatMemberSince(userData?.created_at || '')}
               </div>
 
               {isEditing && (

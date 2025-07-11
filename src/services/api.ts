@@ -315,6 +315,74 @@ export const useApi = () => {
         }
       },
 
+      // Calculate miles saved based on completed rides where user was a participant
+      async calculateMilesSaved(userId: string) {
+        try {
+          // Get user's home location for distance calculations
+          const locationSettings = await this.getLocationSettings()
+          const homeLat = locationSettings.home_latitude
+          const homeLng = locationSettings.home_longitude
+
+          if (!homeLat || !homeLng) {
+            console.log('No home location set, cannot calculate miles saved')
+            return 0
+          }
+
+          // Get completed rides where user was a participant
+          const rideHistory = await this.getRideHistory()
+          
+          let totalMilesSaved = 0
+          let totalRidesCompleted = 0
+
+          for (const ride of rideHistory) {
+            // Check if this ride has destination coordinates
+            if (ride.destination_lat && ride.destination_lng) {
+              // Calculate distance from home to destination
+              const distance = this.calculateDistance(
+                homeLat, 
+                homeLng, 
+                ride.destination_lat, 
+                ride.destination_lng
+              )
+              
+              // Miles saved calculation:
+              // - Each passenger in a carpool saves the equivalent of one car trip
+              // - If there are N passengers, that's N-1 cars saved (since one car is still used)
+              // - Each saved car trip = round trip distance (there and back)
+              const passengers = parseInt(ride.passengers) || 1
+              const carsSaved = Math.max(0, passengers - 1) // At least 1 car is still used
+              const roundTripDistance = distance * 2 // There and back
+              const milesSavedForThisRide = carsSaved * roundTripDistance
+              
+              totalMilesSaved += milesSavedForThisRide
+              totalRidesCompleted++
+              
+              console.log(`Ride: ${ride.carpool_name}, Distance: ${distance.toFixed(1)}mi, Passengers: ${passengers}, Cars Saved: ${carsSaved}, Miles Saved: ${milesSavedForThisRide.toFixed(1)}`)
+            }
+          }
+
+          console.log(`Total miles saved: ${totalMilesSaved.toFixed(1)} from ${totalRidesCompleted} completed rides`)
+          return Math.round(totalMilesSaved)
+        } catch (error) {
+          console.error('Error calculating miles saved:', error)
+          return 0
+        }
+      },
+
+      // Haversine formula to calculate distance between two points
+      calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+        const toRad = (x: number) => (x * Math.PI) / 180
+        const R = 3958.8 // Radius of Earth in miles
+        const dLat = toRad(lat2 - lat1)
+        const dLon = toRad(lon2 - lon1)
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return R * c
+      },
+
       async getCurrentUser() {
         if (useMockApi) {
           return mockService.getCurrentUser()

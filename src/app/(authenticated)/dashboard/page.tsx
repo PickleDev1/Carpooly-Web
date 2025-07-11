@@ -280,15 +280,33 @@ export default function Dashboard() {
 
   // Calculate stats
   useEffect(() => {
-    if (carpools && invites) {
-      setStats({
-        totalCarpools: carpools.length,
-        activeRides: activeRidesCount,
-        pendingInvites: invites.length,
-        milesSaved: Math.round(carpools.length * 15) // Placeholder calculation
-      })
+    if (carpools && invites && user?.id) {
+      const calculateStats = async () => {
+        try {
+          // Calculate miles saved based on completed rides
+          const calculatedMilesSaved = await api.calculateMilesSaved(user.id)
+          
+          setStats({
+            totalCarpools: carpools.length,
+            activeRides: activeRidesCount,
+            pendingInvites: invites.length,
+            milesSaved: calculatedMilesSaved
+          })
+        } catch (error) {
+          console.error('Error calculating stats:', error)
+          // Fallback to placeholder calculation
+          setStats({
+            totalCarpools: carpools.length,
+            activeRides: activeRidesCount,
+            pendingInvites: invites.length,
+            milesSaved: 0
+          })
+        }
+      }
+      
+      calculateStats()
     }
-  }, [carpools, invites, activeRidesCount])
+  }, [carpools, invites, activeRidesCount, user?.id, api])
 
   useEffect(() => {
     console.log('🔔 Dashboard: Browser notification effect triggered')

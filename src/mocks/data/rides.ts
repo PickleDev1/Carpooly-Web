@@ -27,7 +27,10 @@ export const mockCompletedRides: CompletedRide[] = [
     date: '2024-03-15',
     time: '8:00 AM',
     destination_address: '123 School St',
-    passengers: 3
+    destination_lat: 37.547236,
+    destination_lng: -121.942220,
+    passengers: 3,
+    user_id: 'user_123'
   },
   {
     id: '2',
@@ -35,6 +38,9 @@ export const mockCompletedRides: CompletedRide[] = [
     date: '2024-03-14',
     time: '3:00 PM',
     destination_address: '456 Soccer Field',
-    passengers: 4
+    destination_lat: 37.529290,
+    destination_lng: -121.938373,
+    passengers: 4,
+    user_id: 'user_123'
   }
 ]

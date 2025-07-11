@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
@@ -41,6 +41,23 @@ export default function SettingsPage() {
   const api = useApi();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [milesSaved, setMilesSaved] = useState(0);
+
+  // Fetch miles saved for account status
+  useEffect(() => {
+    const fetchMilesSaved = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const calculatedMilesSaved = await api.calculateMilesSaved(user.id);
+        setMilesSaved(calculatedMilesSaved);
+      } catch (error) {
+        console.error('Error calculating miles saved:', error);
+      }
+    };
+
+    fetchMilesSaved();
+  }, [user?.id, api]);
 
   const handleDeleteAccount = async () => {
     if (!user?.id) return;
@@ -276,8 +293,8 @@ export default function SettingsPage() {
                   <span className="text-sm font-medium text-gray-900">Jan 2024</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Rides</span>
-                  <span className="text-sm font-medium text-gray-900">24</span>
+                  <span className="text-sm text-gray-600">Miles Saved</span>
+                  <span className="text-sm font-medium text-gray-900">{milesSaved}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Status</span>
