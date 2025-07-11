@@ -741,6 +741,17 @@ export const useApi = () => {
         return response.json()
       },
 
+      async removeCarpoolParticipantById(rideId: string, userId: string) {
+        const headers = await getHeaders();
+        console.log('Calling removeCarpoolParticipantById with rideId:', rideId, 'userId:', userId);
+        const response = await fetch(`${API_URL}/api/carpools/rides/${rideId}/participants/${userId}`, {
+          method: 'DELETE',
+          headers
+        });
+        if (!response.ok) throw new Error('Failed to remove participant by ID');
+        return response.json();
+      },
+
       async addCarpoolComment(carpoolId: string, date: string, comment: string) {
         const headers = await getHeaders()
         const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/days/${date}/comments`, {

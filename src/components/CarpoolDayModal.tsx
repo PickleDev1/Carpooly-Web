@@ -61,6 +61,7 @@ interface RideDetails {
 export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDayModalProps) {
   const [dayDetails, setDayDetails] = useState<DayDetails | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [removingParticipantId, setRemovingParticipantId] = useState<string | null>(null)
   const { user } = useUser()
   const api = useApi()
   const [carpoolCreatorId, setCarpoolCreatorId] = useState<string | null>(null);
@@ -175,24 +176,65 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
 
   const handleRemoveParticipant = async () => {
     if (!user?.id || !dayDetails?.id) return;
-    
     try {
       setIsLoading(true)
-      const formattedDate = format(date, 'yyyy-MM-dd')
-      await api.removeCarpoolParticipant(carpoolId, formattedDate)
-      
-      // Increment available seats when user leaves
-      await api.incrementCarpoolAvailableSeats(carpoolId)
-      console.log(`Incremented available seats for carpool ${carpoolId} when user left`)
-      
-      // Refresh the day details after removing participant
-      await fetchDayDetails()
+      // Set the removing participant ID for visual feedback
+      const currentUserParticipant = dayDetails.participants.find(p => p.clerk_id === user.id);
+      if (currentUserParticipant) {
+        setRemovingParticipantId(currentUserParticipant.id);
+        // Optimistically remove the current user from the participants list
+        setDayDetails(prev => prev ? {
+          ...prev,
+          participants: prev.participants.filter(p => p.id !== currentUserParticipant.id),
+          driver: prev.driver?.id === currentUserParticipant.id ? undefined : prev.driver
+        } : null);
+      }
+      // Call the same API as Remove, using the logged-in user's UUID
+      await api.removeCarpoolParticipantById(dayDetails.id, currentUserParticipant?.id || user.id);
+      await fetchDayDetails();
     } catch (error) {
       console.error('Error removing participant:', error)
+      await fetchDayDetails()
     } finally {
       setIsLoading(false)
+      setRemovingParticipantId(null)
     }
   }
+
+  // Add a handler for removing other participants
+  const handleRemoveOtherParticipant = async (participantId: string) => {
+    if (!dayDetails?.id) return;
+    try {
+      setIsLoading(true);
+      
+      // Set the removing participant ID for visual feedback
+      setRemovingParticipantId(participantId);
+      
+      // Optimistically remove the participant from the list
+      const participantToRemove = dayDetails.participants.find(p => p.id === participantId);
+      if (participantToRemove) {
+        setDayDetails(prev => prev ? {
+          ...prev,
+          participants: prev.participants.filter(p => p.id !== participantId),
+          // If the removed participant was the driver, clear the driver
+          driver: prev.driver?.id === participantId ? undefined : prev.driver
+        } : null);
+      }
+      
+      // Make the API call
+      await api.removeCarpoolParticipantById(dayDetails.id, participantId);
+      
+      // Refresh the day details to get the latest state
+      await fetchDayDetails();
+    } catch (error) {
+      console.error('Error removing participant:', error);
+      // Revert the optimistic update if there's an error
+      await fetchDayDetails();
+    } finally {
+      setIsLoading(false);
+      setRemovingParticipantId(null);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -268,17 +310,17 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
             <h3 className="font-semibold text-lg text-gray-800">Participants</h3>
             <div className="space-y-2">
               {dayDetails?.participants.map(participant => {
-                console.log('=== PARTICIPANT DEBUG ===');
-                console.log('Participant ID:', participant.id);
-                console.log('Carpool Creator ID:', carpoolCreatorId);
-                console.log('Are they equal?', participant.id === carpoolCreatorId);
-                console.log('Participant data:', participant);
-                console.log('========================');
+                const isCreator = participant.id === carpoolCreatorId;
+                const isSelf = participant.clerk_id === user?.id;
+                const isUserCreator = user?.id && dayDetails.participants.find(p => p.id === carpoolCreatorId)?.clerk_id === user.id;
+                const isBeingRemoved = removingParticipantId === participant.id;
                 
                 return (
                   <div 
                     key={participant.id} 
-                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 shadow-sm hover:border-gray-200 transition-colors"
+                    className={`flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 shadow-sm hover:border-gray-200 transition-all duration-300 ${
+                      isBeingRemoved ? 'opacity-50 scale-95' : ''
+                    }`}
                   >
                     <div className="flex items-center space-x-3">
                       <div className="h-8 w-8 rounded-full bg-[#2B5335] flex items-center justify-center">
@@ -289,30 +331,80 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
                       <div className="flex flex-col">
                         <div className="flex items-center">
                           <span className="font-medium text-gray-900">{participant.name}</span>
-                          {participant.clerk_id === user?.id && (
+                          {isSelf && (
                             <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
                               You
                             </span>
                           )}
-                          {participant.id === carpoolCreatorId && (
+                          {isCreator && (
                             <span className="ml-2 px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full flex items-center">
                               <span className="mr-1">👑</span> Creator
+                            </span>
+                          )}
+                          {isBeingRemoved && (
+                            <span className="ml-2 px-2 py-0.5 text-xs bg-orange-100 text-orange-800 rounded-full animate-pulse">
+                              Removing...
                             </span>
                           )}
                         </div>
                         <span className="text-sm text-gray-500">{participant.email}</span>
                       </div>
                     </div>
-                    {participant.clerk_id === user?.id && (
-                      <Button
-                        variant="destructive"
-                        onClick={handleRemoveParticipant}
-                        size="sm"
-                        disabled={isLoading}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded transition-colors"
-                      >
-                        {isLoading ? "Leaving..." : "Leave Ride"}
-                      </Button>
+                    {/* Button logic - only show if a ride exists */}
+                    {dayDetails?.id && (
+                      <>
+                        {isUserCreator ? (
+                          // Logged-in user is creator
+                          isSelf ? (
+                            <Button
+                              variant="destructive"
+                              onClick={handleRemoveParticipant}
+                              size="sm"
+                              disabled={isLoading}
+                              className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded transition-colors"
+                            >
+                              {isLoading ? "Leaving..." : "Leave Ride"}
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleRemoveOtherParticipant(participant.id)}
+                              size="sm"
+                              disabled={isLoading}
+                              className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded transition-colors"
+                            >
+                              Remove
+                            </Button>
+                          )
+                        ) : (
+                          // Logged-in user is not creator
+                          isSelf ? (
+                            !isCreator && (
+                              <Button
+                                variant="destructive"
+                                onClick={handleRemoveParticipant}
+                                size="sm"
+                                disabled={isLoading}
+                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded transition-colors"
+                              >
+                                {isLoading ? "Leaving..." : "Leave Ride"}
+                              </Button>
+                            )
+                          ) : (
+                            !isCreator && (
+                              <Button
+                                variant="destructive"
+                                onClick={() => handleRemoveOtherParticipant(participant.id)}
+                                size="sm"
+                                disabled={isLoading}
+                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded transition-colors"
+                              >
+                                Remove
+                              </Button>
+                            )
+                          )
+                        )}
+                      </>
                     )}
                   </div>
                 );
