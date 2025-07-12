@@ -20,6 +20,12 @@ interface InviteModalProps {
   onClose: () => void
 }
 
+// Utility to detect iOS
+const isIOS = () => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+};
+
 export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
   console.log('[InviteModal] Rendered with carpoolId:', carpoolId, 'isOpen:', isOpen);
   const [email, setEmail] = useState('')
@@ -32,6 +38,7 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
   const api = useApi()
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error' | 'loading'>('idle');
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [showManualCopy, setShowManualCopy] = useState(isIOS());
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -140,12 +147,18 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://carpooly.app';
       const inviteUrl = `${baseUrl}/invite/${inviteCode}`;
       console.log('[InviteModal] Constructed invite URL:', inviteUrl);
-      await navigator.clipboard.writeText(inviteUrl);
       setCopiedLink(inviteUrl);
+      if (isIOS()) {
+        setShowManualCopy(true);
+        setCopyStatus('success');
+        return;
+      }
+      await navigator.clipboard.writeText(inviteUrl);
       setCopyStatus('success');
     } catch (err) {
       console.error('[InviteModal] Failed to copy invite link:', err);
       setCopyStatus('error');
+      setShowManualCopy(true);
     }
     setTimeout(() => setCopyStatus('idle'), 2500);
   };
@@ -247,6 +260,19 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
               </Button>
             </div>
           </div>
+          {showManualCopy && copiedLink && (
+            <div className="mt-2">
+              <Label htmlFor="manual-invite-link" className="text-xs">Copy this link:</Label>
+              <Input
+                id="manual-invite-link"
+                value={copiedLink}
+                readOnly
+                onFocus={e => e.target.select()}
+                className="text-xs font-mono"
+              />
+              <div className="text-xs text-gray-600 mt-1">Tap and hold the link above to copy it.</div>
+            </div>
+          )}
           {copyStatus === 'success' && copiedLink && (
             <div className="text-xs text-green-600 mt-2 break-all">Invite link copied: <span className="font-mono">{copiedLink}</span></div>
           )}
