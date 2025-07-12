@@ -7,11 +7,12 @@ interface SignInRedirectProps {
   className?: string
   children: React.ReactNode
   size?: "default" | "sm" | "lg" | "icon"
+  redirectUrl?: string
 }
 
-export function SignInRedirect({ className, children, size }: SignInRedirectProps) {
+export function SignInRedirect({ className, children, size, redirectUrl }: SignInRedirectProps) {
   return (
-    <SignInButton mode="modal" forceRedirectUrl="/dashboard">
+    <SignInButton mode="modal" forceRedirectUrl={redirectUrl || "/dashboard"}>
       <Button className={className} size={size}>
         {children}
       </Button>
