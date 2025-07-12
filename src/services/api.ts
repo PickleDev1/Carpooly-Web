@@ -1223,6 +1223,20 @@ export const useApi = () => {
         }
         return response.json();
       },
+
+      async createOrFetchInviteLink(carpoolId: string, expiresInDays: number = 30, maxUses: number = -1) {
+        const headers = await getHeaders();
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/invite-link`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ expires_in_days: expiresInDays, max_uses: maxUses })
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Failed to create invite link');
+        }
+        return response.json();
+      },
     }
   }, [getToken])
 }

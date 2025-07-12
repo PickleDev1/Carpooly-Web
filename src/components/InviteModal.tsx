@@ -29,6 +29,8 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
   const [hasInteracted, setHasInteracted] = useState(false)
   const [members, setMembers] = useState<any[]>([])
   const api = useApi()
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error' | 'loading'>('idle');
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -125,6 +127,23 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
     return <AlertCircle className="w-4 h-4 text-red-500" />
   }
 
+  const handleCopyInviteLink = async () => {
+    setCopyStatus('loading');
+    setCopiedLink(null);
+    try {
+      const result = await api.createOrFetchInviteLink(carpoolId);
+      const inviteCode = result.invite_code;
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://carpooly.app';
+      const inviteUrl = `${baseUrl}/invite/${inviteCode}`;
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopiedLink(inviteUrl);
+      setCopyStatus('success');
+    } catch (err) {
+      setCopyStatus('error');
+    }
+    setTimeout(() => setCopyStatus('idle'), 2500);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -194,23 +213,40 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
             </div>
           )}
           
-          <div className="flex justify-end gap-2 pt-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              disabled={isSubmitting}
+          <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end sm:items-center">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleCopyInviteLink}
+              disabled={copyStatus === 'loading' || isSubmitting}
+              className="min-w-[140px]"
             >
-              Cancel
+              {copyStatus === 'loading' ? 'Generating...' : copyStatus === 'success' ? 'Link Copied!' : 'Copy Invite Link'}
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || !emailValidation.isValid || email.trim() === ''}
-              className="min-w-[100px]"
-            >
-              {isSubmitting ? 'Sending...' : 'Send Invite'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !emailValidation.isValid || email.trim() === ''}
+                className="min-w-[100px]"
+              >
+                {isSubmitting ? 'Sending...' : 'Send Invite'}
+              </Button>
+            </div>
           </div>
+          {copyStatus === 'success' && copiedLink && (
+            <div className="text-xs text-green-600 mt-2 break-all">Invite link copied: <span className="font-mono">{copiedLink}</span></div>
+          )}
+          {copyStatus === 'error' && (
+            <div className="text-xs text-red-600 mt-2">Failed to copy invite link. Please try again.</div>
+          )}
         </form>
       </DialogContent>
     </Dialog>
