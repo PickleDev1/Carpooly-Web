@@ -21,6 +21,7 @@ export default function InvitePage() {
   const code = params.code as string;
 
   useEffect(() => {
+    console.log('[InvitePage] useEffect: loading:', loading, 'isSignedIn:', isSignedIn, 'code:', code);
     if (!code) return;
     setLoading(true);
     setError(null);
@@ -39,8 +40,10 @@ export default function InvitePage() {
 
   // If not signed in, redirect to sign in with return URL
   useEffect(() => {
+    console.log('[InvitePage] useEffect: loading:', loading, 'isSignedIn:', isSignedIn, 'code:', code);
     if (!loading && !isSignedIn) {
       // Clerk sign-in page with redirect back to this invite
+      console.log('[InvitePage] Not signed in, redirecting to sign-up with redirect_url:', `/sign-up?redirect_url=/invite/${code}`);
       router.push(`/sign-up?redirect_url=/invite/${code}`);
     }
   }, [loading, isSignedIn, code, router]);
@@ -48,21 +51,29 @@ export default function InvitePage() {
   const handleJoin = async () => {
     setJoining(true);
     setError(null);
+    console.log('[InvitePage] handleJoin: Attempting to join carpool with code:', code);
     try {
       const token = await getToken();
+      console.log('[InvitePage] handleJoin: Got token:', !!token);
       const res = await fetch(`${API_BASE_URL}/api/invite/${code}/join`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log('[InvitePage] handleJoin: API response status:', res.status);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        console.error('[InvitePage] handleJoin: Error response:', data);
         throw new Error(data.message || "Failed to join carpool.");
       }
       setJoined(true);
-      setTimeout(() => router.push("/carpools/list"), 1500);
+      setTimeout(() => {
+        console.log('[InvitePage] handleJoin: Redirecting to /carpools/list');
+        router.push("/carpools/list");
+      }, 1500);
     } catch (err: any) {
+      console.error('[InvitePage] handleJoin: Exception:', err);
       setError(err.message);
     } finally {
       setJoining(false);
