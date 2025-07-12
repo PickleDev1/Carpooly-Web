@@ -1,4 +1,4 @@
-console.log("SignUp page loaded");
+"use client";
 
 import { SignUp } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
