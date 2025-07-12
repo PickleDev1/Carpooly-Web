@@ -21,6 +21,7 @@ interface InviteModalProps {
 }
 
 export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
+  console.log('[InviteModal] Rendered with carpoolId:', carpoolId, 'isOpen:', isOpen);
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -128,17 +129,22 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
   }
 
   const handleCopyInviteLink = async () => {
+    console.log('[InviteModal] handleCopyInviteLink called');
     setCopyStatus('loading');
     setCopiedLink(null);
     try {
       const result = await api.createOrFetchInviteLink(carpoolId);
+      console.log('[InviteModal] Backend response:', result);
       const inviteCode = result.invite_code;
+      console.log('[InviteModal] invite_code field:', inviteCode);
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://carpooly.app';
       const inviteUrl = `${baseUrl}/invite/${inviteCode}`;
+      console.log('[InviteModal] Constructed invite URL:', inviteUrl);
       await navigator.clipboard.writeText(inviteUrl);
       setCopiedLink(inviteUrl);
       setCopyStatus('success');
     } catch (err) {
+      console.error('[InviteModal] Failed to copy invite link:', err);
       setCopyStatus('error');
     }
     setTimeout(() => setCopyStatus('idle'), 2500);
@@ -217,7 +223,7 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
             <Button
               type="button"
               variant="secondary"
-              onClick={handleCopyInviteLink}
+              onClick={e => { console.log('[InviteModal] Copy Invite Link button clicked'); handleCopyInviteLink(); }}
               disabled={copyStatus === 'loading' || isSubmitting}
               className="min-w-[140px]"
             >
