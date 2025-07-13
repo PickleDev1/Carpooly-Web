@@ -75,7 +75,7 @@ export default function InvitePage() {
     }
   }, [isSignedIn, code, router]);
 
-  // Load invite details only after auth check and if user is signed in
+    // Load invite details only after auth check and if user is signed in
   useEffect(() => {
     if (!authChecked || !isSignedIn || !code) return;
     
@@ -83,17 +83,25 @@ export default function InvitePage() {
     setLoading(true);
     setError(null);
     
-    const loadInviteDetails = async () => {
+    // Add a small delay to ensure authentication is fully established
+    const timer = setTimeout(async () => {
       try {
         // Get the auth token for the API call
         const token = await getToken();
         console.log('[InvitePage] Making API call with token:', token ? 'Token available' : 'No token');
         
-        const response = await fetch(`${API_BASE_URL}/api/invite/${code}`, {
+        // Try with authentication first, then without if it fails
+        let response = await fetch(`${API_BASE_URL}/api/invites/${code}`, {
           headers: token ? {
             'Authorization': `Bearer ${token}`
           } : {}
         });
+        
+        // If 401/403, try without authentication (for public invites)
+        if ((response.status === 401 || response.status === 403) && token) {
+          console.log('[InvitePage] Auth failed, trying without token');
+          response = await fetch(`${API_BASE_URL}/api/invites/${code}`);
+        }
         
         console.log('[InvitePage] API response status:', response.status);
         console.log('[InvitePage] API response headers:', Object.fromEntries(response.headers.entries()));
@@ -114,10 +122,10 @@ export default function InvitePage() {
       } finally {
         setLoading(false);
       }
-    };
+    }, 1000); // 1 second delay
     
-        loadInviteDetails();
-  }, [authChecked, isSignedIn, code]);
+    return () => clearTimeout(timer);
+  }, [authChecked, isSignedIn, code, getToken]);
 
   // Clear stored invite code when successfully joining
   useEffect(() => {
@@ -134,7 +142,7 @@ export default function InvitePage() {
     try {
       const token = await getToken();
       console.log('[InvitePage] handleJoin: Got token:', !!token);
-      const res = await fetch(`${API_BASE_URL}/api/invite/${code}/join`, {
+      const res = await fetch(`${API_BASE_URL}/api/invites/${code}/join`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
