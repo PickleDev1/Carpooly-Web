@@ -154,10 +154,40 @@ export default function InvitePage() {
         throw new Error(data.message || "Failed to join carpool.");
       }
       setJoined(true);
-      console.log('[InvitePage] handleJoin: Successfully joined carpool, waiting 2 seconds before redirect...');
+      console.log('[InvitePage] handleJoin: Successfully joined carpool, checking user onboarding status...');
+      
+      // Check if user has completed onboarding
+      try {
+        const userRes = await fetch(`${API_BASE_URL}/api/users/${user?.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          if (
+            userData.home_latitude &&
+            userData.home_longitude &&
+            userData.home_latitude !== 0 &&
+            userData.home_longitude !== 0
+          ) {
+            console.log('[InvitePage] handleJoin: User has completed onboarding, redirecting to dashboard');
+            setTimeout(() => {
+              router.push("/dashboard");
+            }, 2000);
+            return;
+          }
+        }
+      } catch (userError) {
+        console.error('[InvitePage] handleJoin: Error checking user onboarding status:', userError);
+      }
+      
+      // User hasn't completed onboarding, redirect to onboarding
+      console.log('[InvitePage] handleJoin: User needs onboarding, redirecting to /onboarding');
       setTimeout(() => {
-        console.log('[InvitePage] handleJoin: Redirecting to /dashboard after delay');
-        router.push("/dashboard");
+        console.log('[InvitePage] handleJoin: Redirecting to /onboarding after delay');
+        router.push("/onboarding");
         // Force a reload after navigation to ensure fresh data for onboarding check
         setTimeout(() => {
           console.log('[InvitePage] handleJoin: Force reloading page to ensure fresh data');

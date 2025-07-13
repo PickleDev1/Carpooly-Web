@@ -64,6 +64,22 @@ export default function OnboardingPage() {
           console.log('User already has location set, redirecting to dashboard');
           router.replace('/dashboard');
         }
+      } else if (res.status === 404) {
+        // User doesn't exist in backend, create them
+        console.log('User not found in backend, creating user...');
+        const createRes = await fetch('/api/auth', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (createRes.ok) {
+          console.log('User created successfully in backend');
+        } else {
+          console.error('Failed to create user in backend:', createRes.status);
+        }
       }
     } catch (e) {
       console.error('Error checking user location:', e);
@@ -96,6 +112,31 @@ export default function OnboardingPage() {
         return;
       }
       
+      // First, ensure user exists in backend
+      const userCheckRes = await fetch(`${API_URL}/api/users/${user?.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (userCheckRes.status === 404) {
+        // User doesn't exist, create them first
+        console.log('User not found in backend, creating user...');
+        const createRes = await fetch('/api/auth', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!createRes.ok) {
+          console.error('Failed to create user in backend:', createRes.status);
+          throw new Error('Failed to create user account');
+        }
+        console.log('User created successfully in backend');
+      }
+
       // Update the profile
       const updateRes = await fetch(`${API_URL}/api/profile`, {
         method: "PUT",
