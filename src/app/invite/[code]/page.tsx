@@ -166,11 +166,20 @@ export default function InvitePage() {
         
         if (userRes.ok) {
           const userData = await userRes.json();
+          
+          // Handle both simple values and database objects with Valid property
+          const latValue = userData.home_latitude?.Float64 !== undefined ? userData.home_latitude.Float64 : userData.home_latitude;
+          const lngValue = userData.home_longitude?.Float64 !== undefined ? userData.home_longitude.Float64 : userData.home_longitude;
+          const latValid = userData.home_latitude?.Valid !== undefined ? userData.home_latitude.Valid : true;
+          const lngValid = userData.home_longitude?.Valid !== undefined ? userData.home_longitude.Valid : true;
+          
           if (
-            userData.home_latitude &&
-            userData.home_longitude &&
-            userData.home_latitude !== 0 &&
-            userData.home_longitude !== 0
+            latValue &&
+            lngValue &&
+            latValue !== 0 &&
+            lngValue !== 0 &&
+            latValid &&
+            lngValid
           ) {
             console.log('[InvitePage] handleJoin: User has completed onboarding, redirecting to dashboard');
             setTimeout(() => {

@@ -55,11 +55,20 @@ export default function OnboardingPage() {
 
       if (res.ok) {
         const userData = await res.json();
+        
+        // Handle both simple values and database objects with Valid property
+        const latValue = userData.home_latitude?.Float64 !== undefined ? userData.home_latitude.Float64 : userData.home_latitude;
+        const lngValue = userData.home_longitude?.Float64 !== undefined ? userData.home_longitude.Float64 : userData.home_longitude;
+        const latValid = userData.home_latitude?.Valid !== undefined ? userData.home_latitude.Valid : true;
+        const lngValid = userData.home_longitude?.Valid !== undefined ? userData.home_longitude.Valid : true;
+        
         if (
-          userData.home_latitude &&
-          userData.home_longitude &&
-          userData.home_latitude !== 0 &&
-          userData.home_longitude !== 0
+          latValue &&
+          lngValue &&
+          latValue !== 0 &&
+          lngValue !== 0 &&
+          latValid &&
+          lngValid
         ) {
           console.log('User already has location set, redirecting to dashboard');
           router.replace('/dashboard');
@@ -172,13 +181,21 @@ export default function OnboardingPage() {
       const userData = await verifyRes.json();
       console.log('Profile verification data:', userData);
       
+      // Handle both simple values and database objects with Valid property
+      const latValue = userData.home_latitude?.Float64 !== undefined ? userData.home_latitude.Float64 : userData.home_latitude;
+      const lngValue = userData.home_longitude?.Float64 !== undefined ? userData.home_longitude.Float64 : userData.home_longitude;
+      const latValid = userData.home_latitude?.Valid !== undefined ? userData.home_latitude.Valid : true;
+      const lngValid = userData.home_longitude?.Valid !== undefined ? userData.home_longitude.Valid : true;
+      
       if (
-        userData.home_latitude === 0 ||
-        userData.home_longitude === 0 ||
-        userData.home_latitude === null ||
-        userData.home_longitude === null ||
-        userData.home_latitude === undefined ||
-        userData.home_longitude === undefined
+        latValue === 0 ||
+        lngValue === 0 ||
+        latValue === null ||
+        lngValue === null ||
+        latValue === undefined ||
+        lngValue === undefined ||
+        !latValid ||
+        !lngValid
       ) {
         throw new Error('Profile update verification failed');
       }
