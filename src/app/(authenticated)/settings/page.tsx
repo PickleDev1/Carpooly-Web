@@ -47,7 +47,7 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
     console.log('Reverse geocode URL:', url);
     const response = await fetch(url);
     const data = await response.json();
-    console.log('Reverse geocode API response:', data);
+    console.log('Reverse geocode API response:', JSON.stringify(data, null, 2));
     if (data.status === 'OK' && data.results && data.results.length > 0) {
       return data.results[0].formatted_address;
     }
