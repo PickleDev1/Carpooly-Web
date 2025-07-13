@@ -116,6 +116,8 @@ export default function Dashboard() {
     console.log('🚀 Dashboard: API URL:', API_URL);
     console.log('🚀 Dashboard: Is mobile device:', isMobileDevice());
     console.log('🚀 Dashboard: Is iOS device:', isIOSDevice());
+    console.log('🚀 Dashboard: Current URL:', typeof window !== 'undefined' ? window.location.href : 'Server side');
+    console.log('🚀 Dashboard: Referrer:', typeof window !== 'undefined' ? document.referrer : 'Server side');
     
     async function checkProfile() {
       try {
@@ -187,7 +189,14 @@ export default function Dashboard() {
         }
         
         const userData = await res.json();
-        console.log('User data received:', userData);
+        console.log('🚀 Dashboard: User data received:', userData);
+        console.log('🚀 Dashboard: User data keys:', Object.keys(userData));
+        console.log('🚀 Dashboard: User data home location fields:', {
+          home_latitude: userData.home_latitude,
+          home_longitude: userData.home_longitude,
+          has_home_lat: 'home_latitude' in userData,
+          has_home_lng: 'home_longitude' in userData
+        });
         
         // Check if user data is valid
         if (!userData || typeof userData !== 'object') {
@@ -205,6 +214,13 @@ export default function Dashboard() {
         }
         
         // Only redirect if home coordinates are 0, null, undefined, or empty string
+        console.log('🚀 Dashboard: Checking home location values:', {
+          home_latitude: userData.home_latitude,
+          home_longitude: userData.home_longitude,
+          lat_type: typeof userData.home_latitude,
+          lng_type: typeof userData.home_longitude
+        });
+        
         if (
           userData.home_latitude === 0 ||
           userData.home_longitude === 0 ||
@@ -215,7 +231,8 @@ export default function Dashboard() {
           userData.home_latitude === '' ||
           userData.home_longitude === ''
         ) {
-          console.log('Home location not set, redirecting to onboarding');
+          console.log('🚀 Dashboard: Home location not set, redirecting to onboarding');
+          console.log('🚀 Dashboard: Redirect reason - lat:', userData.home_latitude, 'lng:', userData.home_longitude);
           if (isMounted) {
             console.log('🚀 Dashboard: Home location not set, attempting router.push to onboarding');
             // Use push instead of replace for better mobile compatibility
@@ -227,7 +244,8 @@ export default function Dashboard() {
             }, 1000);
           }
         } else {
-          console.log('Home location set, staying on dashboard');
+          console.log('🚀 Dashboard: Home location is set, staying on dashboard');
+          console.log('🚀 Dashboard: Home coordinates - lat:', userData.home_latitude, 'lng:', userData.home_longitude);
         }
       } catch (e: any) {
         console.error('Error fetching user data:', e);

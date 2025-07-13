@@ -154,10 +154,16 @@ export default function InvitePage() {
         throw new Error(data.message || "Failed to join carpool.");
       }
       setJoined(true);
+      console.log('[InvitePage] handleJoin: Successfully joined carpool, waiting 2 seconds before redirect...');
       setTimeout(() => {
-        console.log('[InvitePage] handleJoin: Redirecting to /dashboard');
+        console.log('[InvitePage] handleJoin: Redirecting to /dashboard after delay');
         router.push("/dashboard");
-      }, 1500);
+        // Force a reload after navigation to ensure fresh data for onboarding check
+        setTimeout(() => {
+          console.log('[InvitePage] handleJoin: Force reloading page to ensure fresh data');
+          window.location.reload();
+        }, 1000);
+      }, 2000);
     } catch (err: any) {
       console.error('[InvitePage] handleJoin: Exception:', err);
       setError(err.message);
