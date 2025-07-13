@@ -24,6 +24,9 @@ import { Tooltip } from '@/components/ui/tooltip'
 
 // Helper for avatar color
 function stringToColor(str: string) {
+  if (!str || typeof str !== 'string') {
+    return '#cccccc'; // Default gray color for invalid input
+  }
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -155,20 +158,26 @@ export function CarpoolList() {
               <TableBody>
                 {carpools?.map((carpool) => {
                   const details = carpoolDetailsMap[carpool.id || ''] || carpool;
+                  // Ensure details has required properties
+                  const safeDetails = {
+                    ...details,
+                    available_seats: details?.available_seats ?? 0,
+                    seats: details?.seats ?? 0
+                  };
                   return (
                     <TableRow key={carpool.id}>
                       <TableCell className="font-medium">{carpool.carpool_name}</TableCell>
                       <TableCell>{carpool.recurring_option || 'One-time'}</TableCell>
                       <TableCell>
-                        <span className={`$${
-                          details.available_seats <= 0 
+                        <span className={`${
+                          safeDetails.available_seats <= 0 
                             ? 'text-red-600 font-semibold' 
-                            : details.available_seats <= 1 
+                            : safeDetails.available_seats <= 1 
                               ? 'text-orange-600 font-medium' 
                               : 'text-gray-900'
                         }`}>
-                          {details.available_seats} of {details.seats}
-                          {details.available_seats <= 0 && ' (Full)'}
+                          {safeDetails.available_seats} of {safeDetails.seats}
+                          {safeDetails.available_seats <= 0 && ' (Full)'}
                         </span>
                       </TableCell>
                     <TableCell>
@@ -188,9 +197,9 @@ export function CarpoolList() {
                               <span
                                 key={m.id || m.email || i}
                                 className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold text-white border-2 border-white shadow"
-                                style={{ background: stringToColor(m.email || m.name || m.display_name || 'U') }}
+                                style={{ background: stringToColor(m.email || m.name || m.display_name || 'U' || 'Unknown') }}
                               >
-                                {(m.name || m.display_name || m.email || 'U')[0].toUpperCase()}
+                                {(m.name || m.display_name || m.email || 'U')?.charAt(0)?.toUpperCase() || 'U'}
                               </span>
                             ))}
                             {(membersMap[carpool.id] as any[]).length > 3 && (
@@ -207,20 +216,20 @@ export function CarpoolList() {
                     <TableCell>{carpool.destination_address}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Tooltip content={details.available_seats <= 0
+                        <Tooltip content={safeDetails.available_seats <= 0
                           ? 'Invite someone to join this carpool. Disabled when the carpool is full.'
                           : 'Invite someone to join this carpool.'}>
                           <Button
                             variant="secondary"
                             onClick={() => carpool.id && handleInvite(carpool.id)}
-                            disabled={details.available_seats <= 0}
-                            className={`$${
-                              details.available_seats <= 0 
+                            disabled={safeDetails.available_seats <= 0}
+                            className={`${
+                              safeDetails.available_seats <= 0 
                                 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                                 : 'bg-blue-200 hover:bg-blue-300'
                             }`}
                           >
-                            {details.available_seats <= 0 ? 'Full' : 'Invite'}
+                            {safeDetails.available_seats <= 0 ? 'Full' : 'Invite'}
                           </Button>
                         </Tooltip>
                         <Tooltip content={"Edit the schedule for this carpool (dates, times, frequency)."}>

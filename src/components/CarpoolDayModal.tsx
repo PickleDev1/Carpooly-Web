@@ -332,7 +332,7 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
                       <>
                         <div className="h-8 w-8 rounded-full bg-[#2B5335] flex items-center justify-center">
                           <span className="text-white font-medium">
-                            {driverParticipant.name.charAt(0).toUpperCase()}
+                            {driverParticipant.name?.charAt(0)?.toUpperCase() || 'D'}
                           </span>
                         </div>
                         <div className="flex flex-col">
@@ -397,7 +397,7 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
                     <div className="flex items-center space-x-3">
                       <div className="h-8 w-8 rounded-full bg-[#2B5335] flex items-center justify-center">
                         <span className="text-white font-medium">
-                          {participant.name.charAt(0).toUpperCase()}
+                          {participant.name?.charAt(0)?.toUpperCase() || 'P'}
                         </span>
                       </div>
                       <div className="flex flex-col">

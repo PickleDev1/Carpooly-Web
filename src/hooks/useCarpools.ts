@@ -18,7 +18,9 @@ export function useCarpools() {
         console.log('Fetching carpools for user:', user.id);
         const carpoolsData = await api.getCarpools(user.id);
         console.log('Carpools data received:', carpoolsData);
-        setCarpools(carpoolsData || []);
+        // Handle both array and object with data property
+        const carpoolsArray = Array.isArray(carpoolsData) ? carpoolsData : (carpoolsData?.data || []);
+        setCarpools(carpoolsArray);
       } catch (error) {
         console.error('Error fetching carpools:', error);
       }
