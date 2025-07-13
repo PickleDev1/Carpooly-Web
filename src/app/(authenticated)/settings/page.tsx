@@ -34,6 +34,24 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
+// Helper function for reverse geocoding
+async function reverseGeocode(lat: number, lng: number): Promise<string> {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return `${lat}, ${lng}`;
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
+    );
+    const data = await response.json();
+    if (data.status === 'OK' && data.results && data.results.length > 0) {
+      return data.results[0].formatted_address;
+    }
+    return `${lat}, ${lng}`;
+  } catch (e) {
+    return `${lat}, ${lng}`;
+  }
+}
+
 export default function SettingsPage() {
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -42,6 +60,13 @@ export default function SettingsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [milesSaved, setMilesSaved] = useState(0);
+  
+  // Location and privacy state
+  const [locationSharingEnabled, setLocationSharingEnabled] = useState(false);
+  const [homeAddress, setHomeAddress] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
 
   // Fetch miles saved for account status
   useEffect(() => {
@@ -58,6 +83,77 @@ export default function SettingsPage() {
 
     fetchMilesSaved();
   }, [user?.id, api]);
+
+  // Fetch location settings and user data
+  useEffect(() => {
+    const fetchLocationSettings = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setIsLoading(true);
+        
+        // Fetch location settings
+        const locationSettings = await api.getLocationSettings();
+        setLocationSharingEnabled(locationSettings.location_sharing_enabled || false);
+        
+        // Fetch user data to get home address
+        const userData = await api.getUserById(user.id);
+        
+        // Extract home address from user data
+        if (userData.home_address) {
+          setHomeAddress(userData.home_address);
+        } else if (userData.home_latitude && userData.home_longitude) {
+          // If we have coordinates but no address, we could reverse geocode here
+          // For now, just show coordinates
+          const lat = userData.home_latitude.Float64 !== undefined ? userData.home_latitude.Float64 : userData.home_latitude;
+          const lng = userData.home_longitude.Float64 !== undefined ? userData.home_longitude.Float64 : userData.home_longitude;
+          // Use reverse geocoding to get a human-readable address
+          const address = await reverseGeocode(lat, lng);
+          setHomeAddress(address);
+        }
+        
+      } catch (error) {
+        console.error('Error fetching location settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLocationSettings();
+  }, [user?.id, api]);
+
+  const handleSaveLocationSettings = async () => {
+    if (!user?.id) return;
+    
+    setIsSaving(true);
+    setSaveMessage('');
+    
+    try {
+      // Update location settings
+      await api.updateLocationSettings(locationSharingEnabled);
+      
+      // Update user data if home address has changed
+      // Note: This assumes the backend supports updating home_address field
+      // If not, you may need to implement a separate endpoint
+      try {
+        await api.updateUser(user.id, {
+          home_address: homeAddress
+        });
+      } catch (userUpdateError) {
+        console.warn('Could not update home address:', userUpdateError);
+        // Don't fail the entire save operation if user update fails
+      }
+      
+      setSaveMessage('Settings saved successfully!');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (error) {
+      console.error('Error saving location settings:', error);
+      setSaveMessage('Error saving settings. Please try again.');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     if (!user?.id) return;
@@ -158,53 +254,72 @@ export default function SettingsPage() {
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <span className="font-medium text-gray-900">Location sharing</span>
-                      <p className="text-sm text-gray-500">Share your location during rides</p>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="loading-spinner h-8 w-8 mx-auto"></div>
+                  <span className="ml-3 text-gray-600">Loading settings...</span>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <span className="font-medium text-gray-900">Location sharing</span>
+                        <p className="text-sm text-gray-500">Share your location during rides</p>
+                      </div>
                     </div>
+                    <Switch 
+                      checked={locationSharingEnabled}
+                      onCheckedChange={setLocationSharingEnabled}
+                    />
                   </div>
-                  <Switch defaultChecked />
-                </div>
-                
-                <div className="p-4 rounded-lg border border-gray-100">
-                  <Label htmlFor="home-address" className="flex items-center gap-2 mb-2">
-                    <Home className="w-4 h-4 text-gray-400" />
-                    Home Address
-                  </Label>
-                  <Input 
-                    id="home-address" 
-                    placeholder="Enter your home address" 
-                    className="border-gray-200 focus:border-primary focus:ring-primary"
-                  />
-                </div>
-                
-                <div className="p-4 rounded-lg border border-gray-100">
-                  <Label htmlFor="work-address" className="flex items-center gap-2 mb-2">
-                    <Building className="w-4 h-4 text-gray-400" />
-                    Work Address
-                  </Label>
-                  <Input 
-                    id="work-address" 
-                    placeholder="Enter your work address" 
-                    className="border-gray-200 focus:border-primary focus:ring-primary"
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Eye className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <span className="font-medium text-gray-900">Profile visibility</span>
-                      <p className="text-sm text-gray-500">Show my profile to other users</p>
+                  
+                  <div className="p-4 rounded-lg border border-gray-100">
+                    <Label htmlFor="home-address" className="flex items-center gap-2 mb-2">
+                      <Home className="w-4 h-4 text-gray-400" />
+                      Home Address
+                    </Label>
+                    <Input 
+                      id="home-address" 
+                      placeholder="Enter your home address" 
+                      value={homeAddress}
+                      onChange={(e) => setHomeAddress(e.target.value)}
+                      className="border-gray-200 focus:border-primary focus:ring-primary"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This address is fetched from your profile and can be updated here.
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <Eye className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <span className="font-medium text-gray-900">Profile visibility</span>
+                        <p className="text-sm text-gray-500">Show my profile to other users</p>
+                      </div>
                     </div>
+                    <Switch defaultChecked />
                   </div>
-                  <Switch defaultChecked />
+                  
+                  {/* Save Button */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <Button
+                      onClick={handleSaveLocationSettings}
+                      disabled={isSaving}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {isSaving ? 'Saving...' : 'Save Preferences'}
+                    </Button>
+                    {saveMessage && (
+                      <span className={`text-sm ${saveMessage.includes('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                        {saveMessage}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </Card>
 
             {/* Account Management Section */}

@@ -294,6 +294,29 @@ export const useApi = () => {
         }
       },
 
+      updateUser: async (userId: string, userData: any) => {
+        try {
+          const token = await getToken({template: "carpooly"})
+          const response = await fetch(`${API_URL}/api/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData)
+          })
+
+          if (!response.ok) {
+            throw new Error('Failed to update user data')
+          }
+
+          return response.json()
+        } catch (error) {
+          console.error('Update user error:', error)
+          throw error
+        }
+      },
+
       deleteUser: async (userId: string) => {
         try {
           const token = await getToken({template: "carpooly"})

@@ -19,7 +19,9 @@ import {
   Bell,
   Search,
   Settings,
-  ArrowRight
+  ArrowRight,
+  HelpCircle,
+  Play
 } from 'lucide-react'
 import { useAuth, useUser } from '@clerk/nextjs'
 import { useCarpools } from '@/hooks/useCarpools'
@@ -33,6 +35,9 @@ import { useRecentActivity, Activity } from '@/hooks/useRecentActivity'
 import { useActiveRides } from '@/hooks/useActiveRides'
 import { NotificationPopup } from '@/components/NotificationPopup'
 import { isMobileDevice, isIOSDevice } from '@/lib/utils'
+import { OnboardingTour } from '@/components/OnboardingTour'
+import { HelpTips } from '@/components/HelpTips'
+import { ContextualTooltip, useTooltips } from '@/components/ContextualTooltip'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -94,6 +99,8 @@ export default function Dashboard() {
     milesSaved: 0
   })
   const [showInvitesModal, setShowInvitesModal] = useState(false)
+  const [showOnboardingTour, setShowOnboardingTour] = useState(false)
+  const [showHelpTips, setShowHelpTips] = useState(false)
   
   const router = useRouter();
   const { getToken } = useAuth();
@@ -105,6 +112,7 @@ export default function Dashboard() {
   const { activity: recentActivity, isLoading: isActivityLoading, error: activityError } = useRecentActivity(20);
   const { activeRides } = useActiveRides();
   const notifiedRidesRef = useRef<Set<string>>(new Set());
+  const { activeTooltip, showTooltip, hideTooltip, dismissTooltip } = useTooltips();
 
   useEffect(() => {
     let isMounted = true;
@@ -256,6 +264,14 @@ export default function Dashboard() {
         } else {
           console.log('🚀 Dashboard: Home location is set, staying on dashboard');
           console.log('🚀 Dashboard: Home coordinates - lat:', latValue, 'lng:', lngValue);
+          
+          // Show onboarding tour for new users (first time on dashboard)
+          const hasSeenTour = localStorage.getItem('hasSeenOnboardingTour');
+          if (!hasSeenTour && carpools.length === 0) {
+            setTimeout(() => {
+              setShowOnboardingTour(true);
+            }, 2000); // Show after 2 seconds
+          }
         }
       } catch (e: any) {
         console.error('Error fetching user data:', e);
@@ -416,6 +432,13 @@ export default function Dashboard() {
                   variant="outline"
                   size="sm"
                   className="w-full"
+                  onMouseEnter={() => showTooltip({
+                    id: 'manual-onboarding',
+                    title: 'Go to Onboarding',
+                    content: 'Complete your profile setup to start using the app',
+                    position: 'top'
+                  })}
+                  onMouseLeave={hideTooltip}
                 >
                   Go to Onboarding
                 </Button>
@@ -427,6 +450,13 @@ export default function Dashboard() {
                   variant="outline"
                   size="sm"
                   className="w-full"
+                  onMouseEnter={() => showTooltip({
+                    id: 'force-onboarding',
+                    title: 'Force Redirect',
+                    content: 'Alternative method to navigate to onboarding if the first button doesn\'t work',
+                    position: 'top'
+                  })}
+                  onMouseLeave={hideTooltip}
                 >
                   Force Redirect (Onboarding)
                 </Button>
@@ -516,10 +546,19 @@ export default function Dashboard() {
           <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="text-lg sm:text-2xl font-bold">{stats.activeRides}</div>
             <p className="text-xs text-muted-foreground">
-              Currently in progress
+              Ongoing rides
             </p>
             {stats.activeRides > 0 && (
-              <Link href="/maps">
+              <Link 
+                href="/maps"
+                onMouseEnter={() => showTooltip({
+                  id: 'view-active-rides',
+                  title: 'View Active Rides',
+                  content: 'Track your ongoing rides in real-time on the live map',
+                  position: 'top'
+                })}
+                onMouseLeave={hideTooltip}
+              >
                 <Button variant="outline" size="sm" className="mt-2 w-full text-xs">
                   View Active Rides
                 </Button>
@@ -544,6 +583,13 @@ export default function Dashboard() {
               className="text-xs text-muted-foreground underline hover:text-primary focus:outline-none"
               onClick={() => setShowInvitesModal(true)}
               disabled={stats.pendingInvites === 0}
+              onMouseEnter={() => showTooltip({
+                id: 'pending-invites-link',
+                title: 'View Pending Invites',
+                content: 'Click to see and respond to carpool invitations',
+                position: 'top'
+              })}
+              onMouseLeave={hideTooltip}
             >
               Awaiting response
             </button>
@@ -571,7 +617,17 @@ export default function Dashboard() {
           {quickActions.map((action) => {
             const Icon = action.icon
             return (
-              <Link key={action.title} href={action.href}>
+              <Link 
+                key={action.title} 
+                href={action.href}
+                onMouseEnter={() => showTooltip({
+                  id: `quick-action-${action.title.toLowerCase().replace(/\s+/g, '-')}`,
+                  title: action.title,
+                  content: action.description,
+                  position: 'top'
+                })}
+                onMouseLeave={hideTooltip}
+              >
                 <Card className="card-interactive group">
                   <CardContent className="p-4 sm:p-6">
                     <div className={`w-10 h-10 sm:w-12 sm:h-12 ${action.color} rounded-lg flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform`}>
@@ -644,6 +700,13 @@ export default function Dashboard() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsInvitesOpen(!isInvitesOpen)}
+                  onMouseEnter={() => showTooltip({
+                    id: 'toggle-invites',
+                    title: isInvitesOpen ? 'Collapse Invites' : 'Expand Invites',
+                    content: isInvitesOpen ? 'Hide pending carpool invitations' : 'Show pending carpool invitations',
+                    position: 'left'
+                  })}
+                  onMouseLeave={hideTooltip}
                 >
                   {isInvitesOpen ? (
                     <ChevronUp className="h-4 w-4" />
@@ -668,12 +731,19 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base sm:text-lg">Active Carpool Rides</CardTitle>
-                  <CardDescription className="text-sm">Currently active rides and their status</CardDescription>
+                  <CardDescription className="text-sm">Ongoing active rides and their status</CardDescription>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsActiveRideOpen(!isActiveRideOpen)}
+                  onMouseEnter={() => showTooltip({
+                    id: 'toggle-active-rides',
+                    title: isActiveRideOpen ? 'Collapse Active Rides' : 'Expand Active Rides',
+                    content: isActiveRideOpen ? 'Hide ongoing active carpool rides' : 'Show ongoing active carpool rides',
+                    position: 'left'
+                  })}
+                  onMouseLeave={hideTooltip}
                 >
                   {isActiveRideOpen ? (
                     <ChevronUp className="h-4 w-4" />
@@ -724,6 +794,70 @@ export default function Dashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Help Button - Fixed Position */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <div className="flex flex-col gap-2">
+          <Button
+            onClick={() => setShowHelpTips(true)}
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white shadow-lg"
+            onMouseEnter={() => showTooltip({
+              id: 'help-button',
+              title: 'Help & Tips',
+              content: 'Get help with using the app and view helpful tips',
+              position: 'left'
+            })}
+            onMouseLeave={hideTooltip}
+          >
+            <HelpCircle className="h-4 w-4 mr-2" />
+            Help
+          </Button>
+          <Button
+            onClick={() => setShowOnboardingTour(true)}
+            size="sm"
+            variant="outline"
+            className="bg-white hover:bg-gray-50 shadow-lg"
+            onMouseEnter={() => showTooltip({
+              id: 'tour-button',
+              title: 'Interactive Tour',
+              content: 'Take a guided tour of the app features',
+              position: 'left'
+            })}
+            onMouseLeave={hideTooltip}
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Tour
+          </Button>
+        </div>
+      </div>
+
+      {/* Guidance Components */}
+      <OnboardingTour
+        isOpen={showOnboardingTour}
+        onClose={() => {
+          setShowOnboardingTour(false);
+          localStorage.setItem('hasSeenOnboardingTour', 'true');
+        }}
+        onComplete={() => {
+          setShowOnboardingTour(false);
+          localStorage.setItem('hasSeenOnboardingTour', 'true');
+        }}
+      />
+
+      <HelpTips
+        isOpen={showHelpTips}
+        onClose={() => setShowHelpTips(false)}
+      />
+
+      <ContextualTooltip
+        tooltip={activeTooltip}
+        onDismiss={dismissTooltip}
+        onAction={(id) => {
+          // Handle tooltip actions
+          console.log('Tooltip action:', id);
+        }}
+      />
     </div>
   )
 } 

@@ -232,9 +232,14 @@ export default function OnboardingPage() {
     <div className="container max-w-md mx-auto mt-8 sm:mt-16 px-4 sm:px-0">
       <Card>
         <CardHeader className="px-4 sm:px-6">
-          <CardTitle className="text-2xl sm:text-3xl font-bold text-center">Welcome to Carpooly!</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl font-bold text-center">Welcome to Carpooly! 🚗</CardTitle>
           <CardDescription className="text-center text-sm sm:text-base">
-            Set your preferred start address for all carpools and choose if you want to share your location while using the website.
+            <p className="mb-3">
+              Let's get you set up for carpooling! First, we need your home address to help you find and create carpools near you.
+            </p>
+            <p className="text-xs text-gray-500">
+              💡 <strong>Pro Tip:</strong> This address will be used as your default starting point for all carpools. You can change it anytime in settings.
+            </p>
             {isMobileDevice() && (
               <span className="block text-sm text-blue-600 mt-2">
                 📱 Mobile optimized for better experience
@@ -250,16 +255,24 @@ export default function OnboardingPage() {
                 onSelect={handleAddressSelect}
                 placeholder="123 Main St, City, State, ZIP"
               />
+              <p className="text-xs text-gray-500">
+                🔍 Start typing your address and select from the suggestions. This helps ensure accuracy.
+              </p>
             </div>
-            <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="locationSharing" className="flex-1 text-sm sm:text-base">
-                Enable location sharing while using the website
-              </Label>
-              <Switch
-                id="locationSharing"
-                checked={locationSharing}
-                onCheckedChange={setLocationSharing}
-              />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="locationSharing" className="flex-1 text-sm sm:text-base">
+                  Enable location sharing while using the website
+                </Label>
+                <Switch
+                  id="locationSharing"
+                  checked={locationSharing}
+                  onCheckedChange={setLocationSharing}
+                />
+              </div>
+              <p className="text-xs text-gray-500">
+                📍 <strong>Location sharing helps:</strong> Your carpool group can see your real-time location during rides for better coordination and safety. You can change this anytime.
+              </p>
             </div>
             <Button
               type="submit"
