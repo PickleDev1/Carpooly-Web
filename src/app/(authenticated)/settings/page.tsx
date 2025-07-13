@@ -38,17 +38,22 @@ import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 // Helper function for reverse geocoding
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  if (!apiKey) return `${lat}, ${lng}`;
+  if (!apiKey) {
+    console.log('No Google Maps API key found.');
+    return `${lat}, ${lng}`;
+  }
   try {
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
-    );
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+    console.log('Reverse geocode URL:', url);
+    const response = await fetch(url);
     const data = await response.json();
+    console.log('Reverse geocode API response:', data);
     if (data.status === 'OK' && data.results && data.results.length > 0) {
       return data.results[0].formatted_address;
     }
     return `${lat}, ${lng}`;
   } catch (e) {
+    console.error('Reverse geocode error:', e);
     return `${lat}, ${lng}`;
   }
 }
