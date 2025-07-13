@@ -158,16 +158,27 @@ export function CarpoolList() {
               <TableBody>
                 {carpools?.map((carpool) => {
                   const details = carpoolDetailsMap[carpool.id || ''] || carpool;
+                  
+                  // Helper function to safely extract string values from nested objects
+                  const safeString = (value: any): string => {
+                    if (typeof value === 'string') return value;
+                    if (value && typeof value === 'object' && 'String' in value && 'Valid' in value) {
+                      return value.Valid ? value.String : '';
+                    }
+                    return String(value || '');
+                  };
+                  
                   // Ensure details has required properties
                   const safeDetails = {
                     ...details,
                     available_seats: details?.available_seats ?? 0,
                     seats: details?.seats ?? 0
                   };
+                  
                   return (
                     <TableRow key={carpool.id}>
-                      <TableCell className="font-medium">{carpool.carpool_name}</TableCell>
-                      <TableCell>{carpool.recurring_option || 'One-time'}</TableCell>
+                      <TableCell className="font-medium">{safeString(carpool.carpool_name)}</TableCell>
+                      <TableCell>{safeString(carpool.recurring_option) || 'One-time'}</TableCell>
                       <TableCell>
                         <span className={`${
                           safeDetails.available_seats <= 0 
@@ -185,23 +196,38 @@ export function CarpoolList() {
                         <Tooltip content={
                           <div className="text-left">
                             <div className="font-semibold mb-1">Members:</div>
-                            {(membersMap[carpool.id] as any[]).map((m: any, i: number) => (
-                              <div key={m.id || m.email || i} className="text-xs">
-                                {m.name || m.display_name || m.email}
-                              </div>
-                            ))}
+                            {(membersMap[carpool.id] as any[]).map((m: any, i: number) => {
+                              // Ensure we're not rendering an object directly
+                              const memberName = typeof m === 'object' && m !== null 
+                                ? (m.name || m.display_name || m.email || 'Unknown Member')
+                                : String(m || 'Unknown Member');
+                              return (
+                                <div key={m?.id || m?.email || i} className="text-xs">
+                                  {memberName}
+                                </div>
+                              );
+                            })}
                           </div>
                         }>
                           <div className="flex items-center space-x-1">
-                            {(membersMap[carpool.id] as any[]).slice(0, 3).map((m: any, i: number) => (
-                              <span
-                                key={m.id || m.email || i}
-                                className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold text-white border-2 border-white shadow"
-                                style={{ background: stringToColor(m.email || m.name || m.display_name || 'U' || 'Unknown') }}
-                              >
-                                {(m.name || m.display_name || m.email || 'U')?.charAt(0)?.toUpperCase() || 'U'}
-                              </span>
-                            ))}
+                            {(membersMap[carpool.id] as any[]).slice(0, 3).map((m: any, i: number) => {
+                              // Ensure we're not rendering an object directly
+                              const memberName = typeof m === 'object' && m !== null 
+                                ? (m.name || m.display_name || m.email || 'U')
+                                : String(m || 'U');
+                              const memberKey = typeof m === 'object' && m !== null 
+                                ? (m.id || m.email || i)
+                                : i;
+                              return (
+                                <span
+                                  key={memberKey}
+                                  className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold text-white border-2 border-white shadow"
+                                  style={{ background: stringToColor(memberName) }}
+                                >
+                                  {memberName?.charAt(0)?.toUpperCase() || 'U'}
+                                </span>
+                              );
+                            })}
                             {(membersMap[carpool.id] as any[]).length > 3 && (
                               <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-300 text-xs font-bold text-gray-700 border-2 border-white shadow">
                                 +{(membersMap[carpool.id] as any[]).length - 3}
@@ -213,7 +239,7 @@ export function CarpoolList() {
                         <span className="text-xs text-gray-400">No members</span>
                       )}
                     </TableCell>
-                    <TableCell>{carpool.destination_address}</TableCell>
+                    <TableCell>{safeString(carpool.destination_address)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Tooltip content={safeDetails.available_seats <= 0

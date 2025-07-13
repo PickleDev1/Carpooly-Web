@@ -805,7 +805,24 @@ export const useApi = () => {
           throw new Error('Failed to fetch carpool')
         }
 
-        return response.json()
+        const data = await response.json()
+        
+        // Helper function to safely extract string values from nested objects
+        const safeString = (value: any): string => {
+          if (typeof value === 'string') return value;
+          if (value && typeof value === 'object' && 'String' in value && 'Valid' in value) {
+            return value.Valid ? value.String : '';
+          }
+          return String(value || '');
+        };
+        
+        // Process the carpool data to handle nested objects
+        return {
+          ...data,
+          carpool_name: safeString(data.carpool_name),
+          recurring_option: safeString(data.recurring_option),
+          destination_address: safeString(data.destination_address)
+        };
       },
 
       async getCarpoolSchedules(carpoolId: string): Promise<Schedule[]> {
@@ -908,7 +925,29 @@ export const useApi = () => {
           headers
         })
         if (!response.ok) throw new Error('Failed to fetch carpool members')
-        return response.json()
+        
+        const data = await response.json()
+        
+        // Helper function to safely extract string values from nested objects
+        const safeString = (value: any): string => {
+          if (typeof value === 'string') return value;
+          if (value && typeof value === 'object' && 'String' in value && 'Valid' in value) {
+            return value.Valid ? value.String : '';
+          }
+          return String(value || '');
+        };
+        
+        // Process member data to handle nested objects
+        if (Array.isArray(data)) {
+          return data.map((member: any) => ({
+            ...member,
+            name: safeString(member.name),
+            display_name: safeString(member.display_name),
+            email: safeString(member.email)
+          }));
+        }
+        
+        return data;
       },
 
       async getCarpoolParticipantsByDate(carpoolId: string, date: string) {

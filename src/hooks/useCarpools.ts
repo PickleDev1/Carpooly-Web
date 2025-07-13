@@ -20,7 +20,27 @@ export function useCarpools() {
         console.log('Carpools data received:', carpoolsData);
         // Handle both array and object with data property
         const carpoolsArray = Array.isArray(carpoolsData) ? carpoolsData : (carpoolsData?.data || []);
-        setCarpools(carpoolsArray);
+        
+        // Process carpools to handle nested objects with String/Valid structure
+        const processedCarpools = carpoolsArray.map((carpool: any) => {
+          // Helper function to safely extract string values from nested objects
+          const safeString = (value: any): string => {
+            if (typeof value === 'string') return value;
+            if (value && typeof value === 'object' && 'String' in value && 'Valid' in value) {
+              return value.Valid ? value.String : '';
+            }
+            return String(value || '');
+          };
+          
+          return {
+            ...carpool,
+            carpool_name: safeString(carpool.carpool_name),
+            recurring_option: safeString(carpool.recurring_option),
+            destination_address: safeString(carpool.destination_address)
+          };
+        });
+        
+        setCarpools(processedCarpools);
       } catch (error) {
         console.error('Error fetching carpools:', error);
       }
