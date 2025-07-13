@@ -19,6 +19,13 @@ export function SignInRedirect() {
       
       if (storedCode) {
         console.log('[SignInRedirect] Found stored invite code:', storedCode);
+        
+        // Don't redirect if we're already on an invite page
+        if (pathname.startsWith('/invite/')) {
+          console.log('[SignInRedirect] Already on invite page, not redirecting');
+          return;
+        }
+        
         // Clear the stored code and redirect to the invite page
         sessionStorage.removeItem('pendingInviteCode');
         console.log('[SignInRedirect] Redirecting to invite page:', `/invite/${storedCode}`);

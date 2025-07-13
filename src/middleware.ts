@@ -5,7 +5,6 @@ const isProtectedRoute = createRouteMatcher([
   '/carpools(.*)',
   '/create-carpool(.*)',
   '/search(.*)',
-  '/invite(.*)',
   '/schedule(.*)'
 ]);
 
