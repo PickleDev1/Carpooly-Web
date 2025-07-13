@@ -33,6 +33,7 @@ import {
   History,
   AlertTriangle
 } from 'lucide-react';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 
 // Helper function for reverse geocoding
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
@@ -64,9 +65,15 @@ export default function SettingsPage() {
   // Location and privacy state
   const [locationSharingEnabled, setLocationSharingEnabled] = useState(false);
   const [homeAddress, setHomeAddress] = useState('');
+  const [homeAddressLoading, setHomeAddressLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+
+  // Helper: check if a string is lat,lng
+  function isLatLngString(str: string) {
+    return /^-?\d{1,3}\.?\d*,\s*-?\d{1,3}\.?\d*$/.test(str);
+  }
 
   // Fetch miles saved for account status
   useEffect(() => {
@@ -101,7 +108,15 @@ export default function SettingsPage() {
         
         // Extract home address from user data
         if (userData.home_address) {
-          setHomeAddress(userData.home_address);
+          if (isLatLngString(userData.home_address)) {
+            setHomeAddressLoading(true);
+            const [lat, lng] = userData.home_address.split(',').map(Number);
+            const address = await reverseGeocode(lat, lng);
+            setHomeAddress(address);
+            setHomeAddressLoading(false);
+          } else {
+            setHomeAddress(userData.home_address);
+          }
         } else if (userData.home_latitude && userData.home_longitude) {
           // If we have coordinates but no address, we could reverse geocode here
           // For now, just show coordinates
@@ -280,13 +295,20 @@ export default function SettingsPage() {
                       <Home className="w-4 h-4 text-gray-400" />
                       Home Address
                     </Label>
-                    <Input 
-                      id="home-address" 
-                      placeholder="Enter your home address" 
-                      value={homeAddress}
-                      onChange={(e) => setHomeAddress(e.target.value)}
-                      className="border-gray-200 focus:border-primary focus:ring-primary"
-                    />
+                    {homeAddressLoading ? (
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <Clock className="w-4 h-4" />
+                        Resolving address…
+                      </div>
+                    ) : (
+                      <AddressAutocomplete
+                        placeholder="Enter your home address"
+                        onSelect={(selectedAddress) => {
+                          setHomeAddress(selectedAddress.address);
+                        }}
+                        className="border-gray-200 focus:border-primary focus:ring-primary"
+                      />
+                    )}
                     <p className="text-xs text-gray-500 mt-1">
                       This address is fetched from your profile and can be updated here.
                     </p>
