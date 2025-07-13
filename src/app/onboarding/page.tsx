@@ -235,7 +235,7 @@ export default function OnboardingPage() {
           <CardTitle className="text-2xl sm:text-3xl font-bold text-center">Welcome to Carpooly! 🚗</CardTitle>
           <CardDescription className="text-center text-sm sm:text-base">
             <p className="mb-3">
-              Let's get you set up for carpooling! First, we need your home address to help you find and create carpools near you.
+              Let&apos;s get you set up for carpooling! First, we need your home address to help you find and create carpools near you.
             </p>
             <p className="text-xs text-gray-500">
               💡 <strong>Pro Tip:</strong> This address will be used as your default starting point for all carpools. You can change it anytime in settings.
