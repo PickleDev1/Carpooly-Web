@@ -95,45 +95,51 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchLocationSettings = async () => {
       if (!user?.id) return;
-      
       try {
         setIsLoading(true);
-        
         // Fetch location settings
         const locationSettings = await api.getLocationSettings();
         setLocationSharingEnabled(locationSettings.location_sharing_enabled || false);
-        
         // Fetch user data to get home address
-        const userData = await api.getUserById(user.id);
-        
-        // Extract home address from user data
-        if (userData.home_address) {
-          if (isLatLngString(userData.home_address)) {
-            setHomeAddressLoading(true);
-            const [lat, lng] = userData.home_address.split(',').map(Number);
-            const address = await reverseGeocode(lat, lng);
-            setHomeAddress(address);
-            setHomeAddressLoading(false);
-          } else {
-            setHomeAddress(userData.home_address);
-          }
-        } else if (userData.home_latitude && userData.home_longitude) {
-          // If we have coordinates but no address, we could reverse geocode here
-          // For now, just show coordinates
-          const lat = userData.home_latitude.Float64 !== undefined ? userData.home_latitude.Float64 : userData.home_latitude;
-          const lng = userData.home_longitude.Float64 !== undefined ? userData.home_longitude.Float64 : userData.home_longitude;
-          // Use reverse geocoding to get a human-readable address
+        const userData = await api.getCurrentUser();
+        console.log('Fetched userData:', userData);
+        // Support both userData.home_latitude and userData.user.home_latitude
+        const u = userData.user || userData;
+        console.log('Extracted user object (u):', u);
+        console.log('u.home_address:', u.home_address);
+        console.log('u.home_latitude:', u.home_latitude, 'type:', typeof u.home_latitude);
+        console.log('u.home_longitude:', u.home_longitude, 'type:', typeof u.home_longitude);
+        if (u.home_address && u.home_address.trim() !== '') {
+          console.log('Using home_address:', u.home_address);
+          setHomeAddress(u.home_address);
+          setHomeAddressLoading(false);
+        } else if (
+          u.home_latitude &&
+          u.home_longitude &&
+          (u.home_latitude.Float64 !== undefined && u.home_latitude.Valid) &&
+          (u.home_longitude.Float64 !== undefined && u.home_longitude.Valid)
+        ) {
+          setHomeAddressLoading(true);
+          const lat = u.home_latitude.Float64;
+          const lng = u.home_longitude.Float64;
+          console.log('Attempting reverse geocode for lat/lng:', lat, lng);
           const address = await reverseGeocode(lat, lng);
+          console.log('Reverse geocoded address:', address);
           setHomeAddress(address);
+          setHomeAddressLoading(false);
+        } else {
+          console.log('No valid home address or lat/lng found.');
+          setHomeAddress('');
+          setHomeAddressLoading(false);
         }
-        
       } catch (error) {
         console.error('Error fetching location settings:', error);
+        setHomeAddress('');
+        setHomeAddressLoading(false);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchLocationSettings();
   }, [user?.id, api]);
 
