@@ -83,24 +83,40 @@ export default function InvitePage() {
     setLoading(true);
     setError(null);
     
-    fetch(`${API_BASE_URL}/api/invite/${code}`)
-      .then(async (res) => {
-        console.log('[InvitePage] API response status:', res.status);
-        if (!res.ok) {
-          if (res.status === 404) throw new Error("This invite link has expired or is no longer active.");
+    const loadInviteDetails = async () => {
+      try {
+        // Get the auth token for the API call
+        const token = await getToken();
+        console.log('[InvitePage] Making API call with token:', token ? 'Token available' : 'No token');
+        
+        const response = await fetch(`${API_BASE_URL}/api/invite/${code}`, {
+          headers: token ? {
+            'Authorization': `Bearer ${token}`
+          } : {}
+        });
+        
+        console.log('[InvitePage] API response status:', response.status);
+        console.log('[InvitePage] API response headers:', Object.fromEntries(response.headers.entries()));
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log('[InvitePage] API error response:', errorText);
+          if (response.status === 404) throw new Error("This invite link has expired or is no longer active.");
           throw new Error("Failed to load invite details.");
         }
-        return res.json();
-      })
-      .then((data) => {
+        
+        const data = await response.json();
         console.log('[InvitePage] Invite data received:', data);
         setInvite(data);
-      })
-      .catch((err) => {
+      } catch (err: any) {
         console.error('[InvitePage] Error loading invite:', err);
         setError(err.message);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+        loadInviteDetails();
   }, [authChecked, isSignedIn, code]);
 
   // Clear stored invite code when successfully joining
@@ -132,8 +148,8 @@ export default function InvitePage() {
       }
       setJoined(true);
       setTimeout(() => {
-        console.log('[InvitePage] handleJoin: Redirecting to /carpools/list');
-        router.push("/carpools/list");
+        console.log('[InvitePage] handleJoin: Redirecting to /dashboard');
+        router.push("/dashboard");
       }, 1500);
     } catch (err: any) {
       console.error('[InvitePage] handleJoin: Exception:', err);
