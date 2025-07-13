@@ -204,14 +204,16 @@ export default function Dashboard() {
           return;
         }
         
-        // Only redirect if home coordinates are 0 or null/undefined
+        // Only redirect if home coordinates are 0, null, undefined, or empty string
         if (
           userData.home_latitude === 0 ||
           userData.home_longitude === 0 ||
           userData.home_latitude === null ||
           userData.home_longitude === null ||
           userData.home_latitude === undefined ||
-          userData.home_longitude === undefined
+          userData.home_longitude === undefined ||
+          userData.home_latitude === '' ||
+          userData.home_longitude === ''
         ) {
           console.log('Home location not set, redirecting to onboarding');
           if (isMounted) {
