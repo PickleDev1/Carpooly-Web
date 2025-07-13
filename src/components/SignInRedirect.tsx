@@ -1,21 +1,35 @@
-'use client'
+"use client"
 
-import { SignInButton } from "@clerk/nextjs"
-import { Button } from "@/components/ui/button"
+import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 
-interface SignInRedirectProps {
-  className?: string
-  children: React.ReactNode
-  size?: "default" | "sm" | "lg" | "icon"
-  redirectUrl?: string
-}
+export function SignInRedirect() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isSignedIn } = useAuth();
 
-export function SignInRedirect({ className, children, size, redirectUrl }: SignInRedirectProps) {
-  return (
-    <SignInButton mode="modal" forceRedirectUrl={redirectUrl || "/dashboard"}>
-      <Button className={className} size={size}>
-        {children}
-      </Button>
-    </SignInButton>
-  )
+  useEffect(() => {
+    console.log('[SignInRedirect] Effect triggered - isSignedIn:', isSignedIn, 'pathname:', pathname);
+    
+    // Check for pending invite code when user is authenticated
+    if (isSignedIn) {
+      const storedCode = sessionStorage.getItem('pendingInviteCode');
+      console.log('[SignInRedirect] Checking for stored invite code:', storedCode);
+      
+      if (storedCode) {
+        console.log('[SignInRedirect] Found stored invite code:', storedCode);
+        // Clear the stored code and redirect to the invite page
+        sessionStorage.removeItem('pendingInviteCode');
+        console.log('[SignInRedirect] Redirecting to invite page:', `/invite/${storedCode}`);
+        router.push(`/invite/${storedCode}`);
+      } else {
+        console.log('[SignInRedirect] No stored invite code found');
+      }
+    } else {
+      console.log('[SignInRedirect] User not signed in, skipping invite check');
+    }
+  }, [isSignedIn, pathname, router]);
+
+  return null; // This component doesn't render anything
 } 

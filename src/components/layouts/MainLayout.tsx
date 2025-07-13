@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation'
 import { NetworkStatus } from '@/components/NetworkStatus'
 import { UpdatePrompt } from '@/components/UpdatePrompt'
 import { PWAPrompt } from '@/components/PWAPrompt'
+import { SignInRedirect } from '@/components/SignInRedirect'
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const { isSignedIn } = useUser()
@@ -18,6 +19,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Check for pending invite codes */}
+      <SignInRedirect />
+      
       {/* Network status indicator */}
       <NetworkStatus />
       

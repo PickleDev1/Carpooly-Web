@@ -2,6 +2,7 @@
 
 import { useLoadScript } from '@react-google-maps/api'
 import { MainLayout } from '@/components/layouts/MainLayout'
+import { SignInRedirect } from '@/components/SignInRedirect'
 
 // Define libraries array outside component to keep it static
 const libraries: ("places")[] = ["places"]
@@ -38,6 +39,11 @@ export default function AuthenticatedLayout({
     )
   }
 
-  return children
+  return (
+    <>
+      <SignInRedirect />
+      {children}
+    </>
+  )
 }
 

@@ -22,7 +22,20 @@ export default function InvitePage() {
 
   useEffect(() => {
     console.log('[InvitePage] useEffect: loading:', loading, 'isSignedIn:', isSignedIn, 'code:', code);
-    if (!code) return;
+    if (!code) {
+      console.log('[InvitePage] No code provided, checking for stored code');
+      const storedCode = sessionStorage.getItem('pendingInviteCode');
+      if (storedCode && isSignedIn) {
+        console.log('[InvitePage] Found stored code, redirecting to:', `/invite/${storedCode}`);
+        sessionStorage.removeItem('pendingInviteCode');
+        router.push(`/invite/${storedCode}`);
+        return;
+      }
+      setError('No invite code provided');
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     fetch(`${API_BASE_URL}/api/invite/${code}`)
@@ -36,17 +49,41 @@ export default function InvitePage() {
       .then(setInvite)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [code]);
+  }, [code, isSignedIn, router]);
 
-  // If not signed in, redirect to sign in with return URL
+  // If not signed in, store invite code and redirect to sign in with return URL
   useEffect(() => {
-    console.log('[InvitePage] useEffect: loading:', loading, 'isSignedIn:', isSignedIn, 'code:', code);
-    if (!loading && !isSignedIn) {
+    console.log('[InvitePage] Auth check effect: loading:', loading, 'isSignedIn:', isSignedIn, 'code:', code);
+    if (!loading && !isSignedIn && code) {
+      // Store the invite code so we can restore it after authentication
+      sessionStorage.setItem('pendingInviteCode', code);
+      console.log('[InvitePage] Stored invite code in sessionStorage:', code);
+      
       // Clerk sign-in page with redirect back to this invite
       console.log('[InvitePage] Not signed in, redirecting to sign-up with redirect_url:', `/sign-up?redirect_url=/invite/${code}`);
       router.push(`/sign-up?redirect_url=/invite/${code}`);
     }
   }, [loading, isSignedIn, code, router]);
+
+  // Check for stored invite code when user is authenticated but no code in URL
+  useEffect(() => {
+    if (isSignedIn && !code && !loading) {
+      const storedCode = sessionStorage.getItem('pendingInviteCode');
+      if (storedCode) {
+        console.log('[InvitePage] Found stored invite code:', storedCode);
+        // Clear the stored code and redirect to the invite page
+        sessionStorage.removeItem('pendingInviteCode');
+        router.push(`/invite/${storedCode}`);
+      }
+    }
+  }, [isSignedIn, code, loading, router]);
+
+  // Clear stored invite code when successfully joining
+  useEffect(() => {
+    if (joined) {
+      sessionStorage.removeItem('pendingInviteCode');
+    }
+  }, [joined]);
 
   const handleJoin = async () => {
     setJoining(true);
