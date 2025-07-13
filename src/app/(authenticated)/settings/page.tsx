@@ -68,9 +68,8 @@ export default function SettingsPage() {
   const [milesSaved, setMilesSaved] = useState(0);
   
   // Location and privacy state
-  const [locationSharingEnabled, setLocationSharingEnabled] = useState(false);
-  const [homeAddress, setHomeAddress] = useState('');
-  const [homeAddressLoading, setHomeAddressLoading] = useState(false);
+  // Remove all state, useEffect, and UI related to Location & Privacy (location sharing, home address, reverse geocoding)
+  // Only keep the rest of the settings page (notifications, account management, etc)
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -103,8 +102,8 @@ export default function SettingsPage() {
       try {
         setIsLoading(true);
         // Fetch location settings
-        const locationSettings = await api.getLocationSettings();
-        setLocationSharingEnabled(locationSettings.location_sharing_enabled || false);
+        // const locationSettings = await api.getLocationSettings(); // This line is removed
+        // setLocationSharingEnabled(locationSettings.location_sharing_enabled || false); // This line is removed
         // Fetch user data to get home address
         const userData = await api.getCurrentUser();
         console.log('Fetched userData:', userData);
@@ -114,33 +113,33 @@ export default function SettingsPage() {
         console.log('u.home_address:', u.home_address);
         console.log('u.home_latitude:', u.home_latitude, 'type:', typeof u.home_latitude);
         console.log('u.home_longitude:', u.home_longitude, 'type:', typeof u.home_longitude);
-        if (u.home_address && u.home_address.trim() !== '') {
-          console.log('Using home_address:', u.home_address);
-          setHomeAddress(u.home_address);
-          setHomeAddressLoading(false);
-        } else if (
-          u.home_latitude &&
-          u.home_longitude &&
-          (u.home_latitude.Float64 !== undefined && u.home_latitude.Valid) &&
-          (u.home_longitude.Float64 !== undefined && u.home_longitude.Valid)
-        ) {
-          setHomeAddressLoading(true);
-          const lat = u.home_latitude.Float64;
-          const lng = u.home_longitude.Float64;
-          console.log('Attempting reverse geocode for lat/lng:', lat, lng);
-          const address = await reverseGeocode(lat, lng);
-          console.log('Reverse geocoded address:', address);
-          setHomeAddress(address);
-          setHomeAddressLoading(false);
-        } else {
-          console.log('No valid home address or lat/lng found.');
-          setHomeAddress('');
-          setHomeAddressLoading(false);
-        }
+        // if (u.home_address && u.home_address.trim() !== '') { // This block is removed
+        //   console.log('Using home_address:', u.home_address);
+        //   setHomeAddress(u.home_address);
+        //   setHomeAddressLoading(false);
+        // } else if ( // This block is removed
+        //   u.home_latitude &&
+        //   u.home_longitude &&
+        //   (u.home_latitude.Float64 !== undefined && u.home_latitude.Valid) &&
+        //   (u.home_longitude.Float64 !== undefined && u.home_longitude.Valid)
+        // ) {
+        //   setHomeAddressLoading(true);
+        //   const lat = u.home_latitude.Float64;
+        //   const lng = u.home_longitude.Float64;
+        //   console.log('Attempting reverse geocode for lat/lng:', lat, lng);
+        //   const address = await reverseGeocode(lat, lng);
+        //   console.log('Reverse geocoded address:', address);
+        //   setHomeAddress(address);
+        //   setHomeAddressLoading(false);
+        // } else {
+        //   console.log('No valid home address or lat/lng found.');
+        //   setHomeAddress('');
+        //   setHomeAddressLoading(false);
+        // }
       } catch (error) {
         console.error('Error fetching location settings:', error);
-        setHomeAddress('');
-        setHomeAddressLoading(false);
+        // setHomeAddress(''); // This line is removed
+        // setHomeAddressLoading(false); // This line is removed
       } finally {
         setIsLoading(false);
       }
@@ -156,15 +155,15 @@ export default function SettingsPage() {
     
     try {
       // Update location settings
-      await api.updateLocationSettings(locationSharingEnabled);
+      // await api.updateLocationSettings(locationSharingEnabled); // This line is removed
       
       // Update user data if home address has changed
       // Note: This assumes the backend supports updating home_address field
       // If not, you may need to implement a separate endpoint
       try {
-        await api.updateUser(user.id, {
-          home_address: homeAddress
-        });
+        // await api.updateUser(user.id, { // This block is removed
+        //   home_address: homeAddress
+        // });
       } catch (userUpdateError) {
         console.warn('Could not update home address:', userUpdateError);
         // Don't fail the entire save operation if user update fails
@@ -266,93 +265,6 @@ export default function SettingsPage() {
                   <Switch defaultChecked />
                 </div>
               </div>
-            </Card>
-
-            {/* Location & Privacy Section */}
-            <Card className="p-6 border-0 shadow-sm bg-white">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <Shield className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Location & Privacy</h2>
-                  <p className="text-sm text-gray-500">Control your location sharing and privacy settings</p>
-                </div>
-              </div>
-              
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="loading-spinner h-8 w-8 mx-auto"></div>
-                  <span className="ml-3 text-gray-600">Loading settings...</span>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <MapPin className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <span className="font-medium text-gray-900">Location sharing</span>
-                        <p className="text-sm text-gray-500">Share your location during rides</p>
-                      </div>
-                    </div>
-                    <Switch 
-                      checked={locationSharingEnabled}
-                      onCheckedChange={setLocationSharingEnabled}
-                    />
-                  </div>
-                  
-                  <div className="p-4 rounded-lg border border-gray-100">
-                    <Label htmlFor="home-address" className="flex items-center gap-2 mb-2">
-                      <Home className="w-4 h-4 text-gray-400" />
-                      Home Address
-                    </Label>
-                    {homeAddressLoading ? (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Clock className="w-4 h-4" />
-                        Resolving address…
-                      </div>
-                    ) : (
-                      <AddressAutocomplete
-                        placeholder="Enter your home address"
-                        onSelect={(selectedAddress) => {
-                          setHomeAddress(selectedAddress.address);
-                        }}
-                        className="border-gray-200 focus:border-primary focus:ring-primary"
-                      />
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      This address is fetched from your profile and can be updated here.
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Eye className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <span className="font-medium text-gray-900">Profile visibility</span>
-                        <p className="text-sm text-gray-500">Show my profile to other users</p>
-                      </div>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  
-                  {/* Save Button */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <Button
-                      onClick={handleSaveLocationSettings}
-                      disabled={isSaving}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {isSaving ? 'Saving...' : 'Save Preferences'}
-                    </Button>
-                    {saveMessage && (
-                      <span className={`text-sm ${saveMessage.includes('Error') ? 'text-red-600' : 'text-green-600'}`}>
-                        {saveMessage}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
             </Card>
 
             {/* Account Management Section */}

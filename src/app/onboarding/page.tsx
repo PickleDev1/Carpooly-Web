@@ -238,7 +238,7 @@ export default function OnboardingPage() {
               Let&apos;s get you set up for carpooling! First, we need your home address to help you find and create carpools near you.
             </p>
             <p className="text-xs text-gray-500">
-              💡 <strong>Pro Tip:</strong> This address will be used as your default starting point for all carpools. You can change it anytime in settings.
+              💡 <strong>Pro Tip:</strong> This address will be used as your default starting point for all carpools.
             </p>
             {isMobileDevice() && (
               <span className="block text-sm text-blue-600 mt-2">
