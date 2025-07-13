@@ -59,7 +59,12 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
     }
 
     const validation = validateEmail(email)
-    setEmailValidation(validation)
+    // Ensure error is always a string
+    const safeValidation = {
+      isValid: validation.isValid,
+      error: typeof validation.error === 'string' ? validation.error : 'Invalid email address'
+    }
+    setEmailValidation(safeValidation)
   }, [email])
 
   // Fetch carpool members when modal opens
@@ -82,7 +87,7 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
     // Validate email before submission
     const validation = validateEmail(email)
     if (!validation.isValid) {
-      setError(validation.error || 'Please enter a valid email address')
+      setError(typeof validation.error === 'string' ? validation.error : 'Please enter a valid email address')
       return
     }
 
@@ -190,7 +195,7 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
             {/* Real-time validation feedback */}
             {hasInteracted && email.trim() !== '' && (
               <div className={`text-xs ${emailValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
-                {emailValidation.isValid ? '✓ Valid email address' : emailValidation.error}
+                {emailValidation.isValid ? '✓ Valid email address' : (typeof emailValidation.error === 'string' ? emailValidation.error : 'Invalid email address')}
               </div>
             )}
           </div>
