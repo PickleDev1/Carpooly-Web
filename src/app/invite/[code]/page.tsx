@@ -91,7 +91,7 @@ export default function InvitePage() {
         console.log('[InvitePage] Making API call with token:', token ? 'Token available' : 'No token');
         
         // Try with authentication first, then without if it fails
-        let response = await fetch(`${API_BASE_URL}/api/invites/${code}`, {
+        let response = await fetch(`${API_BASE_URL}/api/invite-links/${code}`, {
           headers: token ? {
             'Authorization': `Bearer ${token}`
           } : {}
@@ -100,7 +100,7 @@ export default function InvitePage() {
         // If 401/403, try without authentication (for public invites)
         if ((response.status === 401 || response.status === 403) && token) {
           console.log('[InvitePage] Auth failed, trying without token');
-          response = await fetch(`${API_BASE_URL}/api/invites/${code}`);
+          response = await fetch(`${API_BASE_URL}/api/invite-links/${code}`);
         }
         
         console.log('[InvitePage] API response status:', response.status);
@@ -142,7 +142,7 @@ export default function InvitePage() {
     try {
       const token = await getToken();
       console.log('[InvitePage] handleJoin: Got token:', !!token);
-      const res = await fetch(`${API_BASE_URL}/api/invites/${code}/join`, {
+      const res = await fetch(`${API_BASE_URL}/api/invite-links/${code}/join`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
