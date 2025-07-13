@@ -90,17 +90,15 @@ export default function InvitePage() {
         const token = await getToken();
         console.log('[InvitePage] Making API call with token:', token ? 'Token available' : 'No token');
         
-        // Try with authentication first, then without if it fails
-        let response = await fetch(`${API_BASE_URL}/api/invite-links/${code}`, {
-          headers: token ? {
-            'Authorization': `Bearer ${token}`
-          } : {}
-        });
+        // Use the correct public endpoint for invite link details
+        console.log('[InvitePage] Using public endpoint for invite link');
+        const response = await fetch(`${API_BASE_URL}/api/invite/${code}`);
         
-        // If 401/403, try without authentication (for public invites)
-        if ((response.status === 401 || response.status === 403) && token) {
-          console.log('[InvitePage] Auth failed, trying without token');
-          response = await fetch(`${API_BASE_URL}/api/invite-links/${code}`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log('[InvitePage] API error response:', errorText);
+          if (response.status === 404) throw new Error("This invite link has expired or is no longer active.");
+          throw new Error("Failed to load invite details.");
         }
         
         console.log('[InvitePage] API response status:', response.status);
@@ -142,11 +140,12 @@ export default function InvitePage() {
     try {
       const token = await getToken();
       console.log('[InvitePage] handleJoin: Got token:', !!token);
-      const res = await fetch(`${API_BASE_URL}/api/invite-links/${code}/join`, {
+      const res = await fetch(`${API_BASE_URL}/api/invite/${code}/join`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       console.log('[InvitePage] handleJoin: API response status:', res.status);
       if (!res.ok) {
