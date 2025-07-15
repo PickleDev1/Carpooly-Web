@@ -9,8 +9,9 @@ import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AddressAutocomplete } from "@/components/AddressAutocomplete"
-import { Settings, MapPin, Shield, Info } from 'lucide-react'
+import { Settings, MapPin, Shield, Info, AlertTriangle } from 'lucide-react'
 import { LocationSettings as LocationSettingsType } from '@/types/api'
+import { isIOSDevice, iOSLocationUtils } from '@/lib/utils'
 
 export function LocationSettings() {
   const [settings, setSettings] = useState<LocationSettingsType | null>(null)
@@ -18,6 +19,7 @@ export function LocationSettings() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [isIOS] = useState(isIOSDevice())
   
   const [homeAddress, setHomeAddress] = useState<string>('')
   const [homeLatitude, setHomeLatitude] = useState<string>('')
@@ -111,25 +113,22 @@ export function LocationSettings() {
     }
   }
 
-  // Get current location
-  const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      setError('Geolocation is not supported by this browser')
-      return
+  // Get current location with iOS-specific handling
+  const handleGetCurrentLocation = async () => {
+    try {
+      const position = await iOSLocationUtils.requestLocation()
+      setHomeLatitude(position.coords.latitude.toString())
+      setHomeLongitude(position.coords.longitude.toString())
+      setSuccess('Current location set as home location')
+      setError(null)
+    } catch (err) {
+      console.error('Geolocation error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to get current location')
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setHomeLatitude(position.coords.latitude.toString())
-        setHomeLongitude(position.coords.longitude.toString())
-        setSuccess('Current location set as home location')
-      },
-      (error) => {
-        console.error('Geolocation error:', error)
-        setError('Failed to get current location')
-      }
-    )
   }
+
+  // Get iOS help text
+  const iosHelpText = iOSLocationUtils.getHelpText()
 
   return (
     <div className="space-y-6">
@@ -148,6 +147,31 @@ export function LocationSettings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* iOS-specific Information */}
+      {iosHelpText && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-orange-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-orange-900 mb-2">{iosHelpText.title}</h3>
+                <p className="text-sm text-orange-700 mb-3">
+                  {iosHelpText.description}
+                </p>
+                <div className="text-sm text-orange-700">
+                  <p className="font-medium mb-1">If location access is denied:</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    {iosHelpText.steps.map((step: string, index: number) => (
+                      <li key={index}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Location Sharing Toggle */}
       <Card>
@@ -245,7 +269,13 @@ export function LocationSettings() {
       {/* Error/Success Messages */}
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 text-sm">{error}</p>
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5" />
+            <div>
+              <p className="text-red-700 text-sm font-medium">Location Error</p>
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          </div>
         </div>
       )}
 

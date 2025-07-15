@@ -5,6 +5,65 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Comprehensive device compatibility check for location tracking
+ */
+export const LocationCompatibility = {
+  /**
+   * Check if location tracking is supported on this device/browser
+   */
+  isSupported(): boolean {
+    if (typeof window === 'undefined') return false
+    
+    // Check for geolocation support
+    if (!navigator.geolocation) {
+      console.log('📍 Geolocation not supported')
+      return false
+    }
+
+    // Check for HTTPS (required for geolocation in modern browsers)
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      console.log('📍 HTTPS required for geolocation')
+      return false
+    }
+
+    return true
+  },
+
+  /**
+   * Get detailed compatibility information
+   */
+  getCompatibilityInfo() {
+    const info = {
+      geolocationSupported: typeof navigator !== 'undefined' && !!navigator.geolocation,
+      permissionsSupported: typeof navigator !== 'undefined' && !!navigator.permissions,
+      isHTTPS: typeof window !== 'undefined' && (window.location.protocol === 'https:' || window.location.hostname === 'localhost'),
+      isIOS: isIOSDevice(),
+      isMobile: isMobileDevice(),
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown'
+    }
+
+    console.log('📍 Device compatibility info:', info)
+    return info
+  },
+
+  /**
+   * Get recommended settings for this device
+   */
+  getRecommendedSettings() {
+    const isIOS = isIOSDevice()
+    const isMobile = isMobileDevice()
+
+    return {
+      timeout: isIOS ? 15000 : 10000,
+      maximumAge: isIOS ? 10000 : 5000,
+      enableHighAccuracy: true,
+      retryAttempts: isIOS ? 3 : 2,
+      retryDelay: isIOS ? 2000 : 1000
+    }
+  }
+}
+
 export function isMobileDevice(): boolean {
   if (typeof window === 'undefined') return false;
   
@@ -37,7 +96,183 @@ export function isIOSDevice(): boolean {
   if (typeof window === 'undefined') return false;
   
   const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-  return /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+  
+  // Primary iOS detection
+  const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+  
+  // Additional check for iOS Safari specifically
+  const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+  const isIOSSafari = isIOS && isSafari;
+  
+  // Also check for iOS WebKit
+  const isIOSWebKit = /iPad|iPhone|iPod/.test(userAgent) && /WebKit/.test(userAgent) && !/Chrome/.test(userAgent);
+  
+  return isIOS || isIOSSafari || isIOSWebKit;
+}
+
+/**
+ * iOS-specific location permission utilities
+ */
+export const iOSLocationUtils = {
+  /**
+   * Get iOS-specific geolocation options
+   */
+  getGeolocationOptions() {
+    const baseOptions = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 5000
+    }
+
+    if (isIOSDevice()) {
+      return {
+        ...baseOptions,
+        timeout: 15000, // Longer timeout for iOS
+        maximumAge: 10000 // Allow slightly older cached locations on iOS
+      }
+    }
+
+    return baseOptions
+  },
+
+  /**
+   * Get iOS-specific error message for geolocation errors
+   */
+  getErrorMessage(error: GeolocationPositionError): string {
+    if (!isIOSDevice()) {
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          return 'Location access denied. Please allow location access in your browser settings.'
+        case error.POSITION_UNAVAILABLE:
+          return 'Location information unavailable.'
+        case error.TIMEOUT:
+          return 'Location request timed out. Please try again.'
+        default:
+          return 'Failed to get your location.'
+      }
+    }
+
+    // iOS-specific error messages with more detailed guidance
+    switch (error.code) {
+      case error.PERMISSION_DENIED:
+        return 'Location access denied. Please go to Settings → Safari → Location → Allow for this website, then refresh the page.'
+      case error.POSITION_UNAVAILABLE:
+        return 'Location information unavailable. Please check that Location Services are enabled in Settings → Privacy & Security → Location Services.'
+      case error.TIMEOUT:
+        return 'Location request timed out. This can happen on iOS when GPS signal is weak. Please try again or move to an area with better GPS reception.'
+      default:
+        return 'Unable to get your location. Please check your device settings and try again.'
+    }
+  },
+
+  /**
+   * Check if location permission is available and handle iOS-specific cases
+   */
+  async checkLocationPermission(): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
+    if (typeof window === 'undefined') return 'unknown'
+    
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
+      console.log('📍 Geolocation not supported')
+      return 'unknown'
+    }
+
+    // Check if permissions API is available
+    if (!navigator.permissions) {
+      console.log('📍 Permissions API not available - will check via geolocation request')
+      // For iOS devices without Permissions API, we'll need to try a location request
+      // to determine permission status
+      return 'prompt'
+    }
+
+    try {
+      const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
+      console.log('📍 Geolocation permission state:', result.state)
+      return result.state
+    } catch (err) {
+      console.error('📍 Error checking geolocation permission:', err)
+      // If permissions API fails, assume we need to prompt
+      return 'prompt'
+    }
+  },
+
+  /**
+   * Request location with iOS-specific handling
+   */
+  requestLocation(): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) => {
+      if (typeof window === 'undefined') {
+        reject(new Error('Geolocation not available in server environment'))
+        return
+      }
+
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation not supported'))
+        return
+      }
+
+      const options = this.getGeolocationOptions()
+      console.log('📍 Requesting location with options:', options)
+
+      // Add timeout safety
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Location request timed out'))
+      }, options.timeout + 2000) // Add 2 seconds buffer
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          clearTimeout(timeoutId)
+          
+          // Validate position data
+          if (!position || !position.coords) {
+            reject(new Error('Invalid position data received'))
+            return
+          }
+
+          // Validate coordinates
+          if (isNaN(position.coords.latitude) || isNaN(position.coords.longitude)) {
+            reject(new Error('Invalid coordinates received'))
+            return
+          }
+
+          // Check coordinate bounds
+          if (position.coords.latitude < -90 || position.coords.latitude > 90 ||
+              position.coords.longitude < -180 || position.coords.longitude > 180) {
+            reject(new Error('Coordinates out of valid range'))
+            return
+          }
+
+          console.log('📍 Location obtained successfully:', position.coords)
+          resolve(position)
+        },
+        (error) => {
+          clearTimeout(timeoutId)
+          console.error('📍 Geolocation error:', error)
+          const errorMessage = this.getErrorMessage(error)
+          reject(new Error(errorMessage))
+        },
+        options
+      )
+    })
+  },
+
+  /**
+   * Get iOS-specific help text for location permissions
+   */
+  getHelpText() {
+    if (!isIOSDevice()) return null
+
+    return {
+      title: 'iOS Device Detected',
+      description: 'Location features on iOS require explicit permission. You may need to allow location access when prompted.',
+      steps: [
+        'Go to Settings → Safari → Location',
+        'Select "Allow" or "Ask" for this website',
+        'Ensure Location Services are enabled in Settings → Privacy & Security → Location Services',
+        'Refresh this page and try again'
+      ]
+    }
+  }
 }
 
 /**

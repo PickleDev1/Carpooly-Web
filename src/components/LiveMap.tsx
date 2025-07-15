@@ -5,10 +5,11 @@ import { useUser } from '@clerk/nextjs'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { MapPin, Users, Settings } from 'lucide-react'
+import { MapPin, Users, Settings, AlertTriangle, Info } from 'lucide-react'
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api'
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { reverseGeocodeWithCache } from '@/lib/utils'
+import { isIOSDevice } from '@/lib/utils'
 
 interface LiveMapProps {
   rideId: string
@@ -41,11 +42,16 @@ export function LiveMap({ rideId }: LiveMapProps) {
     isSharingEnabled,
     isLoading,
     error,
-    toggleLocationSharing
+    permissionState,
+    isIOS,
+    isCompatible,
+    toggleLocationSharing,
+    requestLocation
   } = useLocationTracking({ rideId })
 
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
   const [addresses, setAddresses] = useState<Map<string, string>>(new Map())
+  const [showIOSHelp, setShowIOSHelp] = useState(false)
 
   // Google Maps API key from env
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -70,32 +76,17 @@ export function LiveMap({ rideId }: LiveMapProps) {
     libraries: ['places'],
   })
 
-  // Reverse geocoding effect to convert coordinates to addresses
+  // Display coordinates as provided by backend (no reverse geocoding)
   useEffect(() => {
-    const fetchAddresses = async () => {
-      const newAddresses = new Map<string, string>()
-      
-      for (const location of locations) {
-        const locationKey = `${location.latitude},${location.longitude}`
-        
-        try {
-          console.log('🌍 Reverse geocoding coordinates:', location.latitude, location.longitude)
-          const address = await reverseGeocodeWithCache(location.latitude, location.longitude)
-          newAddresses.set(locationKey, address)
-          console.log('🌍 Got address:', address)
-        } catch (error) {
-          console.error('Failed to reverse geocode location:', error)
-          newAddresses.set(locationKey, `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`)
-        }
-      }
-      
-      setAddresses(newAddresses)
+    const newAddresses = new Map<string, string>()
+    
+    for (const location of locations) {
+      const locationKey = `${location.latitude},${location.longitude}`
+      // Just display coordinates as provided by backend
+      newAddresses.set(locationKey, `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`)
     }
-
-    if (locations.length > 0) {
-      console.log('🌍 Starting reverse geocoding for', locations.length, 'locations')
-      fetchAddresses()
-    }
+    
+    setAddresses(newAddresses)
   }, [locations])
 
   const handleLocationSharingToggle = async (enabled: boolean) => {
@@ -103,6 +94,15 @@ export function LiveMap({ rideId }: LiveMapProps) {
       await toggleLocationSharing(enabled)
     } catch (err) {
       console.error('Failed to toggle location sharing:', err)
+    }
+  }
+
+  // iOS-specific location request handler
+  const handleIOSLocationRequest = async () => {
+    try {
+      await requestLocation()
+    } catch (err) {
+      console.error('iOS location request failed:', err)
     }
   }
 
@@ -136,19 +136,78 @@ export function LiveMap({ rideId }: LiveMapProps) {
     )
   }
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-[600px]">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-4">
+      {/* Device Compatibility Warning */}
+      {!isCompatible && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-red-900 mb-2">Location Tracking Not Supported</h3>
+                <p className="text-sm text-red-700 mb-3">
+                  Your device or browser doesn't support location tracking. This could be due to:
+                </p>
+                <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+                  <li>Using an older browser that doesn't support geolocation</li>
+                  <li>Not using HTTPS (required for location access)</li>
+                  <li>Browser security settings blocking location access</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* iOS-specific Help Banner */}
+      {isIOS && isSharingEnabled && permissionState === 'prompt' && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-orange-900 mb-2">iOS Location Access Required</h3>
+                <p className="text-sm text-orange-700 mb-3">
+                  To share your location on iOS, you need to allow location access when prompted. 
+                  If you don't see a prompt, tap the button below to request location access.
+                </p>
+                <Button 
+                  onClick={handleIOSLocationRequest}
+                  variant="outline"
+                  size="sm"
+                  className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                >
+                  Request Location Access
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* iOS Permission Denied Warning */}
+      {isIOS && permissionState === 'denied' && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-red-900 mb-2">Location Access Denied</h3>
+                <p className="text-sm text-red-700 mb-3">
+                  Location access has been denied. To enable location sharing on iOS:
+                </p>
+                <ol className="text-sm text-red-700 list-decimal list-inside space-y-1">
+                  <li>Go to Settings → Safari → Location</li>
+                  <li>Select "Allow" or "Ask" for this website</li>
+                  <li>Refresh this page and try again</li>
+                </ol>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Location Sharing Controls */}
       <Card>
         <CardHeader>
@@ -158,17 +217,51 @@ export function LiveMap({ rideId }: LiveMapProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Share your location</p>
-              <p className="text-sm text-gray-600">
-                Allow other members to see your real-time location. Your preference from onboarding is remembered.
-              </p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Share your location</p>
+                <p className="text-sm text-gray-600">
+                  Allow other members to see your real-time location. Your preference from onboarding is remembered.
+                </p>
+              </div>
+              <Switch
+                checked={isSharingEnabled}
+                onCheckedChange={handleLocationSharingToggle}
+              />
             </div>
-            <Switch
-              checked={isSharingEnabled}
-              onCheckedChange={handleLocationSharingToggle}
-            />
+
+            {/* iOS-specific information */}
+            {isIOS && (
+              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-700">
+                  <p className="font-medium">iOS Device Detected</p>
+                  <p>Location sharing on iOS requires explicit permission. You may need to allow location access when prompted.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Error display */}
+            {error && (
+              <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5" />
+                <div className="text-sm text-red-700">
+                  <p className="font-medium">Location Error</p>
+                  <p>{error}</p>
+                  {isIOS && (
+                    <Button 
+                      onClick={handleIOSLocationRequest}
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 border-red-300 text-red-700 hover:bg-red-100"
+                    >
+                      Try Again
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
