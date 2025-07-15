@@ -41,6 +41,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
     locations,
     isSharingEnabled,
     isLoading,
+    isToggleLoading,
     error,
     permissionState,
     isIOS,
@@ -252,10 +253,16 @@ export function LiveMap({ rideId }: LiveMapProps) {
                   Allow other members to see your real-time location. Your preference from onboarding is remembered.
                 </p>
               </div>
-              <Switch
-                checked={isSharingEnabled}
-                onCheckedChange={handleLocationSharingToggle}
-              />
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={isSharingEnabled}
+                  onCheckedChange={handleLocationSharingToggle}
+                  disabled={isToggleLoading}
+                />
+                {isToggleLoading && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#2B5335]" />
+                )}
+              </div>
             </div>
 
             {/* iOS-specific information */}
@@ -264,7 +271,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
                 <Info className="h-4 w-4 text-blue-600 mt-0.5" />
                 <div className="text-sm text-blue-700">
                   <p className="font-medium">iOS Device Detected</p>
-                  <p>Location sharing on iOS requires explicit permission. If you&apos;ve already set location to &quot;Allow&quot; in Safari settings, try toggling location sharing off and on again.</p>
+                  <p>Location sharing on iOS requires explicit permission. If you&apos;ve already set location to &quot;Allow&quot; in Safari settings, try toggling location sharing off and on again. This helps Safari sync the permission.</p>
                 </div>
               </div>
             )}
@@ -290,8 +297,9 @@ export function LiveMap({ rideId }: LiveMapProps) {
                         <p>If you&apos;ve set location to &quot;Allow&quot; in Safari settings:</p>
                         <ol className="list-decimal list-inside mt-1 space-y-1">
                           <li>Try toggling location sharing off and on</li>
-                          <li>Refresh the page and try again</li>
+                          <li>If the toggle gets stuck, refresh the page and try again</li>
                           <li>Check that Location Services are enabled in iOS Settings</li>
+                          <li>Try closing and reopening Safari</li>
                         </ol>
                       </div>
                     </div>

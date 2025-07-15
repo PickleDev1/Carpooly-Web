@@ -221,6 +221,10 @@ export const iOSLocationUtils = {
       console.log('📍 [iOS DEBUG] Geolocation available:', !!navigator.geolocation)
       console.log('📍 [iOS DEBUG] Permissions API available:', !!navigator.permissions)
       
+      // For iOS Safari, we need to handle the case where Safari shows "Allow" 
+      // but the geolocation API still returns PERMISSION_DENIED
+      // This is a known iOS Safari bug
+      
       // Use a very short timeout to quickly determine permission status
       const options = {
         enableHighAccuracy: false,
@@ -268,7 +272,11 @@ export const iOSLocationUtils = {
           switch (error.code) {
             case error.PERMISSION_DENIED:
               console.log('📍 [iOS DEBUG] iOS permission explicitly denied')
-              resolution = 'denied'
+              // For iOS Safari, PERMISSION_DENIED might be a false positive
+              // if Safari shows "Allow" but the API hasn't synced yet
+              // We'll treat this as 'prompt' to allow retry
+              console.log('📍 [iOS DEBUG] iOS Safari PERMISSION_DENIED detected - treating as prompt for retry')
+              resolution = 'prompt'
               break
             case error.POSITION_UNAVAILABLE:
               console.log('📍 [iOS DEBUG] iOS position unavailable - likely permission issue')
@@ -395,6 +403,45 @@ export const iOSLocationUtils = {
         'Refresh this page and try again'
       ]
     }
+  },
+
+  /**
+   * iOS Safari workaround for permission sync issues
+   * Sometimes Safari shows "Allow" but the geolocation API still returns PERMISSION_DENIED
+   * This function tries to force Safari to re-evaluate the permission
+   */
+  async forceIOSPermissionSync(): Promise<boolean> {
+    if (!isIOSDevice()) return false
+    
+    console.log('📍 [iOS DEBUG] Attempting to force iOS Safari permission sync')
+    
+    return new Promise((resolve) => {
+      // Try a very quick location request to force Safari to re-evaluate
+      const options = {
+        enableHighAccuracy: false,
+        timeout: 1000,
+        maximumAge: 0
+      }
+      
+      const timeoutId = setTimeout(() => {
+        console.log('📍 [iOS DEBUG] Force sync timeout - Safari still not synced')
+        resolve(false)
+      }, 1500)
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          clearTimeout(timeoutId)
+          console.log('📍 [iOS DEBUG] Force sync successful - Safari now recognizes permission')
+          resolve(true)
+        },
+        (error) => {
+          clearTimeout(timeoutId)
+          console.log('📍 [iOS DEBUG] Force sync failed:', error.message)
+          resolve(false)
+        },
+        options
+      )
+    })
   }
 }
 

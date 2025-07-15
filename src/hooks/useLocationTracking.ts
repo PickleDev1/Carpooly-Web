@@ -19,6 +19,7 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
   const [locationSettings, setLocationSettings] = useState<LocationSettings | null>(null)
   const [isSharingEnabled, setIsSharingEnabled] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isToggleLoading, setIsToggleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [permissionState, setPermissionState] = useState<'granted' | 'denied' | 'prompt' | 'unknown'>('unknown')
   const [isIOS] = useState(isIOSDevice())
@@ -140,8 +141,13 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
         if (isIOS) {
           console.log('📍 [HOOK DEBUG] iOS device - using lenient permission logic')
           if (permission === 'denied') {
-            console.log('📍 [HOOK DEBUG] iOS permission explicitly denied, disabling location sharing')
-            setIsSharingEnabled(false)
+            console.log('📍 [HOOK DEBUG] iOS permission explicitly denied, but checking if this is a Safari sync issue')
+            // For iOS Safari, even if permission shows as 'denied', 
+            // it might be a sync issue with Safari settings
+            // We'll still allow the user to try enabling location sharing
+            const onboardingPreference = locationSettings.location_sharing_enabled ?? false
+            console.log('📍 [HOOK DEBUG] iOS Safari sync issue suspected - using onboarding preference:', onboardingPreference)
+            setIsSharingEnabled(onboardingPreference)
           } else {
             // For iOS, if permission is 'prompt' or 'granted', use the user's preference
             // This handles cases where iOS permissions API is unreliable
@@ -285,6 +291,15 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
     console.log('📍 [TOGGLE DEBUG] Current permission state:', permissionState)
     console.log('📍 [TOGGLE DEBUG] Current sharing state:', isSharingEnabled)
     
+    // Clear any previous errors when user tries to toggle
+    if (error) {
+      console.log('📍 [TOGGLE DEBUG] Clearing previous error for retry')
+      setError(null)
+    }
+    
+    // Set loading state to prevent multiple toggles
+    setIsToggleLoading(true)
+    
     try {
       console.log('📍 [TOGGLE DEBUG] Updating location sharing settings to:', enabled)
       
@@ -300,9 +315,16 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
           console.log('📍 [TOGGLE DEBUG] Current iOS permission state:', currentPermission)
           
           if (currentPermission === 'denied') {
-            console.log('📍 [TOGGLE DEBUG] iOS permission explicitly denied, stopping toggle')
-            setError('Location access denied. Please allow location access in Safari settings.')
-            return
+            console.log('📍 [TOGGLE DEBUG] iOS permission shows as denied, but this might be a Safari sync issue')
+            console.log('📍 [TOGGLE DEBUG] Attempting to force Safari to re-evaluate permission')
+            
+            // Try to force Safari to sync the permission
+            const syncSuccess = await iOSLocationUtils.forceIOSPermissionSync()
+            if (syncSuccess) {
+              console.log('📍 [TOGGLE DEBUG] Safari permission sync successful')
+            } else {
+              console.log('📍 [TOGGLE DEBUG] Safari permission sync failed, but continuing with location request')
+            }
           }
           
           // Try to request location to establish user gesture context
@@ -325,8 +347,14 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
             stack: err instanceof Error ? err.stack : undefined
           })
           setError(err instanceof Error ? err.message : 'Location access denied')
-          // Don't enable sharing if permission is denied
-          return
+          // For iOS, even if location request fails, we should still allow the toggle
+          // to complete so the user can try again. The error will be displayed but
+          // the toggle state should reflect what the user intended.
+          console.log('📍 [TOGGLE DEBUG] iOS location request failed, but allowing toggle to complete')
+          await api.updateLocationSettings(enabled)
+          setIsSharingEnabled(enabled)
+          setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: enabled } : null)
+          console.log('📍 [TOGGLE DEBUG] Location sharing settings updated despite location request failure')
         }
       } else {
         // For non-iOS or disabling, just update settings
@@ -335,18 +363,26 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
         setIsSharingEnabled(enabled)
         setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: enabled } : null)
         setError(null) // Clear any previous errors
-        console.log('📍 [TOGGLE DEBUG] Location sharing settings updated successfully')
-      }
-    } catch (err) {
-      console.error('📍 [TOGGLE DEBUG] Failed to update location sharing settings:', err)
-      console.log('📍 [TOGGLE DEBUG] Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown error',
-        type: typeof err,
-        stack: err instanceof Error ? err.stack : undefined
-      })
-      setError('Failed to update location sharing settings')
+              console.log('📍 [TOGGLE DEBUG] Location sharing settings updated successfully')
     }
+  } catch (err) {
+    console.error('📍 [TOGGLE DEBUG] Failed to update location sharing settings:', err)
+    console.log('📍 [TOGGLE DEBUG] Error details:', {
+      message: err instanceof Error ? err.message : 'Unknown error',
+      type: typeof err,
+      stack: err instanceof Error ? err.stack : undefined
+    })
+    setError('Failed to update location sharing settings')
+    // Even if there's an error, we should still update the local state
+    // to match what the user intended, so they can try again
+    console.log('📍 [TOGGLE DEBUG] Updating local state despite error to allow retry')
+    setIsSharingEnabled(enabled)
+    setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: enabled } : null)
+  } finally {
+    // Always clear loading state
+    setIsToggleLoading(false)
   }
+}
 
   // Manual location request for iOS (triggered by user gesture)
   const requestLocation = useCallback(async () => {
@@ -376,6 +412,7 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
     locationSettings,
     isSharingEnabled,
     isLoading,
+    isToggleLoading,
     error,
     permissionState,
     isIOS,
