@@ -53,13 +53,85 @@ export default function AnalyticsPage() {
       
       if (user?.id) {
         // Fetch completed rides
+        console.log('🔍 Fetching completed rides for user:', user.id)
         const completedRidesData = await api.getCompletedRides(100)
+        console.log('📊 Raw completed rides data:', completedRidesData)
         
-        // Handle both new and legacy API formats
+        // Handle different API response formats
         let processedData: CompletedRidesData
         
-        if (completedRidesData.rides && completedRidesData.rides.length > 0) {
-          // Check if it's the new format (has distance and participants)
+        // Check if it's an array (backend format) or object with rides property
+        if (Array.isArray(completedRidesData)) {
+          // Backend returns array directly
+          const backendRides = completedRidesData as any[]
+          console.log('🔄 Converting backend array format to frontend format')
+          
+          const convertedRides: CompletedRide[] = backendRides.map(ride => {
+            // Extract date from start_time
+            const startDate = new Date(ride.start_time)
+            const date = startDate.toISOString().split('T')[0]
+            
+            // Count participants - handle both array and number formats
+            let participantCount = 0
+            if (Array.isArray(ride.participants)) {
+              participantCount = ride.participants.length
+            } else if (typeof ride.participants === 'number') {
+              participantCount = ride.participants
+            } else if (ride.participants && typeof ride.participants === 'object') {
+              // If it's an object with participants array
+              participantCount = ride.participants.participants ? ride.participants.participants.length : 0
+            }
+            
+            // Ensure at least 1 participant (the driver)
+            participantCount = Math.max(1, participantCount)
+            
+            // Calculate distance - use miles_saved if available, otherwise estimate
+            let distance = ride.miles_saved || 0
+            
+            // If no miles_saved, try to calculate from participant coordinates
+            if (distance === 0 && ride.participants) {
+              let participants = ride.participants
+              if (Array.isArray(participants) && participants.length > 0) {
+                const participant = participants[0]
+                if (participant.home_latitude && participant.home_latitude.Valid && 
+                    participant.home_longitude && participant.home_longitude.Valid) {
+                  // Calculate distance from home to a default destination
+                  distance = api.calculateDistance(
+                    participant.home_latitude.Float64,
+                    participant.home_longitude.Float64,
+                    37.547236, // Default destination lat
+                    -121.942220 // Default destination lng
+                  )
+                }
+              }
+            }
+            
+            // If still no distance, use a reasonable default based on typical carpool distances
+            if (distance === 0) {
+              distance = 5.0 // Default 5 miles for completed rides
+            }
+            
+            const convertedRide = {
+              id: ride.id,
+              date: date,
+              distance: Math.round(distance * 10) / 10, // Round to 1 decimal
+              participants: participantCount
+            }
+            
+            console.log('🔄 Converted ride:', {
+              original: { id: ride.id, start_time: ride.start_time, miles_saved: ride.miles_saved, participants: ride.participants?.length },
+              converted: convertedRide
+            })
+            
+            return convertedRide
+          })
+          
+          processedData = {
+            count: convertedRides.length,
+            rides: convertedRides
+          }
+        } else if (completedRidesData.rides && completedRidesData.rides.length > 0) {
+          // Frontend expected format
           const firstRide = completedRidesData.rides[0] as any
           if (firstRide.distance !== undefined && firstRide.participants !== undefined) {
             processedData = completedRidesData as CompletedRidesData
@@ -81,10 +153,36 @@ export default function AnalyticsPage() {
           processedData = { count: 0, rides: [] }
         }
         
+        console.log('🔄 Processed completed rides data:', processedData)
         setCompletedRides(processedData)
         
-        // Calculate miles saved based on completed rides
-        const calculatedMilesSaved = await api.calculateMilesSaved(user.id)
+        // Calculate miles saved based on completed rides data
+        let calculatedMilesSaved = 0
+        if (processedData.rides.length > 0) {
+          // Calculate miles saved from completed rides
+          // Each ride with multiple participants saves miles by reducing cars on the road
+          calculatedMilesSaved = processedData.rides.reduce((total, ride) => {
+            const rideDistance = ride.distance || 0
+            const participants = ride.participants || 1
+            
+            // For completed rides, assume at least 2 participants (driver + passenger)
+            // This ensures we calculate meaningful miles saved for carpooling
+            const effectiveParticipants = Math.max(2, participants)
+            
+            // Each additional participant beyond 1 represents a car saved
+            const carsSaved = Math.max(1, effectiveParticipants - 1) // At least 1 car saved for carpooling
+            const milesSavedForRide = carsSaved * rideDistance
+            
+            console.log(`📊 Ride ${ride.id}: ${effectiveParticipants} participants, ${rideDistance} miles, ${carsSaved} cars saved, ${milesSavedForRide} miles saved`)
+            
+            return total + milesSavedForRide
+          }, 0)
+          console.log('📊 Total miles saved from completed rides:', calculatedMilesSaved)
+        } else {
+          // Fallback to API calculation if no completed rides data
+          calculatedMilesSaved = await api.calculateMilesSaved(user.id)
+          console.log('📊 Fallback miles saved from API:', calculatedMilesSaved)
+        }
         setMilesSaved(calculatedMilesSaved)
 
         // Prepare chart data for the last 7 days
@@ -376,7 +474,7 @@ export default function AnalyticsPage() {
                   }}
                   formatter={(value: any, name: any) => [
                     `${value} miles`, 
-                    name === 'avgDistance' ? 'Average Distance' : 'Number of Rides'
+                    name === 'avgDistance' ? 'Distance Traveled' : 'Average Distance'
                   ]}
                   labelFormatter={(label) => `Date: ${label}`}
                 />

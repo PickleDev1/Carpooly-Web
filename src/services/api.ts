@@ -783,35 +783,39 @@ export const useApi = () => {
         if (useMockApi) {
           return mockService.getActiveRide('mock-user-id')
         }
-        const headers = await getHeaders()
-        console.log('Making request to /api/rides/active with headers:', headers)
         
-        const response = await fetch(`${API_URL}/api/rides/active`, { 
-          method: 'GET',
-          headers 
-        })
-
-        if (!response.ok) {
-          console.error('Active Rides API Error:', response.status, response.statusText)
-          const responseText = await response.text()
-          console.error('Response body:', responseText)
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const text = await response.text()
-        console.log('Raw active rides response:', text)
-        
-        if (!text) {
-          console.log('Empty response received')
-          return []
-        }
-
         try {
-          const data = JSON.parse(text)
-          console.log('Parsed active rides:', data)
-          return data || []
+          const headers = await getHeaders()
+          console.log('Making request to /api/rides/active with headers:', headers)
+          
+          const response = await fetch(`${API_URL}/api/rides/active`, { 
+            method: 'GET',
+            headers 
+          })
+
+          if (!response.ok) {
+            console.warn('Active rides endpoint not available, returning empty array')
+            return []
+          }
+
+          const text = await response.text()
+          console.log('Raw active rides response:', text)
+          
+          if (!text) {
+            console.log('Empty response received')
+            return []
+          }
+
+          try {
+            const data = JSON.parse(text)
+            console.log('Parsed active rides:', data)
+            return data || []
+          } catch (error) {
+            console.error('JSON Parse Error:', error, 'Response:', text)
+            return []
+          }
         } catch (error) {
-          console.error('JSON Parse Error:', error, 'Response:', text)
+          console.warn('Active rides endpoint error, returning empty array:', error)
           return []
         }
       },
@@ -1257,36 +1261,59 @@ export const useApi = () => {
       },
 
       async getLocationSettings() {
-        const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/api/location/settings`, {
-          method: 'GET',
-          headers
-        })
-
-        if (!response.ok) {
-          const text = await response.text()
-          console.error('Get location settings error:', {
-            status: response.status,
-            statusText: response.statusText,
-            body: text
+        try {
+          const headers = await getHeaders()
+          const response = await fetch(`${API_URL}/api/location/settings`, {
+            method: 'GET',
+            headers
           })
-          throw new Error(text || 'Failed to get location settings')
-        }
 
-        return response.json()
+          if (!response.ok) {
+            console.warn('Location settings endpoint not available, returning default settings')
+            return {
+              location_sharing_enabled: false,
+              home_latitude: null,
+              home_longitude: null
+            }
+          }
+
+          return response.json()
+        } catch (error) {
+          console.warn('Location settings endpoint error, returning default settings:', error)
+          return {
+            location_sharing_enabled: false,
+            home_latitude: null,
+            home_longitude: null
+          }
+        }
       },
 
       async getRecentActivity(limit = 20) {
         if (useMockApi) {
           return mockService.getRecentActivity(limit)
         }
-        const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/api/recent-activity?limit=${limit}`, { headers })
-        return response.json()
+        
+        try {
+          const headers = await getHeaders()
+          const response = await fetch(`${API_URL}/api/recent-activity?limit=${limit}`, { headers })
+          
+          if (!response.ok) {
+            console.warn('Recent activity endpoint not available, returning empty array')
+            return []
+          }
+          
+          return response.json()
+        } catch (error) {
+          console.warn('Recent activity endpoint error, returning empty array:', error)
+          return []
+        }
       },
 
       async getCompletedRides(limit = 50) {
+        console.log('🚀 getCompletedRides called with limit:', limit)
+        
         if (useMockApi) {
+          console.log('🎭 Using mock API for completed rides')
           // Mock data for completed rides with more realistic data
           const today = new Date()
           const rides = []
@@ -1302,17 +1329,22 @@ export const useApi = () => {
             })
           }
           
-          return {
+          const result = {
             count: rides.length,
             rides: rides
           }
+          console.log('🎭 Mock completed rides result:', result)
+          return result
         }
         
+        console.log('🌐 Making real API call to:', `${API_URL}/api/rides/completed?limit=${limit}`)
         const headers = await getHeaders()
         const response = await fetch(`${API_URL}/api/rides/completed?limit=${limit}`, { 
           method: 'GET',
           headers 
         })
+
+        console.log('📡 Completed rides API response status:', response.status)
 
         if (!response.ok) {
           console.error('Completed Rides API Error:', response.status, response.statusText)
@@ -1322,13 +1354,17 @@ export const useApi = () => {
         }
 
         const text = await response.text()
+        console.log('📄 Raw completed rides response text:', text)
+        
         if (!text) {
           console.log('Empty response received for completed rides')
           return { count: 0, rides: [] }
         }
 
         try {
-          return JSON.parse(text)
+          const parsedData = JSON.parse(text)
+          console.log('✅ Parsed completed rides data:', parsedData)
+          return parsedData
         } catch (error) {
           console.error('JSON Parse Error:', error, 'Response:', text)
           return { count: 0, rides: [] }
