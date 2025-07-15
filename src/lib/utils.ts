@@ -104,3 +104,55 @@ export function validateEmail(email: string): { isValid: boolean; error?: string
 
   return { isValid: true };
 } 
+
+// Reverse geocoding function to convert coordinates to address
+export async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey) {
+      console.warn('Google Maps API key not found for reverse geocoding')
+      return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+    }
+
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch address')
+    }
+
+    const data = await response.json()
+
+    if (data.status === 'OK' && data.results.length > 0) {
+      // Get the most relevant result (usually the first one)
+      const result = data.results[0]
+      
+      // Try to get a formatted address, fallback to coordinates if not available
+      const address = result.formatted_address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+      return address
+    } else {
+      console.warn('No address found for coordinates:', latitude, longitude)
+      return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+    }
+  } catch (error) {
+    console.error('Reverse geocoding error:', error)
+    return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+  }
+}
+
+// Cache for reverse geocoding results to avoid repeated API calls
+const geocodeCache = new Map<string, string>()
+
+export async function reverseGeocodeWithCache(latitude: number, longitude: number): Promise<string> {
+  const cacheKey = `${latitude.toFixed(4)},${longitude.toFixed(4)}`
+  
+  if (geocodeCache.has(cacheKey)) {
+    return geocodeCache.get(cacheKey)!
+  }
+
+  const address = await reverseGeocode(latitude, longitude)
+  geocodeCache.set(cacheKey, address)
+  
+  return address
+} 

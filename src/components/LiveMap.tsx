@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { MapPin, Users, Settings } from 'lucide-react'
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api'
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { reverseGeocodeWithCache } from '@/lib/utils'
 
 interface LiveMapProps {
   rideId: string
@@ -44,6 +45,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
   } = useLocationTracking({ rideId })
 
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
+  const [addresses, setAddresses] = useState<Map<string, string>>(new Map())
 
   // Google Maps API key from env
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -67,6 +69,35 @@ export function LiveMap({ rideId }: LiveMapProps) {
     googleMapsApiKey: apiKey || '',
     libraries: ['places'],
   })
+
+  // Reverse geocoding effect to convert coordinates to addresses
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      const newAddresses = new Map<string, string>()
+      
+      for (const location of locations) {
+        const locationKey = `${location.latitude},${location.longitude}`
+        
+        if (!addresses.has(locationKey)) {
+          try {
+            const address = await reverseGeocodeWithCache(location.latitude, location.longitude)
+            newAddresses.set(locationKey, address)
+          } catch (error) {
+            console.error('Failed to reverse geocode location:', error)
+            newAddresses.set(locationKey, `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`)
+          }
+        } else {
+          newAddresses.set(locationKey, addresses.get(locationKey)!)
+        }
+      }
+      
+      setAddresses(newAddresses)
+    }
+
+    if (locations.length > 0) {
+      fetchAddresses()
+    }
+  }, [locations, addresses])
 
   const handleLocationSharingToggle = async (enabled: boolean) => {
     try {
@@ -132,7 +163,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
             <div>
               <p className="font-medium">Share your location</p>
               <p className="text-sm text-gray-600">
-                Allow other members to see your real-time location
+                Allow other members to see your real-time location. Your preference from onboarding is remembered.
               </p>
             </div>
             <Switch
@@ -167,7 +198,12 @@ export function LiveMap({ rideId }: LiveMapProps) {
                       <div>
                         <strong>{loc.user_id === user?.id ? 'You' : `Member ${idx + 1}`}</strong>
                         <br />
-                        {new Date(loc.timestamp).toLocaleTimeString()}
+                        <div className="text-sm text-gray-600 mt-1">
+                          {addresses.get(`${loc.latitude},${loc.longitude}`) || `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(loc.timestamp).toLocaleTimeString()}
+                        </div>
                       </div>
                     </InfoWindow>
                   )}
@@ -205,7 +241,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
                         {location.user_id === user?.id ? 'You' : 'Member'}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+                        {addresses.get(`${location.latitude},${location.longitude}`) || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`}
                       </p>
                     </div>
                   </div>

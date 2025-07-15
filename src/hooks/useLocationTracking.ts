@@ -8,14 +8,8 @@ interface UseLocationTrackingOptions {
 }
 
 function getInitialSharingEnabled(settings: LocationSettings | null): boolean {
-  if (typeof window !== 'undefined' && navigator.permissions) {
-    // Check geolocation permission
-    // This is async, so we will also check in useEffect
-    // For now, default to false if permission is not granted
-    // (We will update in useEffect)
-    return false
-  }
-  // Fallback to backend setting if available
+  // Use the user's onboarding preference as the initial state
+  // This ensures the toggle starts in the same state they chose during onboarding
   return settings?.location_sharing_enabled ?? false
 }
 
@@ -37,11 +31,16 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
       try {
         const settings = await api.getLocationSettings()
         setLocationSettings(settings)
-        // Only set sharing enabled if not checked permission yet
+        console.log('📍 Location settings loaded:', settings)
+        
+        // Set initial sharing state based on onboarding preference
         if (!hasCheckedPermission.current) {
-          setIsSharingEnabled(getInitialSharingEnabled(settings))
+          const initialSharing = getInitialSharingEnabled(settings)
+          setIsSharingEnabled(initialSharing)
+          console.log('📍 Initial location sharing state:', initialSharing)
         }
       } catch (err) {
+        console.error('Failed to fetch location settings:', err)
         setError('Failed to fetch location settings')
       } finally {
         setIsLoading(false)
@@ -55,10 +54,18 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
     if (typeof window !== 'undefined' && navigator.permissions) {
       navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((result) => {
         hasCheckedPermission.current = true
-        if (result.state === 'granted') {
-          setIsSharingEnabled(locationSettings?.location_sharing_enabled ?? false)
-        } else {
+        console.log('📍 Geolocation permission state:', result.state)
+        
+        // Only disable sharing if permission is explicitly denied
+        // If permission is granted or prompt, respect the user's onboarding preference
+        if (result.state === 'denied') {
+          console.log('📍 Permission denied, disabling location sharing')
           setIsSharingEnabled(false)
+        } else {
+          // Permission granted or prompt - use the user's onboarding preference
+          const onboardingPreference = locationSettings?.location_sharing_enabled ?? false
+          console.log('📍 Permission granted/prompt, using onboarding preference:', onboardingPreference)
+          setIsSharingEnabled(onboardingPreference)
         }
       })
     }
@@ -99,10 +106,13 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
   // Toggle location sharing
   const toggleLocationSharing = async (enabled: boolean) => {
     try {
+      console.log('📍 Updating location sharing settings to:', enabled)
       await api.updateLocationSettings(enabled)
       setIsSharingEnabled(enabled)
       setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: enabled } : null)
+      console.log('📍 Location sharing settings updated successfully')
     } catch (err) {
+      console.error('Failed to update location sharing settings:', err)
       setError('Failed to update location sharing settings')
     }
   }
