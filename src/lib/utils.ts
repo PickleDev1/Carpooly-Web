@@ -108,19 +108,11 @@ export function validateEmail(email: string): { isValid: boolean; error?: string
 // Reverse geocoding function to convert coordinates to address
 export async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
   try {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-    console.log('🌍 Reverse geocoding - API key available:', !!apiKey)
+    console.log('🌍 Reverse geocoding coordinates:', latitude, longitude)
     
-    if (!apiKey) {
-      console.warn('Google Maps API key not found for reverse geocoding')
-      return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
-    }
-
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
-    console.log('🌍 Making request to:', url.replace(apiKey, 'API_KEY_HIDDEN'))
-
-    const response = await fetch(url)
-
+    // Use server-side API route to avoid referer restrictions
+    const response = await fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`)
+    
     console.log('🌍 Response status:', response.status)
     if (!response.ok) {
       const errorText = await response.text()
@@ -131,16 +123,11 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
     const data = await response.json()
     console.log('🌍 Geocoding response:', data)
 
-    if (data.status === 'OK' && data.results.length > 0) {
-      // Get the most relevant result (usually the first one)
-      const result = data.results[0]
-      
-      // Try to get a formatted address, fallback to coordinates if not available
-      const address = result.formatted_address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
-      console.log('🌍 Found address:', address)
-      return address
+    if (data.address) {
+      console.log('🌍 Found address:', data.address)
+      return data.address
     } else {
-      console.warn('🌍 No address found for coordinates:', latitude, longitude, 'Status:', data.status)
+      console.warn('🌍 No address found for coordinates:', latitude, longitude)
       return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
     }
   } catch (error) {
