@@ -1277,13 +1277,62 @@ export const useApi = () => {
       },
 
       async getRecentActivity(limit = 20) {
-        const headers = await getHeaders();
-        const url = `${API_URL}/api/activity?limit=${limit}`;
-        const response = await fetch(url, { headers });
-        if (!response.ok) {
-          throw new Error('Failed to fetch recent activity');
+        if (useMockApi) {
+          return mockService.getRecentActivity(limit)
         }
-        return response.json();
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/api/recent-activity?limit=${limit}`, { headers })
+        return response.json()
+      },
+
+      async getCompletedRides(limit = 50) {
+        if (useMockApi) {
+          // Mock data for completed rides with more realistic data
+          const today = new Date()
+          const rides = []
+          
+          for (let i = 0; i < 20; i++) {
+            const date = new Date(today)
+            date.setDate(date.getDate() - i)
+            rides.push({
+              id: `ride-${i + 1}`,
+              date: date.toISOString().split('T')[0],
+              distance: Math.floor(Math.random() * 20) + 5, // 5-25 miles
+              participants: Math.floor(Math.random() * 4) + 2 // 2-5 participants
+            })
+          }
+          
+          return {
+            count: rides.length,
+            rides: rides
+          }
+        }
+        
+        const headers = await getHeaders()
+        const response = await fetch(`${API_URL}/api/rides/completed?limit=${limit}`, { 
+          method: 'GET',
+          headers 
+        })
+
+        if (!response.ok) {
+          console.error('Completed Rides API Error:', response.status, response.statusText)
+          const responseText = await response.text()
+          console.error('Response body:', responseText)
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const text = await response.text()
+        if (!text) {
+          console.log('Empty response received for completed rides')
+          return { count: 0, rides: [] }
+        }
+
+        try {
+          return JSON.parse(text)
+        } catch (error) {
+          console.error('JSON Parse Error:', error, 'Response:', text)
+          return { count: 0, rides: [] }
+        }
       },
 
       async createOrFetchInviteLink(carpoolId: string, expiresInDays: number = 30, maxUses: number = -1) {

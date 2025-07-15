@@ -98,4 +98,23 @@ export const mockService = {
       has_available_seats: true
     }
   },
+
+  async getRecentActivity(limit = 20) {
+    return [
+      {
+        id: '1',
+        type: 'ride_completed',
+        message: 'Completed ride to work',
+        timestamp: new Date().toISOString(),
+        carpool_name: 'Morning Commute'
+      },
+      {
+        id: '2',
+        type: 'carpool_joined',
+        message: 'Joined new carpool',
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
+        carpool_name: 'Weekend Trip'
+      }
+    ].slice(0, limit)
+  },
 }
