@@ -78,7 +78,11 @@ export function LiveMap({ rideId }: LiveMapProps) {
       for (const location of locations) {
         const locationKey = `${location.latitude},${location.longitude}`
         
-        if (!addresses.has(locationKey)) {
+        // Check if we already have this address in the current state
+        const existingAddress = addresses.get(locationKey)
+        if (existingAddress) {
+          newAddresses.set(locationKey, existingAddress)
+        } else {
           try {
             const address = await reverseGeocodeWithCache(location.latitude, location.longitude)
             newAddresses.set(locationKey, address)
@@ -86,8 +90,6 @@ export function LiveMap({ rideId }: LiveMapProps) {
             console.error('Failed to reverse geocode location:', error)
             newAddresses.set(locationKey, `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`)
           }
-        } else {
-          newAddresses.set(locationKey, addresses.get(locationKey)!)
         }
       }
       
@@ -97,7 +99,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
     if (locations.length > 0) {
       fetchAddresses()
     }
-  }, [locations, addresses])
+  }, [locations]) // Removed addresses from dependency array to prevent infinite loop
 
   const handleLocationSharingToggle = async (enabled: boolean) => {
     try {
