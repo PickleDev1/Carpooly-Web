@@ -90,19 +90,46 @@ export function LiveMap({ rideId }: LiveMapProps) {
   }, [locations])
 
   const handleLocationSharingToggle = async (enabled: boolean) => {
+    console.log('📍 [LIVEMAP DEBUG] User toggled location sharing to:', enabled, 'at:', new Date().toISOString())
+    console.log('📍 [LIVEMAP DEBUG] Current state before toggle:', {
+      isSharingEnabled,
+      permissionState,
+      error,
+      isIOS,
+      isCompatible
+    })
     try {
       await toggleLocationSharing(enabled)
+      console.log('📍 [LIVEMAP DEBUG] Toggle completed successfully')
     } catch (err) {
-      console.error('Failed to toggle location sharing:', err)
+      console.error('📍 [LIVEMAP DEBUG] Failed to toggle location sharing:', err)
+      console.log('📍 [LIVEMAP DEBUG] Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        type: typeof err,
+        stack: err instanceof Error ? err.stack : undefined
+      })
     }
   }
 
   // iOS-specific location request handler
   const handleIOSLocationRequest = async () => {
+    console.log('📍 [LIVEMAP DEBUG] iOS location request triggered by user at:', new Date().toISOString())
+    console.log('📍 [LIVEMAP DEBUG] Current state before request:', {
+      isSharingEnabled,
+      permissionState,
+      error,
+      isIOS
+    })
     try {
       await requestLocation()
+      console.log('📍 [LIVEMAP DEBUG] iOS location request completed successfully')
     } catch (err) {
-      console.error('iOS location request failed:', err)
+      console.error('📍 [LIVEMAP DEBUG] iOS location request failed:', err)
+      console.log('📍 [LIVEMAP DEBUG] Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        type: typeof err,
+        stack: err instanceof Error ? err.stack : undefined
+      })
     }
   }
 
@@ -237,7 +264,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
                 <Info className="h-4 w-4 text-blue-600 mt-0.5" />
                 <div className="text-sm text-blue-700">
                   <p className="font-medium">iOS Device Detected</p>
-                  <p>Location sharing on iOS requires explicit permission. You may need to allow location access when prompted.</p>
+                  <p>Location sharing on iOS requires explicit permission. If you&apos;ve already set location to &quot;Allow&quot; in Safari settings, try toggling location sharing off and on again.</p>
                 </div>
               </div>
             )}
@@ -250,14 +277,24 @@ export function LiveMap({ rideId }: LiveMapProps) {
                   <p className="font-medium">Location Error</p>
                   <p>{error}</p>
                   {isIOS && (
-                    <Button 
-                      onClick={handleIOSLocationRequest}
-                      variant="outline"
-                      size="sm"
-                      className="mt-2 border-red-300 text-red-700 hover:bg-red-100"
-                    >
-                      Try Again
-                    </Button>
+                    <div className="mt-2 space-y-2">
+                      <Button 
+                        onClick={handleIOSLocationRequest}
+                        variant="outline"
+                        size="sm"
+                        className="border-red-300 text-red-700 hover:bg-red-100"
+                      >
+                        Try Again
+                      </Button>
+                      <div className="text-xs text-red-600">
+                        <p>If you&apos;ve set location to &quot;Allow&quot; in Safari settings:</p>
+                        <ol className="list-decimal list-inside mt-1 space-y-1">
+                          <li>Try toggling location sharing off and on</li>
+                          <li>Refresh the page and try again</li>
+                          <li>Check that Location Services are enabled in iOS Settings</li>
+                        </ol>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

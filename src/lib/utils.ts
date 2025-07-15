@@ -169,31 +169,126 @@ export const iOSLocationUtils = {
    * Check if location permission is available and handle iOS-specific cases
    */
   async checkLocationPermission(): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
-    if (typeof window === 'undefined') return 'unknown'
+    console.log('📍 [PERMISSION DEBUG] Starting permission check at:', new Date().toISOString())
+    
+    if (typeof window === 'undefined') {
+      console.log('📍 [PERMISSION DEBUG] Window undefined - server side')
+      return 'unknown'
+    }
     
     // Check if geolocation is supported
     if (!navigator.geolocation) {
-      console.log('📍 Geolocation not supported')
+      console.log('📍 [PERMISSION DEBUG] Geolocation not supported')
       return 'unknown'
     }
 
-    // Check if permissions API is available
+    // For iOS devices, the permissions API is unreliable
+    // We need to use a more robust approach
+    if (isIOSDevice()) {
+      console.log('📍 [PERMISSION DEBUG] iOS device detected - using enhanced permission check')
+      const result = await this.checkIOSPermission()
+      console.log('📍 [PERMISSION DEBUG] iOS permission check result:', result)
+      return result
+    }
+
+    // Check if permissions API is available for non-iOS devices
     if (!navigator.permissions) {
-      console.log('📍 Permissions API not available - will check via geolocation request')
-      // For iOS devices without Permissions API, we'll need to try a location request
-      // to determine permission status
+      console.log('📍 [PERMISSION DEBUG] Permissions API not available - will check via geolocation request')
       return 'prompt'
     }
 
     try {
+      console.log('📍 [PERMISSION DEBUG] Using Permissions API for non-iOS device')
       const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
-      console.log('📍 Geolocation permission state:', result.state)
+      console.log('📍 [PERMISSION DEBUG] Permissions API result:', result.state)
       return result.state
     } catch (err) {
-      console.error('📍 Error checking geolocation permission:', err)
+      console.error('📍 [PERMISSION DEBUG] Error checking geolocation permission:', err)
       // If permissions API fails, assume we need to prompt
       return 'prompt'
     }
+  },
+
+  /**
+   * Enhanced permission checking specifically for iOS devices
+   * iOS has unreliable permissions API, so we need to be more careful
+   */
+  async checkIOSPermission(): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
+    return new Promise((resolve) => {
+      const startTime = Date.now()
+      console.log('📍 [iOS DEBUG] Starting iOS permission check at:', new Date().toISOString())
+      console.log('📍 [iOS DEBUG] User agent:', navigator.userAgent)
+      console.log('📍 [iOS DEBUG] Geolocation available:', !!navigator.geolocation)
+      console.log('📍 [iOS DEBUG] Permissions API available:', !!navigator.permissions)
+      
+      // Use a very short timeout to quickly determine permission status
+      const options = {
+        enableHighAccuracy: false,
+        timeout: 3000,
+        maximumAge: 0
+      }
+      
+      console.log('📍 [iOS DEBUG] Using geolocation options:', options)
+
+      const timeoutId = setTimeout(() => {
+        const elapsed = Date.now() - startTime
+        console.log('📍 [iOS DEBUG] iOS permission check timed out after', elapsed, 'ms - likely denied or prompt')
+        console.log('📍 [iOS DEBUG] Resolving as: prompt')
+        resolve('prompt')
+      }, 3500)
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          clearTimeout(timeoutId)
+          const elapsed = Date.now() - startTime
+          console.log('📍 [iOS DEBUG] iOS permission check successful after', elapsed, 'ms')
+          console.log('📍 [iOS DEBUG] Position received:', {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: new Date(position.timestamp).toISOString()
+          })
+          console.log('📍 [iOS DEBUG] Resolving as: granted')
+          resolve('granted')
+        },
+        (error) => {
+          clearTimeout(timeoutId)
+          const elapsed = Date.now() - startTime
+          console.log('📍 [iOS DEBUG] iOS permission check failed after', elapsed, 'ms')
+          console.log('📍 [iOS DEBUG] Error details:', {
+            code: error.code,
+            message: error.message,
+            PERMISSION_DENIED: error.PERMISSION_DENIED,
+            POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
+            TIMEOUT: error.TIMEOUT
+          })
+          
+          let resolution: 'granted' | 'denied' | 'prompt' | 'unknown' = 'prompt'
+          
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              console.log('📍 [iOS DEBUG] iOS permission explicitly denied')
+              resolution = 'denied'
+              break
+            case error.POSITION_UNAVAILABLE:
+              console.log('📍 [iOS DEBUG] iOS position unavailable - likely permission issue')
+              resolution = 'prompt'
+              break
+            case error.TIMEOUT:
+              console.log('📍 [iOS DEBUG] iOS permission check timed out')
+              resolution = 'prompt'
+              break
+            default:
+              console.log('📍 [iOS DEBUG] iOS permission check unknown error code:', error.code)
+              resolution = 'prompt'
+          }
+          
+          console.log('📍 [iOS DEBUG] Resolving as:', resolution)
+          resolve(resolution)
+        },
+        options
+      )
+    })
   },
 
   /**
@@ -201,36 +296,49 @@ export const iOSLocationUtils = {
    */
   requestLocation(): Promise<GeolocationPosition> {
     return new Promise((resolve, reject) => {
+      const startTime = Date.now()
+      console.log('📍 [LOCATION DEBUG] Starting location request at:', new Date().toISOString())
+      console.log('📍 [LOCATION DEBUG] Is iOS device:', isIOSDevice())
+      
       if (typeof window === 'undefined') {
+        console.log('📍 [LOCATION DEBUG] Window undefined - server side')
         reject(new Error('Geolocation not available in server environment'))
         return
       }
 
       if (!navigator.geolocation) {
+        console.log('📍 [LOCATION DEBUG] Geolocation not supported')
         reject(new Error('Geolocation not supported'))
         return
       }
 
       const options = this.getGeolocationOptions()
-      console.log('📍 Requesting location with options:', options)
+      console.log('📍 [LOCATION DEBUG] Requesting location with options:', options)
+      console.log('📍 [LOCATION DEBUG] User agent:', navigator.userAgent)
 
       // Add timeout safety
       const timeoutId = setTimeout(() => {
+        const elapsed = Date.now() - startTime
+        console.log('📍 [LOCATION DEBUG] Location request timed out after', elapsed, 'ms')
         reject(new Error('Location request timed out'))
       }, options.timeout + 2000) // Add 2 seconds buffer
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
           clearTimeout(timeoutId)
+          const elapsed = Date.now() - startTime
+          console.log('📍 [LOCATION DEBUG] Location request successful after', elapsed, 'ms')
           
           // Validate position data
           if (!position || !position.coords) {
+            console.log('📍 [LOCATION DEBUG] Invalid position data received:', position)
             reject(new Error('Invalid position data received'))
             return
           }
 
           // Validate coordinates
           if (isNaN(position.coords.latitude) || isNaN(position.coords.longitude)) {
+            console.log('📍 [LOCATION DEBUG] Invalid coordinates received:', position.coords)
             reject(new Error('Invalid coordinates received'))
             return
           }
@@ -238,17 +346,32 @@ export const iOSLocationUtils = {
           // Check coordinate bounds
           if (position.coords.latitude < -90 || position.coords.latitude > 90 ||
               position.coords.longitude < -180 || position.coords.longitude > 180) {
+            console.log('📍 [LOCATION DEBUG] Coordinates out of bounds:', position.coords)
             reject(new Error('Coordinates out of valid range'))
             return
           }
 
-          console.log('📍 Location obtained successfully:', position.coords)
+          console.log('📍 [LOCATION DEBUG] Location obtained successfully:', {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: new Date(position.timestamp).toISOString()
+          })
           resolve(position)
         },
         (error) => {
           clearTimeout(timeoutId)
-          console.error('📍 Geolocation error:', error)
+          const elapsed = Date.now() - startTime
+          console.log('📍 [LOCATION DEBUG] Location request failed after', elapsed, 'ms')
+          console.log('📍 [LOCATION DEBUG] Geolocation error details:', {
+            code: error.code,
+            message: error.message,
+            PERMISSION_DENIED: error.PERMISSION_DENIED,
+            POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
+            TIMEOUT: error.TIMEOUT
+          })
           const errorMessage = this.getErrorMessage(error)
+          console.log('📍 [LOCATION DEBUG] Resolved error message:', errorMessage)
           reject(new Error(errorMessage))
         },
         options
