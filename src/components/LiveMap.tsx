@@ -147,10 +147,10 @@ export function LiveMap({ rideId }: LiveMapProps) {
               <div>
                 <h3 className="font-medium text-red-900 mb-2">Location Tracking Not Supported</h3>
                 <p className="text-sm text-red-700 mb-3">
-                  Your device or browser doesn't support location tracking. This could be due to:
+                  Your device or browser doesn&apos;t support location tracking. This could be due to:
                 </p>
                 <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
-                  <li>Using an older browser that doesn't support geolocation</li>
+                  <li>Using an older browser that doesn&apos;t support geolocation</li>
                   <li>Not using HTTPS (required for location access)</li>
                   <li>Browser security settings blocking location access</li>
                 </ul>
@@ -170,7 +170,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
                 <h3 className="font-medium text-orange-900 mb-2">iOS Location Access Required</h3>
                 <p className="text-sm text-orange-700 mb-3">
                   To share your location on iOS, you need to allow location access when prompted. 
-                  If you don't see a prompt, tap the button below to request location access.
+                  If you don&apos;t see a prompt, tap the button below to request location access.
                 </p>
                 <Button 
                   onClick={handleIOSLocationRequest}
@@ -199,7 +199,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
                 </p>
                 <ol className="text-sm text-red-700 list-decimal list-inside space-y-1">
                   <li>Go to Settings → Safari → Location</li>
-                  <li>Select "Allow" or "Ask" for this website</li>
+                  <li>Select &quot;Allow&quot; or &quot;Ask&quot; for this website</li>
                   <li>Refresh this page and try again</li>
                 </ol>
               </div>
