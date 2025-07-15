@@ -78,18 +78,14 @@ export function LiveMap({ rideId }: LiveMapProps) {
       for (const location of locations) {
         const locationKey = `${location.latitude},${location.longitude}`
         
-        // Check if we already have this address in the current state
-        const existingAddress = addresses.get(locationKey)
-        if (existingAddress) {
-          newAddresses.set(locationKey, existingAddress)
-        } else {
-          try {
-            const address = await reverseGeocodeWithCache(location.latitude, location.longitude)
-            newAddresses.set(locationKey, address)
-          } catch (error) {
-            console.error('Failed to reverse geocode location:', error)
-            newAddresses.set(locationKey, `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`)
-          }
+        try {
+          console.log('🌍 Reverse geocoding coordinates:', location.latitude, location.longitude)
+          const address = await reverseGeocodeWithCache(location.latitude, location.longitude)
+          newAddresses.set(locationKey, address)
+          console.log('🌍 Got address:', address)
+        } catch (error) {
+          console.error('Failed to reverse geocode location:', error)
+          newAddresses.set(locationKey, `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`)
         }
       }
       
@@ -97,9 +93,10 @@ export function LiveMap({ rideId }: LiveMapProps) {
     }
 
     if (locations.length > 0) {
+      console.log('🌍 Starting reverse geocoding for', locations.length, 'locations')
       fetchAddresses()
     }
-  }, [locations]) // Removed addresses from dependency array to prevent infinite loop
+  }, [locations])
 
   const handleLocationSharingToggle = async (enabled: boolean) => {
     try {

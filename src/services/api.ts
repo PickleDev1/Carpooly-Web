@@ -1262,14 +1262,18 @@ export const useApi = () => {
 
       async getLocationSettings() {
         try {
+          console.log('📍 Fetching location settings...')
           const headers = await getHeaders()
           const response = await fetch(`${API_URL}/api/location/settings`, {
             method: 'GET',
             headers
           })
 
+          console.log('📍 Location settings response status:', response.status)
+
           if (!response.ok) {
-            console.warn('Location settings endpoint not available, returning default settings')
+            const errorText = await response.text()
+            console.warn('📍 Location settings endpoint not available:', response.status, errorText)
             return {
               location_sharing_enabled: false,
               home_latitude: null,
@@ -1277,9 +1281,11 @@ export const useApi = () => {
             }
           }
 
-          return response.json()
+          const data = await response.json()
+          console.log('📍 Location settings data:', data)
+          return data
         } catch (error) {
-          console.warn('Location settings endpoint error, returning default settings:', error)
+          console.warn('📍 Location settings endpoint error, returning default settings:', error)
           return {
             location_sharing_enabled: false,
             home_latitude: null,

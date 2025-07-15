@@ -49,9 +49,9 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
     fetchSettings()
   }, [api])
 
-  // Check geolocation permission on mount
+  // Check geolocation permission after location settings are loaded
   useEffect(() => {
-    if (typeof window !== 'undefined' && navigator.permissions) {
+    if (locationSettings && typeof window !== 'undefined' && navigator.permissions) {
       navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((result) => {
         hasCheckedPermission.current = true
         console.log('📍 Geolocation permission state:', result.state)
@@ -63,14 +63,13 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
           setIsSharingEnabled(false)
         } else {
           // Permission granted or prompt - use the user's onboarding preference
-          const onboardingPreference = locationSettings?.location_sharing_enabled ?? false
+          const onboardingPreference = locationSettings.location_sharing_enabled ?? false
           console.log('📍 Permission granted/prompt, using onboarding preference:', onboardingPreference)
           setIsSharingEnabled(onboardingPreference)
         }
       })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [locationSettings])
 
   // Main interval for POST and GET
   useEffect(() => {
