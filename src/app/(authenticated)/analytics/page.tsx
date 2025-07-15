@@ -316,7 +316,7 @@ export default function AnalyticsPage() {
     },
     { 
       title: 'Miles Saved', 
-      value: milesSaved !== null ? milesSaved : 'N/A', 
+      value: milesSaved !== null ? Math.round(milesSaved) : 'N/A', 
       icon: Route, 
       color: 'bg-[#E8EDDF]', 
       textColor: 'text-[#2B5335]', 
