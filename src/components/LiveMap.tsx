@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { MapPin, Users, Settings, AlertTriangle, Info, Download, Wifi } from 'lucide-react'
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api'
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { reverseGeocodeWithCache, isIOSDevice, Life360LocationUtils, SafariLocationUtils } from '@/lib/utils'
+import { reverseGeocodeWithCache, isIOSDevice, SafariLocationUtils } from '@/lib/utils'
 
 interface LiveMapProps {
   rideId: string
@@ -55,9 +55,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
   const [addresses, setAddresses] = useState<Map<string, string>>(new Map())
   const [showIOSHelp, setShowIOSHelp] = useState(false)
-  const [showPWAHelp, setShowPWAHelp] = useState(false)
   const [showSafariHelp, setShowSafariHelp] = useState(false)
-  const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'manual' | null>(null)
 
   // Google Maps API key from env
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -140,77 +138,9 @@ export function LiveMap({ rideId }: LiveMapProps) {
     }
   }
 
-  // Life360-style location request with fallbacks
-  const handleLife360LocationRequest = async () => {
-    console.log('📍 [LIVEMAP DEBUG] Life360-style location request triggered')
-    
-    try {
-      const location = await Life360LocationUtils.getLocationWithFallbacks()
-      setLocationSource(location.source)
-      
-      console.log('📍 [LIVEMAP DEBUG] Location obtained via Life360 method:', {
-        source: location.source,
-        accuracy: location.accuracy,
-        coordinates: { lat: location.latitude, lng: location.longitude }
-      })
-      
-      // Update location via API if sharing is enabled
-      if (isSharingEnabled) {
-        await api.updateUserLocation(rideId, location.latitude, location.longitude)
-        console.log('📍 [LIVEMAP DEBUG] Location updated via API')
-      }
-      
-      // Show success message based on source
-      const sourceMessages = {
-        gps: 'GPS location obtained successfully!',
-        ip: 'Approximate location obtained from your network. For better accuracy, try enabling GPS.',
-        manual: 'Location set manually.'
-      }
-      
-      // You could show a toast notification here
-      console.log('📍 [LIVEMAP DEBUG] Success:', sourceMessages[location.source])
-      
-    } catch (err) {
-      console.error('📍 [LIVEMAP DEBUG] Life360 location request failed:', err)
-      console.log('📍 [LIVEMAP DEBUG] Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown error',
-        type: typeof err,
-        stack: err instanceof Error ? err.stack : undefined
-      })
-    }
-  }
 
-  // Safari-specific location request handler
-  const handleSafariLocationRequest = async () => {
-    console.log('📍 [LIVEMAP DEBUG] Safari-specific location request triggered')
-    
-    try {
-      const position = await SafariLocationUtils.requestSafariLocation()
-      setLocationSource('gps')
-      
-      console.log('📍 [LIVEMAP DEBUG] Safari location obtained:', {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy
-      })
-      
-      // Update location via API if sharing is enabled
-      if (isSharingEnabled) {
-        await api.updateUserLocation(rideId, position.coords.latitude, position.coords.longitude)
-        console.log('📍 [LIVEMAP DEBUG] Location updated via API')
-      }
-      
-      console.log('📍 [LIVEMAP DEBUG] Safari location request successful')
-      
-    } catch (err) {
-      console.error('📍 [LIVEMAP DEBUG] Safari location request failed:', err)
-      console.log('📍 [LIVEMAP DEBUG] Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown error',
-        type: typeof err,
-        stack: err instanceof Error ? err.stack : undefined
-      })
-    }
-  }
+
+
 
   if (!isLoaded || !isMapLoaded) {
     return (
@@ -330,12 +260,12 @@ export function LiveMap({ rideId }: LiveMapProps) {
                     Refresh Page
                   </Button>
                   <Button 
-                    onClick={handleSafariLocationRequest}
+                    onClick={() => window.open('https://apps.apple.com/app/google-chrome/id535886823', '_blank')}
                     variant="outline"
                     size="sm"
                     className="border-blue-300 text-blue-700 hover:bg-blue-100"
                   >
-                    Try Safari Fix
+                    Download Chrome
                   </Button>
                 </div>
               </div>
@@ -424,88 +354,9 @@ export function LiveMap({ rideId }: LiveMapProps) {
         </Card>
       )}
 
-      {/* Life360-style Location Request */}
-      {isIOS && permissionState === 'denied' && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <Wifi className="h-5 w-5 text-blue-600 mt-0.5" />
-              <div>
-                <h3 className="font-medium text-blue-900 mb-2">Try Life360-Style Location</h3>
-                <p className="text-sm text-blue-700 mb-3">
-                  We can try to get your location using multiple methods, similar to how Life360 works:
-                </p>
-                <div className="text-sm text-blue-700 mb-3">
-                  <ol className="list-decimal list-inside space-y-1">
-                    <li>First, try GPS with gentle permission request</li>
-                    <li>If that fails, use your network location (approximate)</li>
-                    <li>Finally, allow manual location entry</li>
-                  </ol>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={handleLife360LocationRequest}
-                    variant="outline"
-                    size="sm"
-                    className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                  >
-                    Try Smart Location
-                  </Button>
-                  {Life360LocationUtils.isPWAInstallable() && (
-                    <Button 
-                      onClick={() => setShowPWAHelp(true)}
-                      variant="outline"
-                      size="sm"
-                      className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                    >
-                      <Download className="h-4 w-4 mr-1" />
-                      Install App
-                    </Button>
-                  )}
-                </div>
-                {locationSource && (
-                  <div className="mt-3 p-2 bg-blue-100 rounded text-xs text-blue-800">
-                    <strong>Location Source:</strong> {locationSource.toUpperCase()}
-                    {locationSource === 'ip' && ' (approximate)'}
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* PWA Installation Help */}
-      {showPWAHelp && (
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <Download className="h-5 w-5 text-green-600 mt-0.5" />
-              <div>
-                <h3 className="font-medium text-green-900 mb-2">Install as App for Better Location Access</h3>
-                <p className="text-sm text-green-700 mb-3">
-                  Installing this website as an app can provide better location access on iOS Safari:
-                </p>
-                <ol className="text-sm text-green-700 list-decimal list-inside space-y-1">
-                  {Life360LocationUtils.getPWAInstallInstructions().map((instruction, index) => (
-                    <li key={index}>{instruction}</li>
-                  ))}
-                </ol>
-                <div className="mt-3">
-                  <Button 
-                    onClick={() => setShowPWAHelp(false)}
-                    variant="outline"
-                    size="sm"
-                    className="border-green-300 text-green-700 hover:bg-green-100"
-                  >
-                    Got it
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
+
 
       {/* Location Sharing Controls */}
       <Card>
