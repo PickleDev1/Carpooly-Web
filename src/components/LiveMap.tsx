@@ -292,8 +292,60 @@ export function LiveMap({ rideId }: LiveMapProps) {
         </Card>
       )}
 
-      {/* iOS Permission Denied Warning */}
-      {isIOS && permissionState === 'denied' && (
+      {/* iOS Safari Chrome Recommendation */}
+      {SafariLocationUtils.isIOSSafari() && permissionState === 'denied' && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-blue-900 mb-2">iOS Safari Location Bug</h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  This is a known iOS Safari bug that affects location permissions. The location tracking works perfectly on Chrome and other browsers. Here&apos;s the solution:
+                </p>
+                <div className="bg-white p-3 rounded-md border border-blue-200 mb-3">
+                  <p className="text-sm font-medium text-blue-900 mb-2">💡 Recommended Solution:</p>
+                  <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
+                    <li>Download <strong>Chrome</strong> from the App Store</li>
+                    <li>Open this website in Chrome instead of Safari</li>
+                    <li>Location tracking will work perfectly</li>
+                    <li>This bug will be fixed in the next update</li>
+                  </ol>
+                </div>
+                <div className="text-sm text-blue-700 mb-3">
+                  <p className="font-medium">Alternative solutions:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Refresh the page and try again</li>
+                    <li>Check Settings → Safari → Location → Allow</li>
+                    <li>Enable &quot;Precise Location&quot; in iOS Settings</li>
+                  </ul>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  >
+                    Refresh Page
+                  </Button>
+                  <Button 
+                    onClick={handleSafariLocationRequest}
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  >
+                    Try Safari Fix
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* iOS Permission Denied Warning (non-Safari) */}
+      {isIOS && !SafariLocationUtils.isIOSSafari() && permissionState === 'denied' && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">

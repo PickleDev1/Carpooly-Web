@@ -142,6 +142,30 @@ export default function TestLocationPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
+      {/* Chrome Recommendation for Safari Users */}
+      {isSafari && (
+        <Alert className="mb-6 border-blue-200 bg-blue-50">
+          <AlertTriangle className="h-4 w-4 text-blue-600" />
+          <AlertDescription>
+            <div className="space-y-2">
+              <p className="font-semibold text-blue-900">iOS Safari Location Bug</p>
+              <p className="text-blue-700 text-sm">
+                This is a known iOS Safari bug that affects location permissions. Location tracking works perfectly on Chrome and other browsers.
+              </p>
+              <div className="bg-white p-3 rounded-md border border-blue-200">
+                <p className="font-medium text-blue-900 mb-1">💡 Recommended Solution:</p>
+                <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
+                  <li>Download <strong>Chrome</strong> from the App Store</li>
+                  <li>Open this website in Chrome instead of Safari</li>
+                  <li>Location tracking will work perfectly</li>
+                  <li>This bug will be fixed in the next update</li>
+                </ol>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Location Testing Tool</h1>
         <p className="text-gray-600">
@@ -405,14 +429,15 @@ export default function TestLocationPage() {
                         ))}
                       </ul>
                       
-                      {!isPWAMode && (
-                        <div className="mt-3 p-3 bg-blue-50 rounded-md">
-                          <p className="font-semibold text-blue-800">💡 Recommendation:</p>
-                          <p className="text-blue-700 text-sm">
-                            Install this app as a PWA (Add to Home Screen) for better location access on iOS Safari.
-                          </p>
-                        </div>
-                      )}
+                                             <div className="mt-3 p-3 bg-blue-50 rounded-md">
+                         <p className="font-semibold text-blue-800">💡 Recommended Solution:</p>
+                         <p className="text-blue-700 text-sm mb-2">
+                           This is a known iOS Safari bug. Download <strong>Chrome</strong> from the App Store and use it instead - location tracking works perfectly there.
+                         </p>
+                         <p className="text-blue-600 text-xs">
+                           This bug will be fixed in the next update.
+                         </p>
+                       </div>
                     </div>
                   </AlertDescription>
                 </Alert>

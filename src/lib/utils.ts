@@ -849,13 +849,13 @@ export const SafariLocationUtils = {
   getSafariErrorMessage(error: GeolocationPositionError): string {
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        return 'Location access denied. On iOS Safari, try: 1) Refresh the page, 2) Install as PWA, or 3) Use Chrome instead.'
+        return 'Location access denied. This is a known iOS Safari bug. Please use Chrome instead - this will be fixed in the next update.'
       case error.POSITION_UNAVAILABLE:
         return 'Location unavailable. Please check your device location settings.'
       case error.TIMEOUT:
-        return 'Location request timed out. This is common on iOS Safari. Try refreshing or installing as PWA.'
+        return 'Location request timed out. This is common on iOS Safari. Please use Chrome instead - this will be fixed in the next update.'
       default:
-        return 'Failed to get location on iOS Safari.'
+        return 'Failed to get location on iOS Safari. Please use Chrome instead - this will be fixed in the next update.'
     }
   },
 
@@ -865,11 +865,11 @@ export const SafariLocationUtils = {
   getSafariHelpText(): string[] {
     return [
       'iOS Safari has known location permission issues. Here are solutions:',
-      '1. Refresh the page and try again',
-      '2. Install this app as a PWA (Add to Home Screen)',
-      '3. Use Chrome or Firefox instead',
-      '4. Check Settings > Safari > Location > Allow',
-      '5. Try enabling "Precise Location" in iOS Settings'
+      '1. Use Chrome instead (recommended) - this bug will be fixed in the next update',
+      '2. Refresh the page and try again',
+      '3. Check Settings > Safari > Location > Allow',
+      '4. Try enabling "Precise Location" in iOS Settings',
+      '5. Download Chrome from the App Store for better location support'
     ]
   },
 
@@ -886,9 +886,7 @@ export const SafariLocationUtils = {
   getRecommendedAction(): 'refresh' | 'install-pwa' | 'use-chrome' | 'none' {
     if (!this.isIOSSafari()) return 'none'
     
-    if (this.isPWAMode()) return 'none'
-    
-    // If not in PWA mode, recommend PWA installation
-    return 'install-pwa'
+    // Always recommend Chrome for iOS Safari due to known location bugs
+    return 'use-chrome'
   }
 } 
