@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { MapPin, Users, Settings, AlertTriangle, Info, Download, Wifi } from 'lucide-react'
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api'
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { reverseGeocodeWithCache, isIOSDevice, Life360LocationUtils } from '@/lib/utils'
+import { reverseGeocodeWithCache, isIOSDevice, Life360LocationUtils, SafariLocationUtils } from '@/lib/utils'
 
 interface LiveMapProps {
   rideId: string
@@ -56,6 +56,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
   const [addresses, setAddresses] = useState<Map<string, string>>(new Map())
   const [showIOSHelp, setShowIOSHelp] = useState(false)
   const [showPWAHelp, setShowPWAHelp] = useState(false)
+  const [showSafariHelp, setShowSafariHelp] = useState(false)
   const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'manual' | null>(null)
 
   // Google Maps API key from env
@@ -171,6 +172,38 @@ export function LiveMap({ rideId }: LiveMapProps) {
       
     } catch (err) {
       console.error('📍 [LIVEMAP DEBUG] Life360 location request failed:', err)
+      console.log('📍 [LIVEMAP DEBUG] Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        type: typeof err,
+        stack: err instanceof Error ? err.stack : undefined
+      })
+    }
+  }
+
+  // Safari-specific location request handler
+  const handleSafariLocationRequest = async () => {
+    console.log('📍 [LIVEMAP DEBUG] Safari-specific location request triggered')
+    
+    try {
+      const position = await SafariLocationUtils.requestSafariLocation()
+      setLocationSource('gps')
+      
+      console.log('📍 [LIVEMAP DEBUG] Safari location obtained:', {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy
+      })
+      
+      // Update location via API if sharing is enabled
+      if (isSharingEnabled) {
+        await api.updateUserLocation(rideId, position.coords.latitude, position.coords.longitude)
+        console.log('📍 [LIVEMAP DEBUG] Location updated via API')
+      }
+      
+      console.log('📍 [LIVEMAP DEBUG] Safari location request successful')
+      
+    } catch (err) {
+      console.error('📍 [LIVEMAP DEBUG] Safari location request failed:', err)
       console.log('📍 [LIVEMAP DEBUG] Error details:', {
         message: err instanceof Error ? err.message : 'Unknown error',
         type: typeof err,

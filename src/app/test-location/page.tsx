@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { iOSLocationUtils, isIOSDevice, LocationCompatibility, Life360LocationUtils } from '@/lib/utils'
-import { AlertTriangle, CheckCircle, Info, MapPin, Wifi, Download } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { iOSLocationUtils, isIOSDevice, LocationCompatibility, Life360LocationUtils, SafariLocationUtils } from '@/lib/utils'
+import { AlertTriangle, CheckCircle, Info, MapPin, Wifi, Download, RefreshCw, Globe, XCircle } from 'lucide-react'
 
 export default function TestLocationPage() {
   const [location, setLocation] = useState<GeolocationPosition | null>(null)
@@ -16,6 +18,16 @@ export default function TestLocationPage() {
   const [life360Location, setLife360Location] = useState<any>(null)
   const [isLife360Loading, setIsLife360Loading] = useState(false)
   const [showPWAHelp, setShowPWAHelp] = useState(false)
+  const [showSafariHelp, setShowSafariHelp] = useState(false)
+  const [safariTestResult, setSafariTestResult] = useState<string | null>(null)
+  const [isSafari, setIsSafari] = useState(false)
+  const [isPWAMode, setIsPWAMode] = useState(false)
+
+  // Check if we're on Safari
+  useEffect(() => {
+    setIsSafari(SafariLocationUtils.isIOSSafari())
+    setIsPWAMode(SafariLocationUtils.isPWAMode())
+  }, [])
 
   const testBasicLocation = async () => {
     setIsLoading(true)
@@ -69,6 +81,44 @@ export default function TestLocationPage() {
       console.error('📍 Life360-style location failed:', err)
     } finally {
       setIsLife360Loading(false)
+    }
+  }
+
+  // Safari-specific location test
+  const testSafariLocation = async () => {
+    setSafariTestResult('Testing Safari location...')
+    setError(null)
+    
+    try {
+      console.log('📍 [TEST DEBUG] Starting Safari-specific location test')
+      
+      // Test Safari permission check
+      const permission = await SafariLocationUtils.checkSafariPermission()
+      console.log('📍 [TEST DEBUG] Safari permission result:', permission)
+      
+      if (permission === 'denied') {
+        setSafariTestResult('Permission denied. Safari requires user interaction.')
+        return
+      }
+      
+      // Test Safari location request
+      const position = await SafariLocationUtils.requestSafariLocation()
+      
+      setSafariTestResult(`✅ Safari location successful! 
+        Lat: ${position.coords.latitude.toFixed(6)}
+        Lng: ${position.coords.longitude.toFixed(6)}
+        Accuracy: ${position.coords.accuracy?.toFixed(0) || 'Unknown'}m`)
+      
+      // setCurrentLocation({ // This state variable doesn't exist, so this line is commented out
+      //   latitude: position.coords.latitude,
+      //   longitude: position.coords.longitude,
+      //   accuracy: position.coords.accuracy || 0
+      // })
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      setSafariTestResult(`❌ Safari location failed: ${errorMessage}`)
+      console.error('📍 [TEST DEBUG] Safari location test failed:', err)
     }
   }
 
@@ -297,6 +347,79 @@ export default function TestLocationPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Safari-specific testing section */}
+        {isSafari && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                Safari-Specific Testing
+                <Badge variant={isPWAMode ? "default" : "secondary"}>
+                  {isPWAMode ? "PWA Mode" : "Browser Mode"}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                iOS Safari has unique location permission quirks. This section tests Safari-specific workarounds.
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  onClick={testSafariLocation}
+                  variant="outline"
+                  size="sm"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Test Safari Location
+                </Button>
+                
+                <Button 
+                  onClick={() => setShowSafariHelp(!showSafariHelp)}
+                  variant="outline"
+                  size="sm"
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Safari Help
+                </Button>
+              </div>
+              
+              {safariTestResult && (
+                <Alert>
+                  <AlertDescription className="whitespace-pre-line">
+                    {safariTestResult}
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {showSafariHelp && (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <p className="font-semibold">iOS Safari Location Issues:</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        {SafariLocationUtils.getSafariHelpText().map((text, index) => (
+                          <li key={index}>{text}</li>
+                        ))}
+                      </ul>
+                      
+                      {!isPWAMode && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded-md">
+                          <p className="font-semibold text-blue-800">💡 Recommendation:</p>
+                          <p className="text-blue-700 text-sm">
+                            Install this app as a PWA (Add to Home Screen) for better location access on iOS Safari.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Troubleshooting Guide */}
         <Card>

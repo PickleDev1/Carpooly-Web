@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useApi } from '@/services/api'
 import { useUser } from '@clerk/nextjs'
 import { LocationData, LocationSettings } from '@/types/api'
-import { isIOSDevice, iOSLocationUtils, LocationCompatibility } from '@/lib/utils'
+import { isIOSDevice, iOSLocationUtils, LocationCompatibility, SafariLocationUtils } from '@/lib/utils'
 
 interface UseLocationTrackingOptions {
   rideId: string
@@ -35,15 +35,26 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
     }
   }, [])
 
-  // Standard permission checking
+  // Enhanced permission checking with Safari support
   const checkGeolocationPermission = useCallback(async () => {
     console.log('📍 [HOOK DEBUG] Starting permission check')
     
     try {
-      const permission = await iOSLocationUtils.checkLocationPermission()
-      console.log('📍 [HOOK DEBUG] Permission check result:', permission)
-      setPermissionState(permission)
-      return permission
+      // Use Safari-specific check if on iOS Safari
+      if (SafariLocationUtils.isIOSSafari()) {
+        console.log('📍 [HOOK DEBUG] Using Safari-specific permission check')
+        const permission = await SafariLocationUtils.checkSafariPermission()
+        console.log('📍 [HOOK DEBUG] Safari permission check result:', permission)
+        setPermissionState(permission)
+        return permission
+      } else {
+        // Use standard check for other browsers
+        console.log('📍 [HOOK DEBUG] Using standard permission check')
+        const permission = await iOSLocationUtils.checkLocationPermission()
+        console.log('📍 [HOOK DEBUG] Standard permission check result:', permission)
+        setPermissionState(permission)
+        return permission
+      }
     } catch (err) {
       console.error('📍 [HOOK DEBUG] Permission check failed:', err)
       setPermissionState('unknown')
@@ -51,18 +62,32 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
     }
   }, [])
 
-  // Standard location request
+  // Enhanced location request with Safari support
   const requestLocation = useCallback(async (): Promise<GeolocationPosition | null> => {
     console.log('📍 [HOOK DEBUG] Starting location request')
     
     try {
-      const position = await iOSLocationUtils.requestLocationWithRetry()
-      console.log('📍 [HOOK DEBUG] Location request successful:', {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy
-      })
-      return position
+      // Use Safari-specific request if on iOS Safari
+      if (SafariLocationUtils.isIOSSafari()) {
+        console.log('📍 [HOOK DEBUG] Using Safari-specific location request')
+        const position = await SafariLocationUtils.requestSafariLocation()
+        console.log('📍 [HOOK DEBUG] Safari location request successful:', {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        })
+        return position
+      } else {
+        // Use standard request for other browsers
+        console.log('📍 [HOOK DEBUG] Using standard location request')
+        const position = await iOSLocationUtils.requestLocationWithRetry()
+        console.log('📍 [HOOK DEBUG] Standard location request successful:', {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        })
+        return position
+      }
     } catch (err) {
       console.error('📍 [HOOK DEBUG] Location request failed:', err)
       throw err

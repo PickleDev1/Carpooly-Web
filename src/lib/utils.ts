@@ -666,3 +666,229 @@ export const Life360LocationUtils = {
     ]
   }
 } 
+
+/**
+ * Safari-specific location utilities for iOS Safari quirks
+ */
+export const SafariLocationUtils = {
+  /**
+   * Check if we're running in Safari on iOS
+   */
+  isIOSSafari(): boolean {
+    if (typeof window === 'undefined') return false
+    
+    const userAgent = navigator.userAgent
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent)
+    const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent)
+    
+    return isIOS && isSafari
+  },
+
+  /**
+   * Check if we're running as a PWA on iOS
+   */
+  isPWAMode(): boolean {
+    if (typeof window === 'undefined') return false
+    
+    // Check for PWA indicators
+    const isStandalone = (window.navigator as any).standalone === true
+    const hasDisplayMode = window.matchMedia('(display-mode: standalone)').matches
+    
+    return isStandalone || hasDisplayMode
+  },
+
+  /**
+   * Safari-specific permission check with workarounds
+   */
+  async checkSafariPermission(): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
+    console.log('📍 [SAFARI DEBUG] Starting Safari-specific permission check')
+    
+    if (!this.isIOSSafari()) {
+      console.log('📍 [SAFARI DEBUG] Not iOS Safari, using standard check')
+      return iOSLocationUtils.checkLocationPermission()
+    }
+
+    // Safari-specific permission checking
+    try {
+      // First, try to clear any cached permission state
+      await this.clearSafariPermissionCache()
+      
+      // Try a gentle location request first
+      const gentleOptions = {
+        enableHighAccuracy: false,
+        timeout: 3000,
+        maximumAge: 60000 // Accept very old positions
+      }
+      
+      const position = await this.requestLocationWithOptions(gentleOptions)
+      console.log('📍 [SAFARI DEBUG] Gentle location request successful')
+      return 'granted'
+      
+    } catch (error) {
+      console.log('📍 [SAFARI DEBUG] Gentle request failed:', error)
+      
+      // Check if it's a permission error
+      if (error instanceof Error && error.message.includes('denied')) {
+        return 'denied'
+      }
+      
+      // For other errors, we might need user interaction
+      return 'prompt'
+    }
+  },
+
+  /**
+   * Clear Safari's permission cache by making a test request
+   */
+  async clearSafariPermissionCache(): Promise<void> {
+    console.log('📍 [SAFARI DEBUG] Clearing Safari permission cache')
+    
+    try {
+      // Make a very quick test request to reset Safari's internal state
+      const testOptions = {
+        enableHighAccuracy: false,
+        timeout: 1000,
+        maximumAge: 300000 // 5 minutes
+      }
+      
+      await this.requestLocationWithOptions(testOptions)
+    } catch (error) {
+      // Expected to fail, this is just to clear the cache
+      console.log('📍 [SAFARI DEBUG] Cache clearing test completed')
+    }
+  },
+
+  /**
+   * Request location with Safari-specific optimizations
+   */
+  async requestSafariLocation(): Promise<GeolocationPosition> {
+    console.log('📍 [SAFARI DEBUG] Starting Safari-specific location request')
+    
+    if (!this.isIOSSafari()) {
+      console.log('📍 [SAFARI DEBUG] Not iOS Safari, using standard request')
+      return iOSLocationUtils.requestLocation()
+    }
+
+    // Safari-specific location request strategy
+    const strategies = [
+      // Strategy 1: Low accuracy, short timeout (most likely to work)
+      {
+        name: 'gentle',
+        options: { enableHighAccuracy: false, timeout: 5000, maximumAge: 30000 }
+      },
+      // Strategy 2: Standard accuracy
+      {
+        name: 'standard',
+        options: { enableHighAccuracy: true, timeout: 10000, maximumAge: 10000 }
+      },
+      // Strategy 3: High accuracy, longer timeout
+      {
+        name: 'high-accuracy',
+        options: { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      }
+    ]
+
+    for (const strategy of strategies) {
+      try {
+        console.log('📍 [SAFARI DEBUG] Trying strategy:', strategy.name)
+        const position = await this.requestLocationWithOptions(strategy.options)
+        console.log('📍 [SAFARI DEBUG] Strategy successful:', strategy.name)
+        return position
+      } catch (error) {
+        console.log('📍 [SAFARI DEBUG] Strategy failed:', strategy.name, error)
+        
+        // If it's a permission error, don't try other strategies
+        if (error instanceof Error && error.message.includes('denied')) {
+          throw error
+        }
+        
+        // Wait before trying next strategy
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
+
+    throw new Error('All Safari location strategies failed')
+  },
+
+  /**
+   * Request location with custom options (Safari-optimized)
+   */
+  requestLocationWithOptions(options: {
+    enableHighAccuracy?: boolean;
+    timeout?: number;
+    maximumAge?: number;
+  }): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) => {
+      if (typeof window === 'undefined' || !navigator.geolocation) {
+        reject(new Error('Geolocation not available'))
+        return
+      }
+
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Location request timed out'))
+      }, (options.timeout || 10000) + 1000)
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          clearTimeout(timeoutId)
+          resolve(position)
+        },
+        (error) => {
+          clearTimeout(timeoutId)
+          const errorMessage = this.getSafariErrorMessage(error)
+          reject(new Error(errorMessage))
+        },
+        options
+      )
+    })
+  },
+
+  /**
+   * Safari-specific error messages
+   */
+  getSafariErrorMessage(error: GeolocationPositionError): string {
+    switch (error.code) {
+      case error.PERMISSION_DENIED:
+        return 'Location access denied. On iOS Safari, try: 1) Refresh the page, 2) Install as PWA, or 3) Use Chrome instead.'
+      case error.POSITION_UNAVAILABLE:
+        return 'Location unavailable. Please check your device location settings.'
+      case error.TIMEOUT:
+        return 'Location request timed out. This is common on iOS Safari. Try refreshing or installing as PWA.'
+      default:
+        return 'Failed to get location on iOS Safari.'
+    }
+  },
+
+  /**
+   * Get Safari-specific help text
+   */
+  getSafariHelpText(): string[] {
+    return [
+      'iOS Safari has known location permission issues. Here are solutions:',
+      '1. Refresh the page and try again',
+      '2. Install this app as a PWA (Add to Home Screen)',
+      '3. Use Chrome or Firefox instead',
+      '4. Check Settings > Safari > Location > Allow',
+      '5. Try enabling "Precise Location" in iOS Settings'
+    ]
+  },
+
+  /**
+   * Check if location request requires user interaction
+   */
+  requiresUserInteraction(): boolean {
+    return this.isIOSSafari() && !this.isPWAMode()
+  },
+
+  /**
+   * Get recommended action for Safari users
+   */
+  getRecommendedAction(): 'refresh' | 'install-pwa' | 'use-chrome' | 'none' {
+    if (!this.isIOSSafari()) return 'none'
+    
+    if (this.isPWAMode()) return 'none'
+    
+    // If not in PWA mode, recommend PWA installation
+    return 'install-pwa'
+  }
+} 
