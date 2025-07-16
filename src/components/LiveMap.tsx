@@ -223,15 +223,28 @@ export function LiveMap({ rideId }: LiveMapProps) {
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
               <div>
-                <h3 className="font-medium text-red-900 mb-2">Location Access Denied</h3>
+                <h3 className="font-medium text-red-900 mb-2">Location Access Denied on iOS</h3>
                 <p className="text-sm text-red-700 mb-3">
-                  Location access has been denied. To enable location sharing on iOS:
+                  Location access has been denied. On iOS Safari, this can happen even when permissions appear to be granted. Here&apos;s how to fix it:
                 </p>
                 <ol className="text-sm text-red-700 list-decimal list-inside space-y-1">
-                  <li>Go to Settings → Safari → Location</li>
-                  <li>Select &quot;Allow&quot; or &quot;Ask&quot; for this website</li>
-                  <li>Refresh this page and try again</li>
+                  <li>Go to <strong>Settings → Safari → Location</strong></li>
+                  <li>Select <strong>&quot;Ask&quot;</strong> or <strong>&quot;Allow&quot;</strong> for this website</li>
+                  <li>Go to <strong>Settings → Privacy & Security → Location Services</strong></li>
+                  <li>Ensure <strong>Safari</strong> is set to <strong>&quot;While Using&quot;</strong></li>
+                  <li>Close Safari completely (swipe up and swipe away)</li>
+                  <li>Reopen Safari and refresh this page</li>
                 </ol>
+                <div className="mt-3">
+                  <Button 
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Refresh Page
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -345,6 +358,12 @@ export function LiveMap({ rideId }: LiveMapProps) {
                         <li>Try toggling location sharing off and on</li>
                         <li>If the toggle gets stuck, refresh the page and try again</li>
                         <li>Check that Location Services are enabled on your device</li>
+                        {isIOS && (
+                          <>
+                            <li>On iOS: Go to <strong>Settings → Safari → Location</strong> and set to <strong>&quot;Ask&quot;</strong></li>
+                            <li>Also check <strong>Settings → Privacy & Security → Location Services → Safari</strong></li>
+                          </>
+                        )}
                         <li>Try closing and reopening your browser</li>
                       </ol>
                     </div>

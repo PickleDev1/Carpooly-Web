@@ -142,7 +142,7 @@ export const iOSLocationUtils = {
   },
 
   /**
-   * Check location permission using standard approach
+   * Check location permission using actual location request test
    */
   async checkLocationPermission(): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
     console.log('📍 [PERMISSION DEBUG] Starting standard permission check')
@@ -155,19 +155,61 @@ export const iOSLocationUtils = {
       return 'unknown'
     }
 
-    // Use standard permissions API if available
+    // First try the Permissions API if available
     if (navigator.permissions) {
       try {
         const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
+        console.log('📍 [PERMISSION DEBUG] Permissions API result:', result.state)
+        
+        // If explicitly denied, return denied
+        if (result.state === 'denied') {
+          return 'denied'
+        }
+        
+        // If granted, test with actual location request to verify
+        if (result.state === 'granted') {
+          try {
+            // Test with a quick location request to verify permission is actually working
+            await this.requestLocation()
+            console.log('📍 [PERMISSION DEBUG] Permission verified with location request')
+            return 'granted'
+          } catch (error) {
+            console.log('📍 [PERMISSION DEBUG] Permission API said granted but location request failed:', error)
+            // If the location request fails despite "granted" permission, 
+            // this indicates a permission issue (common on iOS Safari)
+            return 'denied'
+          }
+        }
+        
+        // If prompt, return prompt
         return result.state
       } catch (err) {
         console.error('📍 [PERMISSION DEBUG] Error checking geolocation permission:', err)
-        return 'prompt'
+        // Fall through to actual location test
       }
     }
 
-    // Fallback: assume we can prompt
-    return 'prompt'
+    // Fallback: test with actual location request
+    try {
+      console.log('📍 [PERMISSION DEBUG] Testing permission with actual location request')
+      await this.requestLocation()
+      console.log('📍 [PERMISSION DEBUG] Location request successful, permission granted')
+      return 'granted'
+    } catch (error) {
+      console.log('📍 [PERMISSION DEBUG] Location request failed, checking error type:', error)
+      
+      if (error instanceof Error) {
+        if (error.message.includes('denied') || error.message.includes('Permission denied')) {
+          return 'denied'
+        } else if (error.message.includes('timeout')) {
+          // Timeout might indicate permission issues on some devices
+          return 'prompt'
+        }
+      }
+      
+      // For other errors, assume we can prompt
+      return 'prompt'
+    }
   },
 
   /**

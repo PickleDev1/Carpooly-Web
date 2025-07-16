@@ -214,6 +214,14 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
     
     try {
       if (enabled) {
+        // Check permission first before enabling
+        console.log('📍 [TOGGLE DEBUG] Checking location permission before enabling')
+        const permission = await checkGeolocationPermission()
+        
+        if (permission === 'denied') {
+          throw new Error('Location access denied. Please allow location access in your browser settings.')
+        }
+        
         // Request location permission when enabling
         console.log('📍 [TOGGLE DEBUG] Requesting location permission')
         await requestLocation()
@@ -229,11 +237,26 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
       console.log('📍 [TOGGLE DEBUG] Location sharing settings updated successfully')
     } catch (err) {
       console.error('📍 [TOGGLE DEBUG] Failed to update location sharing settings:', err)
-      setError(err instanceof Error ? err.message : 'Failed to update location sharing settings')
       
-      // Even if there's an error, update the local state to match user intent
-      setIsSharingEnabled(enabled)
-      setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: enabled } : null)
+      // Handle specific permission errors
+      if (err instanceof Error) {
+        if (err.message.includes('denied') || err.message.includes('Permission denied')) {
+          setError('Location access denied. Please allow location access in your browser settings and try again.')
+          // Don't update local state for permission errors
+          setIsSharingEnabled(false)
+          setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: false } : null)
+        } else {
+          setError(err.message)
+          // For other errors, update the local state to match user intent
+          setIsSharingEnabled(enabled)
+          setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: enabled } : null)
+        }
+      } else {
+        setError('Failed to update location sharing settings')
+        // For unknown errors, update the local state to match user intent
+        setIsSharingEnabled(enabled)
+        setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: enabled } : null)
+      }
     } finally {
       setIsToggleLoading(false)
     }
