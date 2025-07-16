@@ -115,291 +115,98 @@ export function isIOSDevice(): boolean {
  */
 export const iOSLocationUtils = {
   /**
-   * Get iOS-specific geolocation options
+   * Get standard geolocation options (same for all devices)
    */
   getGeolocationOptions() {
-    const baseOptions = {
+    return {
       enableHighAccuracy: true,
       timeout: 10000,
       maximumAge: 5000
     }
-
-    if (isIOSDevice()) {
-      return {
-        ...baseOptions,
-        timeout: 15000, // Longer timeout for iOS
-        maximumAge: 10000 // Allow slightly older cached locations on iOS
-      }
-    }
-
-    return baseOptions
   },
 
   /**
-   * Get iOS-specific error message for geolocation errors
+   * Get standard error message for geolocation errors
    */
   getErrorMessage(error: GeolocationPositionError): string {
-    if (!isIOSDevice()) {
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          return 'Location access denied. Please allow location access in your browser settings.'
-        case error.POSITION_UNAVAILABLE:
-          return 'Location information unavailable.'
-        case error.TIMEOUT:
-          return 'Location request timed out. Please try again.'
-        default:
-          return 'Failed to get your location.'
-      }
-    }
-
-    // iOS-specific error messages with more detailed guidance
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        return 'Location access denied. Please go to Settings → Safari → Location → Allow for this website, then refresh the page.'
+        return 'Location access denied. Please allow location access in your browser settings.'
       case error.POSITION_UNAVAILABLE:
-        return 'Location information unavailable. Please check that Location Services are enabled in Settings → Privacy & Security → Location Services.'
+        return 'Location information unavailable.'
       case error.TIMEOUT:
-        return 'Location request timed out. This can happen on iOS when GPS signal is weak. Please try again or move to an area with better GPS reception.'
+        return 'Location request timed out. Please try again.'
       default:
-        return 'Unable to get your location. Please check your device settings and try again.'
+        return 'Failed to get your location.'
     }
   },
 
   /**
-   * Check if location permission is available and handle iOS-specific cases
+   * Check location permission using standard approach
    */
   async checkLocationPermission(): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
-    console.log('📍 [PERMISSION DEBUG] Starting permission check at:', new Date().toISOString())
+    console.log('📍 [PERMISSION DEBUG] Starting standard permission check')
     
     if (typeof window === 'undefined') {
-      console.log('📍 [PERMISSION DEBUG] Window undefined - server side')
       return 'unknown'
     }
     
-    // Check if geolocation is supported
     if (!navigator.geolocation) {
-      console.log('📍 [PERMISSION DEBUG] Geolocation not supported')
       return 'unknown'
     }
 
-    // For iOS devices, the permissions API is unreliable
-    // We need to use a more robust approach
-    if (isIOSDevice()) {
-      console.log('📍 [PERMISSION DEBUG] iOS device detected - using enhanced permission check')
-      const result = await this.checkIOSPermissionWithRetry()
-      console.log('📍 [PERMISSION DEBUG] iOS permission check result:', result)
-      return result
-    }
-
-    // Check if permissions API is available for non-iOS devices
-    if (!navigator.permissions) {
-      console.log('📍 [PERMISSION DEBUG] Permissions API not available - will check via geolocation request')
-      return 'prompt'
-    }
-
-    try {
-      console.log('📍 [PERMISSION DEBUG] Using Permissions API for non-iOS device')
-      const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
-      console.log('📍 [PERMISSION DEBUG] Permissions API result:', result.state)
-      return result.state
-    } catch (err) {
-      console.error('📍 [PERMISSION DEBUG] Error checking geolocation permission:', err)
-      // If permissions API fails, assume we need to prompt
-      return 'prompt'
-    }
-  },
-
-  /**
-   * Enhanced permission checking specifically for iOS devices
-   * iOS has unreliable permissions API, so we need to be more careful
-   */
-  async checkIOSPermission(): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
-    return new Promise((resolve) => {
-      const startTime = Date.now()
-      console.log('📍 [iOS DEBUG] Starting iOS permission check at:', new Date().toISOString())
-      console.log('📍 [iOS DEBUG] User agent:', navigator.userAgent)
-      console.log('📍 [iOS DEBUG] Geolocation available:', !!navigator.geolocation)
-      console.log('📍 [iOS DEBUG] Permissions API available:', !!navigator.permissions)
-      
-      // For iOS Safari, we need to handle the case where Safari shows "Allow" 
-      // but the geolocation API still returns PERMISSION_DENIED
-      // This is a known iOS Safari bug
-      
-      // Use a very short timeout to quickly determine permission status
-      const options = {
-        enableHighAccuracy: false,
-        timeout: 3000,
-        maximumAge: 0
-      }
-      
-      console.log('📍 [iOS DEBUG] Using geolocation options:', options)
-
-      const timeoutId = setTimeout(() => {
-        const elapsed = Date.now() - startTime
-        console.log('📍 [iOS DEBUG] iOS permission check timed out after', elapsed, 'ms - likely denied or prompt')
-        console.log('📍 [iOS DEBUG] Resolving as: prompt')
-        resolve('prompt')
-      }, 3500)
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          clearTimeout(timeoutId)
-          const elapsed = Date.now() - startTime
-          console.log('📍 [iOS DEBUG] iOS permission check successful after', elapsed, 'ms')
-          console.log('📍 [iOS DEBUG] Position received:', {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timestamp: new Date(position.timestamp).toISOString()
-          })
-          console.log('📍 [iOS DEBUG] Resolving as: granted')
-          resolve('granted')
-        },
-        (error) => {
-          clearTimeout(timeoutId)
-          const elapsed = Date.now() - startTime
-          console.log('📍 [iOS DEBUG] iOS permission check failed after', elapsed, 'ms')
-          console.log('📍 [iOS DEBUG] Error details:', {
-            code: error.code,
-            message: error.message,
-            PERMISSION_DENIED: error.PERMISSION_DENIED,
-            POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
-            TIMEOUT: error.TIMEOUT
-          })
-          
-          let resolution: 'granted' | 'denied' | 'prompt' | 'unknown' = 'prompt'
-          
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              console.log('📍 [iOS DEBUG] iOS permission explicitly denied')
-              // For iOS Safari, PERMISSION_DENIED might be a false positive
-              // if Safari shows "Allow" but the API hasn't synced yet
-              // We'll treat this as 'prompt' to allow retry
-              console.log('📍 [iOS DEBUG] iOS Safari PERMISSION_DENIED detected - treating as prompt for retry')
-              resolution = 'prompt'
-              break
-            case error.POSITION_UNAVAILABLE:
-              console.log('📍 [iOS DEBUG] iOS position unavailable - likely permission issue')
-              resolution = 'prompt'
-              break
-            case error.TIMEOUT:
-              console.log('📍 [iOS DEBUG] iOS permission check timed out')
-              resolution = 'prompt'
-              break
-            default:
-              console.log('📍 [iOS DEBUG] iOS permission check unknown error code:', error.code)
-              resolution = 'prompt'
-          }
-          
-          console.log('📍 [iOS DEBUG] Resolving as:', resolution)
-          resolve(resolution)
-        },
-        options
-      )
-    })
-  },
-
-  /**
-   * Enhanced iOS permission checking with multiple attempts
-   * This handles the iOS Safari bug where PERMISSION_DENIED is returned even when permission is granted
-   */
-  async checkIOSPermissionWithRetry(maxAttempts: number = 3): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
-    console.log('📍 [iOS DEBUG] Starting enhanced iOS permission check with retry')
-    
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      console.log('📍 [iOS DEBUG] Permission check attempt', attempt, 'of', maxAttempts)
-      
+    // Use standard permissions API if available
+    if (navigator.permissions) {
       try {
-        const result = await this.checkIOSPermission()
-        
-        if (result === 'granted') {
-          console.log('📍 [iOS DEBUG] Permission granted on attempt', attempt)
-          return 'granted'
-        }
-        
-        if (result === 'denied') {
-          console.log('📍 [iOS DEBUG] Permission explicitly denied on attempt', attempt)
-          return 'denied'
-        }
-        
-        // If we get 'prompt', it might be the iOS Safari sync issue
-        // Try to force a sync and retry
-        if (attempt < maxAttempts) {
-          console.log('📍 [iOS DEBUG] Got prompt, attempting to force Safari sync...')
-          const syncSuccess = await this.forceIOSPermissionSync()
-          if (syncSuccess) {
-            console.log('📍 [iOS DEBUG] Safari sync successful, retrying permission check')
-            // Wait a bit for Safari to fully sync
-            await new Promise(resolve => setTimeout(resolve, 500))
-            continue
-          }
-        }
-        
-        console.log('📍 [iOS DEBUG] Permission check result:', result, 'on attempt', attempt)
-        return result
-        
-      } catch (error) {
-        console.error('📍 [iOS DEBUG] Error during permission check attempt', attempt, ':', error)
-        if (attempt === maxAttempts) {
-          return 'unknown'
-        }
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
+        return result.state
+      } catch (err) {
+        console.error('📍 [PERMISSION DEBUG] Error checking geolocation permission:', err)
+        return 'prompt'
       }
     }
-    
-    console.log('📍 [iOS DEBUG] All permission check attempts completed, returning prompt')
+
+    // Fallback: assume we can prompt
     return 'prompt'
   },
 
   /**
-   * Request location with iOS-specific handling and retry logic
+   * Request location using standard approach (no iOS-specific workarounds)
    */
   requestLocation(): Promise<GeolocationPosition> {
     return new Promise((resolve, reject) => {
-      const startTime = Date.now()
-      console.log('📍 [LOCATION DEBUG] Starting location request at:', new Date().toISOString())
-      console.log('📍 [LOCATION DEBUG] Is iOS device:', isIOSDevice())
+      console.log('📍 [LOCATION DEBUG] Starting standard location request')
       
       if (typeof window === 'undefined') {
-        console.log('📍 [LOCATION DEBUG] Window undefined - server side')
         reject(new Error('Geolocation not available in server environment'))
         return
       }
 
       if (!navigator.geolocation) {
-        console.log('📍 [LOCATION DEBUG] Geolocation not supported')
         reject(new Error('Geolocation not supported'))
         return
       }
 
       const options = this.getGeolocationOptions()
       console.log('📍 [LOCATION DEBUG] Requesting location with options:', options)
-      console.log('📍 [LOCATION DEBUG] User agent:', navigator.userAgent)
 
-      // Add timeout safety
       const timeoutId = setTimeout(() => {
-        const elapsed = Date.now() - startTime
-        console.log('📍 [LOCATION DEBUG] Location request timed out after', elapsed, 'ms')
         reject(new Error('Location request timed out'))
-      }, options.timeout + 2000) // Add 2 seconds buffer
+      }, options.timeout + 2000)
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
           clearTimeout(timeoutId)
-          const elapsed = Date.now() - startTime
-          console.log('📍 [LOCATION DEBUG] Location request successful after', elapsed, 'ms')
+          console.log('📍 [LOCATION DEBUG] Location request successful')
           
           // Validate position data
           if (!position || !position.coords) {
-            console.log('📍 [LOCATION DEBUG] Invalid position data received:', position)
             reject(new Error('Invalid position data received'))
             return
           }
 
           // Validate coordinates
           if (isNaN(position.coords.latitude) || isNaN(position.coords.longitude)) {
-            console.log('📍 [LOCATION DEBUG] Invalid coordinates received:', position.coords)
             reject(new Error('Invalid coordinates received'))
             return
           }
@@ -407,7 +214,6 @@ export const iOSLocationUtils = {
           // Check coordinate bounds
           if (position.coords.latitude < -90 || position.coords.latitude > 90 ||
               position.coords.longitude < -180 || position.coords.longitude > 180) {
-            console.log('📍 [LOCATION DEBUG] Coordinates out of bounds:', position.coords)
             reject(new Error('Coordinates out of valid range'))
             return
           }
@@ -415,37 +221,14 @@ export const iOSLocationUtils = {
           console.log('📍 [LOCATION DEBUG] Location obtained successfully:', {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timestamp: new Date(position.timestamp).toISOString()
+            accuracy: position.coords.accuracy
           })
           resolve(position)
         },
         (error) => {
           clearTimeout(timeoutId)
-          const elapsed = Date.now() - startTime
-          console.log('📍 [LOCATION DEBUG] Location request failed after', elapsed, 'ms')
-          console.log('📍 [LOCATION DEBUG] Geolocation error details:', {
-            code: error.code,
-            message: error.message,
-            PERMISSION_DENIED: error.PERMISSION_DENIED,
-            POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
-            TIMEOUT: error.TIMEOUT
-          })
-          
-          // For iOS, provide more specific error handling
-          if (isIOSDevice()) {
-            if (error.code === error.PERMISSION_DENIED) {
-              console.log('📍 [LOCATION DEBUG] iOS PERMISSION_DENIED detected - this might be a Safari sync issue')
-              // Instead of immediately rejecting, provide a more helpful error message
-              const errorMessage = 'Location access appears to be denied. If you have allowed location access in Safari settings, please refresh the page and try again. If the issue persists, try going to Settings → Safari → Location and ensure this website is set to "Allow".'
-              console.log('📍 [LOCATION DEBUG] Resolved error message:', errorMessage)
-              reject(new Error(errorMessage))
-              return
-            }
-          }
-          
+          console.log('📍 [LOCATION DEBUG] Location request failed:', error.message)
           const errorMessage = this.getErrorMessage(error)
-          console.log('📍 [LOCATION DEBUG] Resolved error message:', errorMessage)
           reject(new Error(errorMessage))
         },
         options
@@ -454,10 +237,10 @@ export const iOSLocationUtils = {
   },
 
   /**
-   * Request location with retry logic for iOS Safari sync issues
+   * Simple location request with one retry (standard approach)
    */
   async requestLocationWithRetry(maxAttempts: number = 2): Promise<GeolocationPosition> {
-    console.log('📍 [LOCATION DEBUG] Starting location request with retry logic')
+    console.log('📍 [LOCATION DEBUG] Starting location request with retry')
     
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       console.log('📍 [LOCATION DEBUG] Location request attempt', attempt, 'of', maxAttempts)
@@ -469,22 +252,8 @@ export const iOSLocationUtils = {
       } catch (error) {
         console.error('📍 [LOCATION DEBUG] Location request failed on attempt', attempt, ':', error)
         
-        // If this is the last attempt, throw the error
         if (attempt === maxAttempts) {
           throw error
-        }
-        
-        // For iOS, if we get a permission denied error, try to force sync
-        if (isIOSDevice() && error instanceof Error && 
-            (error.message.includes('denied') || error.message.includes('Permission denied'))) {
-          console.log('📍 [LOCATION DEBUG] iOS permission denied detected, attempting Safari sync...')
-          const syncSuccess = await this.forceIOSPermissionSync()
-          if (syncSuccess) {
-            console.log('📍 [LOCATION DEBUG] Safari sync successful, retrying location request')
-            // Wait a bit for Safari to fully sync
-            await new Promise(resolve => setTimeout(resolve, 1000))
-            continue
-          }
         }
         
         // Wait before retry
@@ -496,79 +265,10 @@ export const iOSLocationUtils = {
   },
 
   /**
-   * Get iOS-specific help text for location permissions
+   * Get standard help text for location issues
    */
   getHelpText() {
-    if (!isIOSDevice()) return null
-
-    return {
-      title: 'iOS Device Detected',
-      description: 'Location features on iOS require explicit permission. You may need to allow location access when prompted.',
-      steps: [
-        'Go to Settings → Safari → Location',
-        'Select "Allow" or "Ask" for this website',
-        'Ensure Location Services are enabled in Settings → Privacy & Security → Location Services',
-        'Refresh this page and try again'
-      ]
-    }
-  },
-
-  /**
-   * iOS Safari workaround for permission sync issues
-   * Sometimes Safari shows "Allow" but the geolocation API still returns PERMISSION_DENIED
-   * This function tries to force Safari to re-evaluate the permission
-   */
-  async forceIOSPermissionSync(): Promise<boolean> {
-    if (!isIOSDevice()) return false
-    
-    console.log('📍 [iOS DEBUG] Attempting to force iOS Safari permission sync')
-    
-    return new Promise((resolve) => {
-      // Try a very quick location request to force Safari to re-evaluate
-      const options = {
-        enableHighAccuracy: false,
-        timeout: 1000,
-        maximumAge: 0
-      }
-      
-      const timeoutId = setTimeout(() => {
-        console.log('📍 [iOS DEBUG] Force sync timeout - Safari still not synced')
-        resolve(false)
-      }, 1500)
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          clearTimeout(timeoutId)
-          console.log('📍 [iOS DEBUG] Force sync successful - Safari now recognizes permission')
-          resolve(true)
-        },
-        (error) => {
-          clearTimeout(timeoutId)
-          console.log('📍 [iOS DEBUG] Force sync failed:', error.message)
-          resolve(false)
-        },
-        options
-      )
-    })
-  },
-
-  /**
-   * Get iOS Safari permission troubleshooting steps
-   */
-  getIOSSafariTroubleshootingSteps() {
-    return {
-      title: 'iOS Safari Permission Sync Issue',
-      description: 'This is a known iOS Safari issue where the browser doesn\'t immediately sync location permissions. Here are steps to resolve it:',
-      steps: [
-        'Toggle location sharing off and on again',
-        'If that doesn\'t work, refresh the page',
-        'Close Safari completely and reopen it',
-        'Check that Location Services are enabled in iOS Settings → Privacy & Security → Location Services',
-        'Go to Settings → Safari → Location and ensure this website is set to "Allow"',
-        'If the issue persists, try using a different browser or the native app'
-      ],
-      technicalNote: 'This happens because iOS Safari has a bug where the geolocation API returns PERMISSION_DENIED even when permissions are granted, until Safari fully syncs the permission state.'
-    }
+    return 'To use location features, please allow location access when prompted by your browser. If you have previously denied access, you can change this in your browser settings.'
   }
 }
 

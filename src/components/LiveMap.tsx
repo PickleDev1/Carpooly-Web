@@ -39,6 +39,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
   const { user, isLoaded } = useUser()
   const {
     locations,
+    locationSettings,
     isSharingEnabled,
     isLoading,
     isToggleLoading,
@@ -112,9 +113,9 @@ export function LiveMap({ rideId }: LiveMapProps) {
     }
   }
 
-  // iOS-specific location request handler
-  const handleIOSLocationRequest = async () => {
-    console.log('📍 [LIVEMAP DEBUG] iOS location request triggered by user at:', new Date().toISOString())
+  // Manual location request handler
+  const handleManualLocationRequest = async () => {
+    console.log('📍 [LIVEMAP DEBUG] Manual location request triggered by user at:', new Date().toISOString())
     console.log('📍 [LIVEMAP DEBUG] Current state before request:', {
       isSharingEnabled,
       permissionState,
@@ -122,10 +123,11 @@ export function LiveMap({ rideId }: LiveMapProps) {
       isIOS
     })
     try {
+      // Use the standard location request function
       await requestLocation()
-      console.log('📍 [LIVEMAP DEBUG] iOS location request completed successfully')
+      console.log('📍 [LIVEMAP DEBUG] Manual location request completed successfully')
     } catch (err) {
-      console.error('📍 [LIVEMAP DEBUG] iOS location request failed:', err)
+      console.error('📍 [LIVEMAP DEBUG] Manual location request failed:', err)
       console.log('📍 [LIVEMAP DEBUG] Error details:', {
         message: err instanceof Error ? err.message : 'Unknown error',
         type: typeof err,
@@ -188,20 +190,20 @@ export function LiveMap({ rideId }: LiveMapProps) {
         </Card>
       )}
 
-      {/* iOS-specific Help Banner */}
-      {isIOS && isSharingEnabled && permissionState === 'prompt' && (
+      {/* Location Access Help Banner */}
+      {isSharingEnabled && permissionState === 'prompt' && (
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
               <div>
-                <h3 className="font-medium text-orange-900 mb-2">iOS Location Access Required</h3>
+                <h3 className="font-medium text-orange-900 mb-2">Location Access Required</h3>
                 <p className="text-sm text-orange-700 mb-3">
-                  To share your location on iOS, you need to allow location access when prompted. 
+                  To share your location, you need to allow location access when prompted. 
                   If you don&apos;t see a prompt, tap the button below to request location access.
                 </p>
                 <Button 
-                  onClick={handleIOSLocationRequest}
+                  onClick={handleManualLocationRequest}
                   variant="outline"
                   size="sm"
                   className="border-orange-300 text-orange-700 hover:bg-orange-100"
@@ -236,36 +238,52 @@ export function LiveMap({ rideId }: LiveMapProps) {
         </Card>
       )}
 
-      {/* iOS Safari Permission Sync Issue Warning */}
-      {isIOS && isSharingEnabled && error && error.includes('Safari settings') && (
+      {/* Permission Issue Warning */}
+      {isSharingEnabled && error && (error.includes('denied') || error.includes('Permission denied')) && (
         <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
               <div>
-                <h3 className="font-medium text-yellow-900 mb-2">iOS Safari Permission Sync Issue</h3>
+                <h3 className="font-medium text-yellow-900 mb-2">Location Permission Issue</h3>
                 <p className="text-sm text-yellow-700 mb-3">
-                  Safari may not have synced your location permission yet. This is a known iOS Safari issue. Try these steps:
+                  Location access appears to be denied. This can happen when browser permissions aren&apos;t properly configured or when there are temporary permission sync issues.
                 </p>
-                <ol className="text-sm text-yellow-700 list-decimal list-inside space-y-1 mb-3">
-                  <li>Toggle location sharing off and on again</li>
-                  <li>If that doesn&apos;t work, refresh the page</li>
-                  <li>Close Safari completely and reopen it</li>
-                  <li>Check that Location Services are enabled in iOS Settings</li>
-                </ol>
-                <Button 
-                  onClick={handleIOSLocationRequest}
-                  variant="outline"
-                  size="sm"
-                  className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
-                >
-                  Try Again
-                </Button>
+                <div className="text-sm text-yellow-700 mb-3">
+                  <p className="font-medium">To enable real-time location tracking:</p>
+                  <ol className="list-decimal list-inside space-y-1 space-y-1">
+                    <li>Check your browser&apos;s location settings</li>
+                    <li>Ensure this website is set to &quot;Allow&quot; location access</li>
+                    <li>Toggle location sharing off and on again</li>
+                    <li>Close and reopen your browser</li>
+                    <li>Refresh this page and try again</li>
+                  </ol>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleManualLocationRequest}
+                    variant="outline"
+                    size="sm"
+                    className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                  >
+                    Try Real-Time Location
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                    size="sm"
+                    className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                  >
+                    Refresh Page
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
+
+
 
       {/* Location Sharing Controls */}
       <Card>
@@ -296,16 +314,14 @@ export function LiveMap({ rideId }: LiveMapProps) {
               </div>
             </div>
 
-            {/* iOS-specific information */}
-            {isIOS && (
-              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                <div className="text-sm text-blue-700">
-                  <p className="font-medium">iOS Device Detected</p>
-                  <p>Location sharing on iOS requires explicit permission. If you&apos;ve already set location to &quot;Allow&quot; in Safari settings but still see errors, this is a known iOS Safari sync issue. Try toggling location sharing off and on again to help Safari sync the permission.</p>
-                </div>
+            {/* Location Information */}
+            <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="text-sm text-blue-700">
+                <p className="font-medium">Location Tracking</p>
+                <p>Real-time location tracking requires explicit permission from your browser. The app will only use real-time location when permission is properly granted. Your location is only shared with other carpool participants.</p>
               </div>
-            )}
+            </div>
 
             {/* Error display */}
             {error && (
@@ -314,27 +330,25 @@ export function LiveMap({ rideId }: LiveMapProps) {
                 <div className="text-sm text-red-700">
                   <p className="font-medium">Location Error</p>
                   <p>{error}</p>
-                  {isIOS && (
-                    <div className="mt-2 space-y-2">
-                      <Button 
-                        onClick={handleIOSLocationRequest}
-                        variant="outline"
-                        size="sm"
-                        className="border-red-300 text-red-700 hover:bg-red-100"
-                      >
-                        Try Again
-                      </Button>
-                      <div className="text-xs text-red-600">
-                        <p>If you&apos;ve set location to &quot;Allow&quot; in Safari settings:</p>
-                        <ol className="list-decimal list-inside mt-1 space-y-1">
-                          <li>Try toggling location sharing off and on</li>
-                          <li>If the toggle gets stuck, refresh the page and try again</li>
-                          <li>Check that Location Services are enabled in iOS Settings</li>
-                          <li>Try closing and reopening Safari</li>
-                        </ol>
-                      </div>
+                  <div className="mt-2 space-y-2">
+                    <Button 
+                      onClick={handleManualLocationRequest}
+                      variant="outline"
+                      size="sm"
+                      className="border-red-300 text-red-700 hover:bg-red-100"
+                    >
+                      Try Again
+                    </Button>
+                    <div className="text-xs text-red-600">
+                      <p>If you&apos;ve set location to &quot;Allow&quot; in your browser settings:</p>
+                      <ol className="list-decimal list-inside mt-1 space-y-1">
+                        <li>Try toggling location sharing off and on</li>
+                        <li>If the toggle gets stuck, refresh the page and try again</li>
+                        <li>Check that Location Services are enabled on your device</li>
+                        <li>Try closing and reopening your browser</li>
+                      </ol>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             )}

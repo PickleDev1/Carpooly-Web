@@ -127,8 +127,8 @@ export function LocationSettings() {
     }
   }
 
-  // Get iOS help text
-  const iosHelpText = iOSLocationUtils.getHelpText()
+  // Get help text
+  const helpText = iOSLocationUtils.getHelpText()
 
   return (
     <div className="space-y-6">
@@ -148,30 +148,29 @@ export function LocationSettings() {
         </CardContent>
       </Card>
 
-      {/* iOS-specific Information */}
-      {iosHelpText && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <Info className="h-5 w-5 text-orange-600 mt-0.5" />
-              <div>
-                <h3 className="font-medium text-orange-900 mb-2">{iosHelpText.title}</h3>
-                <p className="text-sm text-orange-700 mb-3">
-                  {iosHelpText.description}
-                </p>
-                <div className="text-sm text-orange-700">
-                  <p className="font-medium mb-1">If location access is denied:</p>
-                  <ol className="list-decimal list-inside space-y-1">
-                    {iosHelpText.steps.map((step: string, index: number) => (
-                      <li key={index}>{step}</li>
-                    ))}
-                  </ol>
-                </div>
+      {/* Location Information */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-orange-600 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-orange-900 mb-2">Location Access</h3>
+              <p className="text-sm text-orange-700 mb-3">
+                {helpText}
+              </p>
+              <div className="text-sm text-orange-700">
+                <p className="font-medium mb-1">If location access is denied:</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Check your browser&apos;s location settings</li>
+                  <li>Ensure this website is set to &quot;Allow&quot; location access</li>
+                  <li>Try refreshing the page and allowing location when prompted</li>
+                  <li>Check that Location Services are enabled on your device</li>
+                </ol>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Location Sharing Toggle */}
       <Card>
