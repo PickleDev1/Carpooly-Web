@@ -152,8 +152,8 @@ export default function TestLocationPage() {
                 <p className="font-medium mb-2">iOS Safari Permission Issue</p>
                 <p>On iOS Safari, try these steps:</p>
                 <ol className="list-decimal list-inside mt-1 space-y-1">
-                  <li>Settings → Safari → Location → Set to "Ask"</li>
-                  <li>Settings → Privacy & Security → Location Services → Safari → "While Using"</li>
+                  <li>Settings → Safari → Location → Set to &quot;Ask&quot;</li>
+                  <li>Settings → Privacy & Security → Location Services → Safari → &quot;While Using&quot;</li>
                   <li>Close Safari completely and reopen</li>
                 </ol>
               </div>
