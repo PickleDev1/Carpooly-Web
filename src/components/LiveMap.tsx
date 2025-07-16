@@ -236,6 +236,37 @@ export function LiveMap({ rideId }: LiveMapProps) {
         </Card>
       )}
 
+      {/* iOS Safari Permission Sync Issue Warning */}
+      {isIOS && isSharingEnabled && error && error.includes('Safari settings') && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-yellow-900 mb-2">iOS Safari Permission Sync Issue</h3>
+                <p className="text-sm text-yellow-700 mb-3">
+                  Safari may not have synced your location permission yet. This is a known iOS Safari issue. Try these steps:
+                </p>
+                <ol className="text-sm text-yellow-700 list-decimal list-inside space-y-1 mb-3">
+                  <li>Toggle location sharing off and on again</li>
+                  <li>If that doesn&apos;t work, refresh the page</li>
+                  <li>Close Safari completely and reopen it</li>
+                  <li>Check that Location Services are enabled in iOS Settings</li>
+                </ol>
+                <Button 
+                  onClick={handleIOSLocationRequest}
+                  variant="outline"
+                  size="sm"
+                  className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Location Sharing Controls */}
       <Card>
         <CardHeader>
@@ -271,7 +302,7 @@ export function LiveMap({ rideId }: LiveMapProps) {
                 <Info className="h-4 w-4 text-blue-600 mt-0.5" />
                 <div className="text-sm text-blue-700">
                   <p className="font-medium">iOS Device Detected</p>
-                  <p>Location sharing on iOS requires explicit permission. If you&apos;ve already set location to &quot;Allow&quot; in Safari settings, try toggling location sharing off and on again. This helps Safari sync the permission.</p>
+                  <p>Location sharing on iOS requires explicit permission. If you&apos;ve already set location to &quot;Allow&quot; in Safari settings but still see errors, this is a known iOS Safari sync issue. Try toggling location sharing off and on again to help Safari sync the permission.</p>
                 </div>
               </div>
             )}

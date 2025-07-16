@@ -65,7 +65,11 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
         console.log('📍 [HOOK DEBUG] iOS detected - ensuring user gesture context for location request')
       }
       
-      const position = await iOSLocationUtils.requestLocation()
+      // Use the new retry logic for iOS
+      const position = isIOS 
+        ? await iOSLocationUtils.requestLocationWithRetry()
+        : await iOSLocationUtils.requestLocation()
+        
       console.log('📍 [HOOK DEBUG] Location request successful:', {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
@@ -261,6 +265,20 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
           type: typeof err,
           stack: err instanceof Error ? err.stack : undefined
         })
+        
+        // For iOS permission errors, don't continuously retry
+        if (isIOS && err instanceof Error && 
+            (err.message.includes('denied') || err.message.includes('Permission denied'))) {
+          console.log('📍 [INTERVAL DEBUG] iOS permission error detected - stopping interval to prevent spam')
+          setError('Location access denied. Please allow location access in Safari settings and try again.')
+          // Stop the interval for iOS permission errors to prevent spam
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current)
+            intervalRef.current = null
+          }
+          return
+        }
+        
         const errorMessage = err instanceof Error ? err.message : 'Failed to update location'
         setError(errorMessage)
         
@@ -274,8 +292,10 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
     updateLocation()
 
     // Set up interval for subsequent updates with error recovery
-    console.log('📍 [INTERVAL DEBUG] Setting up 5-second interval for location updates')
-    intervalRef.current = setInterval(updateLocation, 5000)
+    // Use longer interval for iOS to reduce permission request frequency
+    const intervalMs = isIOS ? 15000 : 5000 // 15 seconds for iOS, 5 seconds for others
+    console.log('📍 [INTERVAL DEBUG] Setting up', intervalMs/1000, '-second interval for location updates')
+    intervalRef.current = setInterval(updateLocation, intervalMs)
 
     return () => {
       console.log('📍 [INTERVAL DEBUG] Cleaning up location tracking interval')
@@ -363,26 +383,26 @@ export function useLocationTracking({ rideId }: UseLocationTrackingOptions) {
         setIsSharingEnabled(enabled)
         setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: enabled } : null)
         setError(null) // Clear any previous errors
-              console.log('📍 [TOGGLE DEBUG] Location sharing settings updated successfully')
+        console.log('📍 [TOGGLE DEBUG] Location sharing settings updated successfully')
+      }
+    } catch (err) {
+      console.error('📍 [TOGGLE DEBUG] Failed to update location sharing settings:', err)
+      console.log('📍 [TOGGLE DEBUG] Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        type: typeof err,
+        stack: err instanceof Error ? err.stack : undefined
+      })
+      setError('Failed to update location sharing settings')
+      // Even if there's an error, we should still update the local state
+      // to match what the user intended, so they can try again
+      console.log('📍 [TOGGLE DEBUG] Updating local state despite error to allow retry')
+      setIsSharingEnabled(enabled)
+      setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: enabled } : null)
+    } finally {
+      // Always clear loading state
+      setIsToggleLoading(false)
     }
-  } catch (err) {
-    console.error('📍 [TOGGLE DEBUG] Failed to update location sharing settings:', err)
-    console.log('📍 [TOGGLE DEBUG] Error details:', {
-      message: err instanceof Error ? err.message : 'Unknown error',
-      type: typeof err,
-      stack: err instanceof Error ? err.stack : undefined
-    })
-    setError('Failed to update location sharing settings')
-    // Even if there's an error, we should still update the local state
-    // to match what the user intended, so they can try again
-    console.log('📍 [TOGGLE DEBUG] Updating local state despite error to allow retry')
-    setIsSharingEnabled(enabled)
-    setLocationSettings(prev => prev ? { ...prev, location_sharing_enabled: enabled } : null)
-  } finally {
-    // Always clear loading state
-    setIsToggleLoading(false)
   }
-}
 
   // Manual location request for iOS (triggered by user gesture)
   const requestLocation = useCallback(async () => {

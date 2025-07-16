@@ -186,7 +186,7 @@ export const iOSLocationUtils = {
     // We need to use a more robust approach
     if (isIOSDevice()) {
       console.log('📍 [PERMISSION DEBUG] iOS device detected - using enhanced permission check')
-      const result = await this.checkIOSPermission()
+      const result = await this.checkIOSPermissionWithRetry()
       console.log('📍 [PERMISSION DEBUG] iOS permission check result:', result)
       return result
     }
@@ -300,7 +300,60 @@ export const iOSLocationUtils = {
   },
 
   /**
-   * Request location with iOS-specific handling
+   * Enhanced iOS permission checking with multiple attempts
+   * This handles the iOS Safari bug where PERMISSION_DENIED is returned even when permission is granted
+   */
+  async checkIOSPermissionWithRetry(maxAttempts: number = 3): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
+    console.log('📍 [iOS DEBUG] Starting enhanced iOS permission check with retry')
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      console.log('📍 [iOS DEBUG] Permission check attempt', attempt, 'of', maxAttempts)
+      
+      try {
+        const result = await this.checkIOSPermission()
+        
+        if (result === 'granted') {
+          console.log('📍 [iOS DEBUG] Permission granted on attempt', attempt)
+          return 'granted'
+        }
+        
+        if (result === 'denied') {
+          console.log('📍 [iOS DEBUG] Permission explicitly denied on attempt', attempt)
+          return 'denied'
+        }
+        
+        // If we get 'prompt', it might be the iOS Safari sync issue
+        // Try to force a sync and retry
+        if (attempt < maxAttempts) {
+          console.log('📍 [iOS DEBUG] Got prompt, attempting to force Safari sync...')
+          const syncSuccess = await this.forceIOSPermissionSync()
+          if (syncSuccess) {
+            console.log('📍 [iOS DEBUG] Safari sync successful, retrying permission check')
+            // Wait a bit for Safari to fully sync
+            await new Promise(resolve => setTimeout(resolve, 500))
+            continue
+          }
+        }
+        
+        console.log('📍 [iOS DEBUG] Permission check result:', result, 'on attempt', attempt)
+        return result
+        
+      } catch (error) {
+        console.error('📍 [iOS DEBUG] Error during permission check attempt', attempt, ':', error)
+        if (attempt === maxAttempts) {
+          return 'unknown'
+        }
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+    
+    console.log('📍 [iOS DEBUG] All permission check attempts completed, returning prompt')
+    return 'prompt'
+  },
+
+  /**
+   * Request location with iOS-specific handling and retry logic
    */
   requestLocation(): Promise<GeolocationPosition> {
     return new Promise((resolve, reject) => {
@@ -378,6 +431,19 @@ export const iOSLocationUtils = {
             POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
             TIMEOUT: error.TIMEOUT
           })
+          
+          // For iOS, provide more specific error handling
+          if (isIOSDevice()) {
+            if (error.code === error.PERMISSION_DENIED) {
+              console.log('📍 [LOCATION DEBUG] iOS PERMISSION_DENIED detected - this might be a Safari sync issue')
+              // Instead of immediately rejecting, provide a more helpful error message
+              const errorMessage = 'Location access appears to be denied. If you have allowed location access in Safari settings, please refresh the page and try again. If the issue persists, try going to Settings → Safari → Location and ensure this website is set to "Allow".'
+              console.log('📍 [LOCATION DEBUG] Resolved error message:', errorMessage)
+              reject(new Error(errorMessage))
+              return
+            }
+          }
+          
           const errorMessage = this.getErrorMessage(error)
           console.log('📍 [LOCATION DEBUG] Resolved error message:', errorMessage)
           reject(new Error(errorMessage))
@@ -385,6 +451,48 @@ export const iOSLocationUtils = {
         options
       )
     })
+  },
+
+  /**
+   * Request location with retry logic for iOS Safari sync issues
+   */
+  async requestLocationWithRetry(maxAttempts: number = 2): Promise<GeolocationPosition> {
+    console.log('📍 [LOCATION DEBUG] Starting location request with retry logic')
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      console.log('📍 [LOCATION DEBUG] Location request attempt', attempt, 'of', maxAttempts)
+      
+      try {
+        const position = await this.requestLocation()
+        console.log('📍 [LOCATION DEBUG] Location request successful on attempt', attempt)
+        return position
+      } catch (error) {
+        console.error('📍 [LOCATION DEBUG] Location request failed on attempt', attempt, ':', error)
+        
+        // If this is the last attempt, throw the error
+        if (attempt === maxAttempts) {
+          throw error
+        }
+        
+        // For iOS, if we get a permission denied error, try to force sync
+        if (isIOSDevice() && error instanceof Error && 
+            (error.message.includes('denied') || error.message.includes('Permission denied'))) {
+          console.log('📍 [LOCATION DEBUG] iOS permission denied detected, attempting Safari sync...')
+          const syncSuccess = await this.forceIOSPermissionSync()
+          if (syncSuccess) {
+            console.log('📍 [LOCATION DEBUG] Safari sync successful, retrying location request')
+            // Wait a bit for Safari to fully sync
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            continue
+          }
+        }
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+    
+    throw new Error('Location request failed after all attempts')
   },
 
   /**
@@ -442,6 +550,25 @@ export const iOSLocationUtils = {
         options
       )
     })
+  },
+
+  /**
+   * Get iOS Safari permission troubleshooting steps
+   */
+  getIOSSafariTroubleshootingSteps() {
+    return {
+      title: 'iOS Safari Permission Sync Issue',
+      description: 'This is a known iOS Safari issue where the browser doesn\'t immediately sync location permissions. Here are steps to resolve it:',
+      steps: [
+        'Toggle location sharing off and on again',
+        'If that doesn\'t work, refresh the page',
+        'Close Safari completely and reopen it',
+        'Check that Location Services are enabled in iOS Settings → Privacy & Security → Location Services',
+        'Go to Settings → Safari → Location and ensure this website is set to "Allow"',
+        'If the issue persists, try using a different browser or the native app'
+      ],
+      technicalNote: 'This happens because iOS Safari has a bug where the geolocation API returns PERMISSION_DENIED even when permissions are granted, until Safari fully syncs the permission state.'
+    }
   }
 }
 
