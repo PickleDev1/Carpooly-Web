@@ -425,3 +425,244 @@ export async function reverseGeocodeWithCache(latitude: number, longitude: numbe
   
   return address
 } 
+
+/**
+ * Life360-inspired location strategies for iOS Safari compatibility
+ */
+export const Life360LocationUtils = {
+  /**
+   * Progressive permission request - start gentle, escalate if needed
+   */
+  async requestPermissionProgressive(): Promise<'granted' | 'denied' | 'prompt'> {
+    console.log('📍 [LIFE360 DEBUG] Starting progressive permission request')
+    
+    // Step 1: Try gentle request first
+    try {
+      const gentleOptions = {
+        enableHighAccuracy: false, // Start with low accuracy
+        timeout: 5000, // Shorter timeout
+        maximumAge: 30000 // Accept older positions
+      }
+      
+      const position = await this.requestLocationWithOptions(gentleOptions)
+      console.log('📍 [LIFE360 DEBUG] Gentle request successful')
+      return 'granted'
+    } catch (error) {
+      console.log('📍 [LIFE360 DEBUG] Gentle request failed, trying standard request')
+    }
+    
+    // Step 2: Try standard request
+    try {
+      const position = await iOSLocationUtils.requestLocation()
+      console.log('📍 [LIFE360 DEBUG] Standard request successful')
+      return 'granted'
+    } catch (error) {
+      console.log('📍 [LIFE360 DEBUG] Standard request failed, trying high accuracy')
+    }
+    
+    // Step 3: Try high accuracy request
+    try {
+      const highAccuracyOptions = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+      
+      const position = await this.requestLocationWithOptions(highAccuracyOptions)
+      console.log('📍 [LIFE360 DEBUG] High accuracy request successful')
+      return 'granted'
+    } catch (error) {
+      console.log('📍 [LIFE360 DEBUG] All location requests failed')
+      
+      if (error instanceof Error && error.message.includes('denied')) {
+        return 'denied'
+      }
+      
+      return 'prompt'
+    }
+  },
+
+  /**
+   * Request location with custom options
+   */
+  requestLocationWithOptions(options: {
+    enableHighAccuracy?: boolean;
+    timeout?: number;
+    maximumAge?: number;
+  }): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) => {
+      if (typeof window === 'undefined' || !navigator.geolocation) {
+        reject(new Error('Geolocation not available'))
+        return
+      }
+
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Location request timed out'))
+      }, (options.timeout || 10000) + 2000)
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          clearTimeout(timeoutId)
+          resolve(position)
+        },
+        (error) => {
+          clearTimeout(timeoutId)
+          const errorMessage = iOSLocationUtils.getErrorMessage(error)
+          reject(new Error(errorMessage))
+        },
+        options
+      )
+    })
+  },
+
+  /**
+   * Get approximate location from IP (fallback method)
+   */
+  async getApproximateLocation(): Promise<{ latitude: number; longitude: number; accuracy: number }> {
+    console.log('📍 [LIFE360 DEBUG] Getting approximate location from IP')
+    
+    try {
+      // Use a free IP geolocation service
+      const response = await fetch('https://ipapi.co/json/')
+      const data = await response.json()
+      
+      if (data.latitude && data.longitude) {
+        console.log('📍 [LIFE360 DEBUG] IP-based location obtained:', {
+          latitude: data.latitude,
+          longitude: data.longitude,
+          accuracy: 5000 // IP-based location is approximate
+        })
+        
+        return {
+          latitude: parseFloat(data.latitude),
+          longitude: parseFloat(data.longitude),
+          accuracy: 5000
+        }
+      }
+      
+      throw new Error('Could not get location from IP')
+    } catch (error) {
+      console.error('📍 [LIFE360 DEBUG] IP-based location failed:', error)
+      throw new Error('Could not determine approximate location')
+    }
+  },
+
+  /**
+   * Geocode address to coordinates
+   */
+  async geocodeAddress(address: string): Promise<{ latitude: number; longitude: number }> {
+    console.log('📍 [LIFE360 DEBUG] Geocoding address:', address)
+    
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+      if (!apiKey) {
+        throw new Error('Google Maps API key not available')
+      }
+      
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`
+      )
+      const data = await response.json()
+      
+      if (data.results && data.results.length > 0) {
+        const location = data.results[0].geometry.location
+        console.log('📍 [LIFE360 DEBUG] Address geocoded successfully:', location)
+        
+        return {
+          latitude: location.lat,
+          longitude: location.lng
+        }
+      }
+      
+      throw new Error('Address not found')
+    } catch (error) {
+      console.error('📍 [LIFE360 DEBUG] Address geocoding failed:', error)
+      throw new Error('Could not find location for this address')
+    }
+  },
+
+  /**
+   * Get location with multiple fallback strategies
+   */
+  async getLocationWithFallbacks(): Promise<{
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    source: 'gps' | 'ip' | 'manual';
+  }> {
+    console.log('📍 [LIFE360 DEBUG] Getting location with fallbacks')
+    
+    // Try GPS first
+    try {
+      const position = await iOSLocationUtils.requestLocation()
+      console.log('📍 [LIFE360 DEBUG] GPS location obtained')
+      
+      return {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy || 10,
+        source: 'gps'
+      }
+    } catch (error) {
+      console.log('📍 [LIFE360 DEBUG] GPS failed, trying IP-based location')
+    }
+    
+    // Try IP-based location
+    try {
+      const ipLocation = await this.getApproximateLocation()
+      console.log('📍 [LIFE360 DEBUG] IP-based location obtained')
+      
+      return {
+        ...ipLocation,
+        source: 'ip'
+      }
+    } catch (error) {
+      console.log('📍 [LIFE360 DEBUG] IP-based location failed')
+    }
+    
+    // If all else fails, throw error
+    throw new Error('Could not determine location. Please try enabling location services or enter your location manually.')
+  },
+
+  /**
+   * Check if device supports PWA installation
+   */
+  isPWAInstallable(): boolean {
+    if (typeof window === 'undefined') return false
+    
+    // Check for iOS Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
+    
+    // Check for standalone mode (already installed as PWA)
+    const isStandalone = (window.navigator as any).standalone === true
+    
+    // Check for beforeinstallprompt event support
+    const hasBeforeInstallPrompt = 'onbeforeinstallprompt' in window
+    
+    return (isIOS && isSafari) || isStandalone || hasBeforeInstallPrompt
+  },
+
+  /**
+   * Get PWA installation instructions
+   */
+  getPWAInstallInstructions(): string[] {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
+    
+    if (isIOS && isSafari) {
+      return [
+        'Tap the Share button (square with arrow)',
+        'Scroll down and tap "Add to Home Screen"',
+        'Tap "Add" to install the app',
+        'Open the app from your home screen for better location access'
+      ]
+    }
+    
+    return [
+      'Look for the install button in your browser address bar',
+      'Or go to your browser menu and select "Install App"',
+      'Install the app for better location access'
+    ]
+  }
+} 
