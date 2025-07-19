@@ -237,6 +237,9 @@ export default function OnboardingPage() {
             <p className="mb-3">
               Let&apos;s get you set up for carpooling! First, we need your home address to help you find and create carpools near you.
             </p>
+            <p className="text-xs text-blue-600 font-medium mb-2">
+              🎯 <strong>Why this matters:</strong> Your start address is crucial for accurate mileage calculations, environmental impact tracking, and optimal carpool matching.
+            </p>
             <p className="text-xs text-gray-500">
               💡 <strong>Pro Tip:</strong> This address will be used as your default starting point for all carpools.
             </p>
@@ -250,14 +253,21 @@ export default function OnboardingPage() {
         <CardContent className="px-4 sm:px-6">
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="address" className="text-sm sm:text-base">Start Address</Label>
+              <Label htmlFor="address" className="text-sm sm:text-base">
+                Start Address <span className="text-red-500">*</span>
+              </Label>
               <AddressAutocomplete
                 onSelect={handleAddressSelect}
                 placeholder="123 Main St, City, State, ZIP"
               />
-              <p className="text-xs text-gray-500">
-                🔍 Start typing your address and select from the suggestions. This helps ensure accuracy.
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500">
+                  🔍 Start typing your address and select from the suggestions. This helps ensure accuracy.
+                </p>
+                <p className="text-xs text-blue-600 font-medium">
+                  ⚠️ <strong>Required for accurate features:</strong> Your start address is essential for calculating miles saved, route optimization, and finding nearby carpools. This ensures you get the most accurate environmental impact tracking and carpool matching.
+                </p>
+              </div>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between space-x-2">
@@ -293,21 +303,6 @@ export default function OnboardingPage() {
                 {error}
               </div>
             )}
-            
-            {/* Manual redirect option for mobile users */}
-            <div className="text-center mt-4">
-              <p className="text-xs sm:text-sm text-gray-500 mb-2">
-                Having trouble? You can also:
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push('/dashboard')}
-                className="text-xs sm:text-sm"
-              >
-                Skip for now and go to dashboard
-              </Button>
-            </div>
           </form>
         </CardContent>
       </Card>
