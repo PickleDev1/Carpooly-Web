@@ -163,20 +163,20 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Profile</h1>
+    <div className="max-w-4xl mx-auto py-4 sm:py-10 px-2 sm:px-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold">Profile</h1>
         <Button
           onClick={() => setIsEditing(!isEditing)}
           variant={isEditing ? "outline" : "default"}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 text-sm sm:text-base"
         >
           {isEditing ? <X className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
           {isEditing ? 'Cancel' : 'Edit Profile'}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Profile Card */}
         <div className="lg:col-span-1">
           <Card className="p-6">

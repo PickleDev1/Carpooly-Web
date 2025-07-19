@@ -67,13 +67,13 @@ export default function CarpoolCalendarPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-bold text-[#2B5335]">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full">
+      <Card className="overflow-hidden">
+        <CardHeader className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0 pb-2 px-3 sm:px-6">
+          <CardTitle className="text-xl sm:text-2xl font-bold text-[#2B5335] text-center sm:text-left">
             {format(currentDate, 'MMMM yyyy')}
           </CardTitle>
-          <div className="flex space-x-4">
+          <div className="flex space-x-2 sm:space-x-4">
             <Button variant="outline" size="icon" onClick={() => setCurrentDate(prev => addMonths(prev, -1))}>
               <ChevronLeftIcon className="h-4 w-4" />
             </Button>
@@ -82,10 +82,10 @@ export default function CarpoolCalendarPage() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-6">
           <div className="grid grid-cols-7 gap-px bg-gray-200">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div key={day} className="bg-white p-4 text-center text-sm font-semibold text-gray-700">
+              <div key={day} className="bg-white p-2 sm:p-4 text-center text-xs sm:text-sm font-semibold text-gray-700">
                 {day}
               </div>
             ))}
@@ -100,7 +100,7 @@ export default function CarpoolCalendarPage() {
                 <div
                   key={day.toString()}
                   className={`
-                    bg-white p-4 text-center relative min-h-[100px]
+                    bg-white p-1 sm:p-4 text-center relative min-h-[60px] sm:min-h-[100px]
                     ${isToday(day) ? 'bg-green-50' : ''}
                     ${!isSameMonth(day, currentDate) ? 'text-gray-400' : ''}
                   `}
@@ -108,7 +108,7 @@ export default function CarpoolCalendarPage() {
                   <time
                     dateTime={format(day, 'yyyy-MM-dd')}
                     className={`
-                      block w-6 h-6 mx-auto rounded-full flex items-center justify-center
+                      block w-5 h-5 sm:w-6 sm:h-6 mx-auto rounded-full flex items-center justify-center text-xs sm:text-sm
                       ${isToday(day) ? 'bg-[#2B5335] text-white' : ''}
                     `}
                   >
@@ -117,9 +117,9 @@ export default function CarpoolCalendarPage() {
                   {hasEvent && (
                     <button
                       onClick={() => handleEventClick(day)}
-                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-[#2B5335] hover:bg-[#1e3b25] transition-colors duration-200 flex items-center justify-center"
+                      className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-[#2B5335] hover:bg-[#1e3b25] transition-colors duration-200 flex items-center justify-center"
                     >
-                      <PlusIcon className="h-4 w-4 text-white" />
+                      <PlusIcon className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                     </button>
                   )}
                 </div>

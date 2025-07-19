@@ -21,8 +21,8 @@ export default function ListCarpoolsPage() {
   }, [api])
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">My Carpools</h1>
+    <div className="px-2 sm:px-4 py-4 sm:py-8">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 px-2 sm:px-0">My Carpools</h1>
       <CarpoolList />
     </div>
   )

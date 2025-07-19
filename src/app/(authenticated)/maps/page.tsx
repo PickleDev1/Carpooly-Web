@@ -112,36 +112,36 @@ export default function TrackLocationsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Track Active Rides</h1>
-        <p className="text-gray-600">Monitor real-time locations of your carpool members</p>
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Track Active Rides</h1>
+        <p className="text-sm sm:text-base text-gray-600">Monitor real-time locations of your carpool members</p>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {activeRides.map((ride) => (
           <Card key={ride.id} className="hover:shadow-lg transition-all duration-200 border-0 shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xl font-bold text-[#2B5335] flex items-center">
-                <Navigation className="h-5 w-5 mr-2" />
+            <CardHeader className="pb-3 px-4 sm:px-6">
+              <CardTitle className="text-lg sm:text-xl font-bold text-[#2B5335] flex items-center">
+                <Navigation className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 {ride.carpool_name || 'Unnamed Carpool'}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-start space-x-3">
-                  <MapPin className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
+            <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 mb-1">Destination</p>
-                    <p className="font-medium text-gray-900 truncate">{ride.destination_address || 'No destination set'}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1">Destination</p>
+                    <p className="font-medium text-gray-900 truncate text-sm sm:text-base">{ride.destination_address || 'No destination set'}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-3">
-                  <Clock className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 mb-1">Time</p>
-                    <p className="font-medium text-gray-900">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1">Time</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">
                       {new Date(ride.start_time).toLocaleTimeString([], { 
                         hour: '2-digit', 
                         minute: '2-digit',
@@ -155,11 +155,11 @@ export default function TrackLocationsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-3">
-                  <Users className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 mb-1">Members</p>
-                    <p className="font-medium text-gray-900">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1">Members</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">
                       {(ride.participants?.length || 0)} {(ride.participants?.length || 0) === 1 ? 'member' : 'members'}
                     </p>
                   </div>
@@ -168,8 +168,8 @@ export default function TrackLocationsPage() {
 
               <div className="pt-2">
                 <Link href={`/maps/${ride.id}`} className="block">
-                  <Button className="w-full bg-[#2B5335] hover:bg-[#1e3b25] text-white transition-colors">
-                    <Navigation className="h-4 w-4 mr-2" />
+                  <Button className="w-full bg-[#2B5335] hover:bg-[#1e3b25] text-white transition-colors text-sm">
+                    <Navigation className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                     View Live Map
                   </Button>
                 </Link>

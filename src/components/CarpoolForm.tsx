@@ -159,34 +159,36 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       {/* Carpool Details Section */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Carpool Details</h2>
+      <div className="space-y-3 sm:space-y-4">
+        <h2 className="text-lg sm:text-xl font-semibold">Carpool Details</h2>
         
         <div>
-          <Label htmlFor="carpoolName">Carpool Name</Label>
+          <Label htmlFor="carpoolName" className="text-sm sm:text-base">Carpool Name</Label>
           <Input
             id="carpoolName"
             value={carpoolName}
             onChange={(e) => setCarpoolName(e.target.value)}
             required
+            className="text-sm sm:text-base"
           />
         </div>
 
         <div>
-          <Label htmlFor="seats">Number of Seats</Label>
+          <Label htmlFor="seats" className="text-sm sm:text-base">Number of Seats</Label>
           <Input
             id="seats"
             type="number"
             value={seats}
             onChange={(e) => setSeats(e.target.value)}
             required
+            className="text-sm sm:text-base"
           />
         </div>
 
         <div>
-          <Label htmlFor="destinationAddress">Destination Address</Label>
+          <Label htmlFor="destinationAddress" className="text-sm sm:text-base">Destination Address</Label>
           <AddressAutocomplete
             onSelect={handleDestinationSelect}
             placeholder="Enter destination address"
@@ -195,67 +197,74 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
       </div>
 
       {/* Schedule Section */}
-      <div className="space-y-4 pt-6 border-t">
-        <h2 className="text-xl font-semibold">Schedule Details</h2>
+      <div className="space-y-3 sm:space-y-4 pt-4 sm:pt-6 border-t">
+        <h2 className="text-lg sm:text-xl font-semibold">Schedule Details</h2>
 
-        <RadioGroup value={scheduleType} onValueChange={setScheduleType}>
+        <RadioGroup value={scheduleType} onValueChange={setScheduleType} className="space-y-2">
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="one_time" id="one-time" />
-            <Label htmlFor="one-time">One-time</Label>
+            <Label htmlFor="one-time" className="text-sm sm:text-base">One-time</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="daily" id="daily" />
-            <Label htmlFor="daily">Daily</Label>
+            <Label htmlFor="daily" className="text-sm sm:text-base">Daily</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="weekly" id="weekly" />
-            <Label htmlFor="weekly">Weekly</Label>
+            <Label htmlFor="weekly" className="text-sm sm:text-base">Weekly</Label>
           </div>
         </RadioGroup>
 
         <div>
-          <Label>Start Date</Label>
-          <DayPicker
-            mode="single"
-            selected={startDate}
-            onSelect={setStartDate}
-            required
-            disabled={false}
-          />
+          <Label className="text-sm sm:text-base">Start Date</Label>
+          <div className="mt-1">
+            <DayPicker
+              mode="single"
+              selected={startDate}
+              onSelect={setStartDate}
+              required
+              disabled={false}
+              className="text-sm"
+            />
+          </div>
         </div>
 
         {scheduleType !== 'one_time' && (
           <div>
-            <Label>End Date</Label>
-            <DayPicker
-              mode="single"
-              selected={endDate}
-              onSelect={setEndDate}
-              fromDate={startDate}
-              footer={!startDate ? "Please select a start date first" : undefined}
-            />
+            <Label className="text-sm sm:text-base">End Date</Label>
+            <div className="mt-1">
+              <DayPicker
+                mode="single"
+                selected={endDate}
+                onSelect={setEndDate}
+                fromDate={startDate}
+                footer={!startDate ? "Please select a start date first" : undefined}
+                className="text-sm"
+              />
+            </div>
           </div>
         )}
 
         <div>
-          <Label htmlFor="startTime">Start Time</Label>
+          <Label htmlFor="startTime" className="text-sm sm:text-base">Start Time</Label>
           <Input
             id="startTime"
             type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
             required
+            className="text-sm sm:text-base"
           />
         </div>
 
         {scheduleType === 'weekly' && (
           <div>
-            <Label htmlFor="dayOfWeek">Day of Week</Label>
+            <Label htmlFor="dayOfWeek" className="text-sm sm:text-base">Day of Week</Label>
             <select
               id="dayOfWeek"
               value={dayOfWeek}
               onChange={(e) => setDayOfWeek(e.target.value)}
-              className="w-full border rounded-md p-2"
+              className="w-full border rounded-md p-2 text-sm sm:text-base"
             >
               <option value="MONDAY">Monday</option>
               <option value="TUESDAY">Tuesday</option>
@@ -272,7 +281,7 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
       <Button 
         type="submit" 
         disabled={isSubmitting}
-        className="w-full"
+        className="w-full text-sm sm:text-base"
       >
         {isSubmitting ? 'Creating...' : 'Create Carpool'}
       </Button>

@@ -204,62 +204,62 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto py-4 sm:py-8 px-2 sm:px-4 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Settings className="w-6 h-6 text-primary" />
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
+              <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Settings</h1>
           </div>
-          <p className="text-gray-600">Manage your account preferences and privacy settings</p>
+          <p className="text-sm sm:text-base text-gray-600">Manage your account preferences and privacy settings</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
           {/* Main Settings */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Notifications Section */}
-            <Card className="p-6 border-0 shadow-sm bg-white">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <Bell className="w-5 h-5 text-blue-600" />
+            <Card className="p-4 sm:p-6 border-0 shadow-sm bg-white">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="p-1.5 sm:p-2 bg-blue-50 rounded-lg">
+                  <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
-                  <p className="text-sm text-gray-500">Manage how you receive updates and alerts</p>
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Notifications</h2>
+                  <p className="text-xs sm:text-sm text-gray-500">Manage how you receive updates and alerts</p>
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-gray-400" />
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                     <div>
-                      <span className="font-medium text-gray-900">Email notifications</span>
-                      <p className="text-sm text-gray-500">Receive updates via email</p>
+                      <span className="font-medium text-gray-900 text-sm sm:text-base">Email notifications</span>
+                      <p className="text-xs sm:text-sm text-gray-500">Receive updates via email</p>
                     </div>
                   </div>
                   <Switch defaultChecked />
                 </div>
                 
-                <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Smartphone className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                     <div>
-                      <span className="font-medium text-gray-900">Push notifications</span>
-                      <p className="text-sm text-gray-500">Get instant alerts on your device</p>
+                      <span className="font-medium text-gray-900 text-sm sm:text-base">Push notifications</span>
+                      <p className="text-xs sm:text-sm text-gray-500">Get instant alerts on your device</p>
                     </div>
                   </div>
                   <Switch />
                 </div>
                 
-                <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                     <div>
-                      <span className="font-medium text-gray-900">Ride reminders</span>
-                      <p className="text-sm text-gray-500">Get notified before your rides</p>
+                      <span className="font-medium text-gray-900 text-sm sm:text-base">Ride reminders</span>
+                      <p className="text-xs sm:text-sm text-gray-500">Get notified before your rides</p>
                     </div>
                   </div>
                   <Switch defaultChecked />

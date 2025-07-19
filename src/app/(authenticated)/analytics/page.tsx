@@ -346,31 +346,31 @@ export default function AnalyticsPage() {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-7xl">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-          <p className="text-gray-600 mt-2">Track your carpooling impact and progress</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Track your carpooling impact and progress</p>
         </div>
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
           <div className="flex items-center space-x-2">
-            <Clock size={16} />
+            <Clock size={14} className="sm:w-4 sm:h-4" />
             <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
           </div>
           <button
             onClick={() => fetchAndProcessData(true)}
             disabled={isRefreshing}
-            className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors ${
+            className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors text-xs sm:text-sm ${
               isRefreshing 
                 ? 'text-gray-400 cursor-not-allowed' 
                 : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
             }`}
           >
-            <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+            <RefreshCw size={12} className={`sm:w-3.5 sm:h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
           {isRefreshing && (
-            <div className="flex items-center space-x-1 text-blue-600">
+            <div className="flex items-center space-x-1 text-blue-600 text-xs sm:text-sm">
               <span>Updating...</span>
             </div>
           )}
@@ -378,24 +378,24 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {metrics.map((metric, index) => {
           const Icon = metric.icon
           return (
             <div 
               key={index}
-              className={`${metric.color} rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow duration-200`}
+              className={`${metric.color} rounded-xl shadow-sm p-3 sm:p-6 border border-gray-100 hover:shadow-md transition-shadow duration-200`}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`${metric.iconColor} rounded-full p-2 bg-white shadow-sm`}>
-                  <Icon size={20} />
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className={`${metric.iconColor} rounded-full p-1.5 sm:p-2 bg-white shadow-sm`}>
+                  <Icon size={16} className="sm:w-5 sm:h-5" />
                 </div>
-                <TrendingUp size={16} className="text-gray-400" />
+                <TrendingUp size={12} className="text-gray-400 sm:w-4 sm:h-4" />
               </div>
-              <h3 className="text-gray-600 text-sm font-medium mb-1">
+              <h3 className="text-gray-600 text-xs sm:text-sm font-medium mb-1">
                 {metric.title}
               </h3>
-              <p className={`${metric.textColor} text-2xl font-bold mb-1`}>
+              <p className={`${metric.textColor} text-lg sm:text-2xl font-bold mb-1`}>
                 {metric.value}
               </p>
               <p className="text-gray-500 text-xs">
@@ -407,70 +407,76 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 mb-6 sm:mb-8">
         {/* Weekly Activity Chart */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Activity</h3>
-          <div className="h-64">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Weekly Activity</h3>
+          <div className="h-48 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={weeklyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="date" 
                   stroke="#6b7280"
-                  fontSize={12}
+                  fontSize={10}
+                  className="sm:text-xs"
                 />
                 <YAxis 
                   stroke="#6b7280"
-                  fontSize={12}
+                  fontSize={10}
+                  className="sm:text-xs"
                 />
                 <Tooltip 
                   contentStyle={{
                     backgroundColor: 'white',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    fontSize: '12px'
                   }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="rides" 
                   stroke="#8b5cf6" 
-                  strokeWidth={3}
-                  dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#8b5cf6', strokeWidth: 2 }}
+                  strokeWidth={2}
+                  dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 3 }}
+                  activeDot={{ r: 5, stroke: '#8b5cf6', strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <p className="text-sm text-gray-500 mt-2 text-center">
+          <p className="text-xs sm:text-sm text-gray-500 mt-2 text-center">
             Number of completed rides per day
           </p>
         </div>
 
         {/* Average Distance per Week Chart */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Average Distance per Day</h3>
-          <div className="h-64">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Average Distance per Day</h3>
+          <div className="h-48 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="date" 
                   stroke="#6b7280"
-                  fontSize={12}
+                  fontSize={10}
+                  className="sm:text-xs"
                 />
                 <YAxis 
                   stroke="#6b7280"
-                  fontSize={12}
-                  label={{ value: 'Miles', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
+                  fontSize={10}
+                  className="sm:text-xs"
+                  label={{ value: 'Miles', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: '10px' } }}
                 />
                 <Tooltip 
                   contentStyle={{
                     backgroundColor: 'white',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    fontSize: '12px'
                   }}
                   formatter={(value: any, name: any) => [
                     `${value} miles`, 
@@ -481,7 +487,7 @@ export default function AnalyticsPage() {
                 <Bar 
                   dataKey="avgDistance" 
                   fill="#10b981" 
-                  radius={[4, 4, 0, 0]}
+                  radius={[3, 3, 0, 0]}
                   name="Average Distance"
                 />
               </BarChart>
@@ -489,59 +495,59 @@ export default function AnalyticsPage() {
           </div>
           <div className="flex justify-center mt-2">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-500 rounded"></div>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded"></div>
               <span className="text-xs text-gray-600">Average Distance (miles)</span>
             </div>
           </div>
-          <p className="text-sm text-gray-500 mt-2 text-center">
+          <p className="text-xs sm:text-sm text-gray-500 mt-2 text-center">
             Shows the average distance of rides completed each day
           </p>
         </div>
       </div>
 
       {/* Additional Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 sm:p-6 border border-blue-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-600 text-sm font-medium">Total Distance</p>
-              <p className="text-blue-900 text-2xl font-bold">{totalDistance.toFixed(1)} miles</p>
+              <p className="text-blue-600 text-xs sm:text-sm font-medium">Total Distance</p>
+              <p className="text-blue-900 text-lg sm:text-2xl font-bold">{totalDistance.toFixed(1)} miles</p>
             </div>
-            <Route className="text-blue-500" size={24} />
+            <Route className="text-blue-500 sm:w-6 sm:h-6" size={20} />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 sm:p-6 border border-green-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-600 text-sm font-medium">Leaves Saved</p>
-              <p className="text-green-900 text-2xl font-bold">{leavesSaved.toLocaleString()}</p>
+              <p className="text-green-600 text-xs sm:text-sm font-medium">Leaves Saved</p>
+              <p className="text-green-900 text-lg sm:text-2xl font-bold">{leavesSaved.toLocaleString()}</p>
             </div>
-            <Leaf className="text-green-500" size={24} />
+            <Leaf className="text-green-500 sm:w-6 sm:h-6" size={20} />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-3 sm:p-6 border border-purple-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-600 text-sm font-medium">Avg. Ride Distance</p>
-              <p className="text-purple-900 text-2xl font-bold">
+              <p className="text-purple-600 text-xs sm:text-sm font-medium">Avg. Ride Distance</p>
+              <p className="text-purple-900 text-lg sm:text-2xl font-bold">
                 {avgDistance} miles
               </p>
             </div>
-            <TrendingUp className="text-purple-500" size={24} />
+            <TrendingUp className="text-purple-500 sm:w-6 sm:h-6" size={20} />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border border-indigo-200">
+        <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-3 sm:p-6 border border-indigo-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-indigo-600 text-sm font-medium">Most Common Distance</p>
-              <p className="text-indigo-900 text-2xl font-bold">
+              <p className="text-indigo-600 text-xs sm:text-sm font-medium">Most Common Distance</p>
+              <p className="text-indigo-900 text-lg sm:text-2xl font-bold">
                 {mostCommonDistanceRange} miles
               </p>
             </div>
-            <Users className="text-indigo-500" size={24} />
+            <Users className="text-indigo-500 sm:w-6 sm:h-6" size={20} />
           </div>
         </div>
       </div>

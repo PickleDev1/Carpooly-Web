@@ -237,15 +237,35 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
             </div>
           )}
           
+          {/* iOS-specific warning */}
+          {isIOS() && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-blue-600 text-xs font-bold">ℹ️</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-blue-900 mb-1">
+                    iOS Device Detected
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Due to iOS security restrictions, you'll need to manually copy the invite link. 
+                    The link will appear in a text field below for you to copy.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end sm:items-center">
             <Button
               type="button"
               variant="secondary"
               onClick={e => { console.log('[InviteModal] Copy Invite Link button clicked'); handleCopyInviteLink(); }}
               disabled={copyStatus === 'loading' || isSubmitting}
-              className="min-w-[140px]"
+              className={`min-w-[140px] ${isIOS() ? 'bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300' : ''}`}
             >
-              {copyStatus === 'loading' ? 'Generating...' : copyStatus === 'success' ? 'Link Copied!' : 'Copy Invite Link'}
+              {copyStatus === 'loading' ? 'Generating...' : copyStatus === 'success' ? (isIOS() ? 'Link Ready!' : 'Link Copied!') : (isIOS() ? 'Generate Link' : 'Copy Invite Link')}
             </Button>
             <div className="flex gap-2">
               <Button
@@ -265,24 +285,162 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
               </Button>
             </div>
           </div>
+
+          {/* Enhanced manual copy section for iOS */}
           {showManualCopy && copiedLink && (
-            <div className="mt-2">
-              <Label htmlFor="manual-invite-link" className="text-xs">Copy this link:</Label>
-              <Input
-                id="manual-invite-link"
-                value={copiedLink}
-                readOnly
-                onFocus={e => e.target.select()}
-                className="text-xs font-mono"
-              />
-              <div className="text-xs text-gray-600 mt-1">Tap and hold the link above to copy it.</div>
+            <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                  <span className="text-green-600 text-sm">✓</span>
+                </div>
+                <div>
+                  <Label htmlFor="manual-invite-link" className="text-sm font-medium text-gray-900">
+                    {isIOS() ? 'Your Invite Link is Ready!' : 'Copy this link:'}
+                  </Label>
+                  {isIOS() && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      Choose the easiest method below to copy your link
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Method 1: Easy Copy Button */}
+              <div className="mb-3">
+                <Button
+                  onClick={() => {
+                    const input = document.getElementById('manual-invite-link') as HTMLInputElement;
+                    if (input) {
+                      input.select();
+                      input.setSelectionRange(0, input.value.length);
+                      // Try to copy using clipboard API first
+                      if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(copiedLink).then(() => {
+                          // Show success feedback
+                          const button = document.getElementById('easy-copy-btn');
+                          if (button) {
+                            const originalText = button.textContent;
+                            button.textContent = 'Copied!';
+                            button.className = 'w-full bg-green-100 hover:bg-green-200 text-green-800 border-green-300 text-sm font-medium py-2 px-4 rounded-md transition-colors';
+                            setTimeout(() => {
+                              button.textContent = originalText;
+                              button.className = 'w-full bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 text-sm font-medium py-2 px-4 rounded-md transition-colors';
+                            }, 2000);
+                          }
+                        }).catch(() => {
+                          // Fallback to manual selection
+                          input.focus();
+                          input.select();
+                        });
+                      } else {
+                        // Fallback for non-secure contexts
+                        input.focus();
+                        input.select();
+                      }
+                    }
+                  }}
+                  id="easy-copy-btn"
+                  className="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 text-sm font-medium py-2 px-4 rounded-md transition-colors"
+                >
+                  📋 Easy Copy (Tap Here)
+                </Button>
+              </div>
+
+              {/* Method 2: Text Input with Better Selection */}
+              <div className="mb-3">
+                <Label htmlFor="manual-invite-link" className="text-xs font-medium text-gray-700 block mb-2">
+                  Or manually select from here:
+                </Label>
+                <Input
+                  id="manual-invite-link"
+                  value={copiedLink}
+                  readOnly
+                  onClick={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    target.select();
+                    target.setSelectionRange(0, target.value.length);
+                  }}
+                  onFocus={(e) => {
+                    e.target.select();
+                    e.target.setSelectionRange(0, e.target.value.length);
+                  }}
+                  className="text-xs font-mono bg-white border-2 border-blue-300 focus:border-blue-500 cursor-text"
+                />
+              </div>
+
+              {/* Method 3: Tap to Copy Text */}
+              <div className="mb-3">
+                <Label className="text-xs font-medium text-gray-700 block mb-2">
+                  Or tap this text to copy:
+                </Label>
+                <div
+                  onClick={() => {
+                    if (navigator.clipboard && window.isSecureContext) {
+                      navigator.clipboard.writeText(copiedLink).then(() => {
+                        const textDiv = document.getElementById('tap-to-copy-text');
+                        if (textDiv) {
+                          const originalText = textDiv.textContent;
+                          textDiv.textContent = '✅ Copied!';
+                          textDiv.className = 'p-3 bg-green-100 border-2 border-green-300 rounded-md text-xs font-mono break-all cursor-pointer text-green-800';
+                          setTimeout(() => {
+                            textDiv.textContent = originalText;
+                            textDiv.className = 'p-3 bg-blue-100 border-2 border-blue-300 rounded-md text-xs font-mono break-all cursor-pointer text-blue-800 hover:bg-blue-200 transition-colors';
+                          }, 2000);
+                        }
+                      });
+                    }
+                  }}
+                  id="tap-to-copy-text"
+                  className="p-3 bg-blue-100 border-2 border-blue-300 rounded-md text-xs font-mono break-all cursor-pointer text-blue-800 hover:bg-blue-200 transition-colors"
+                >
+                  {copiedLink}
+                </div>
+              </div>
+              
+              {isIOS() ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-green-600 text-xs font-bold">💡</span>
+                    </div>
+                    <p className="text-xs text-gray-700">
+                      <strong>Recommended:</strong> Use the "Easy Copy" button above - it's the fastest way!
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-blue-600 text-xs font-bold">📱</span>
+                    </div>
+                    <p className="text-xs text-gray-700">
+                      If the button doesn't work, tap the blue text box above to copy instantly
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-gray-600 text-xs font-bold">⚙️</span>
+                    </div>
+                    <p className="text-xs text-gray-700">
+                      Last resort: Tap the input field, then tap "Select All" → "Copy"
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-600 mt-2">
+                  Tap and hold the link above to copy it, or use Ctrl+C (Cmd+C on Mac)
+                </div>
+              )}
             </div>
           )}
-          {copyStatus === 'success' && copiedLink && (
-            <div className="text-xs text-green-600 mt-2 break-all">Invite link copied: <span className="font-mono">{copiedLink}</span></div>
+
+          {copyStatus === 'success' && copiedLink && !showManualCopy && (
+            <div className="text-xs text-green-600 mt-2 break-all bg-green-50 p-2 rounded">
+              ✅ Invite link copied to clipboard: <span className="font-mono">{copiedLink}</span>
+            </div>
           )}
           {copyStatus === 'error' && (
-            <div className="text-xs text-red-600 mt-2">Failed to copy invite link. Please try again.</div>
+            <div className="text-xs text-red-600 mt-2 bg-red-50 p-2 rounded border border-red-200">
+              ❌ Failed to copy invite link. Please try again or use the manual copy option above.
+            </div>
           )}
         </form>
       </DialogContent>

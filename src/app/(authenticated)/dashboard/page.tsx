@@ -796,12 +796,12 @@ export default function Dashboard() {
       </Dialog>
 
       {/* Help Button - Fixed Position */}
-      <div className="fixed bottom-6 right-6 z-40">
+      <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-40">
         <div className="flex flex-col gap-2">
           <Button
             onClick={() => setShowHelpTips(true)}
             size="sm"
-            className="bg-green-600 hover:bg-green-700 text-white shadow-lg"
+            className="bg-green-600 hover:bg-green-700 text-white shadow-lg text-xs sm:text-sm"
             onMouseEnter={() => showTooltip({
               id: 'help-button',
               title: 'Help & Tips',
@@ -810,14 +810,14 @@ export default function Dashboard() {
             })}
             onMouseLeave={hideTooltip}
           >
-            <HelpCircle className="h-4 w-4 mr-2" />
+            <HelpCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Help
           </Button>
           <Button
             onClick={() => setShowOnboardingTour(true)}
             size="sm"
             variant="outline"
-            className="bg-white hover:bg-gray-50 shadow-lg"
+            className="bg-white hover:bg-gray-50 shadow-lg text-xs sm:text-sm"
             onMouseEnter={() => showTooltip({
               id: 'tour-button',
               title: 'Interactive Tour',
@@ -826,7 +826,7 @@ export default function Dashboard() {
             })}
             onMouseLeave={hideTooltip}
           >
-            <Play className="h-4 w-4 mr-2" />
+            <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Tour
           </Button>
         </div>

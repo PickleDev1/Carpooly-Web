@@ -128,9 +128,27 @@ export function CarpoolList() {
 
   if (!carpools?.length) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">No carpools created yet.</p>
+      <Card className="mx-2 sm:mx-0">
+        <CardContent className="pt-8 pb-8 px-4 sm:px-6">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No carpools yet</h3>
+              <p className="text-gray-500 text-sm sm:text-base max-w-sm mx-auto">
+                You haven't created any carpools yet. Start by creating your first carpool to begin sharing rides!
+              </p>
+            </div>
+            <Button 
+              onClick={() => router.push('/carpools/create')}
+              className="mt-4 bg-[#2B5335] hover:bg-[#1e3b25] text-white"
+            >
+              Create Your First Carpool
+            </Button>
+          </div>
         </CardContent>
       </Card>
     )
@@ -138,12 +156,132 @@ export function CarpoolList() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>My Carpools ({carpools?.length || 0})</CardTitle>
+      <Card className="mx-2 sm:mx-0">
+        <CardHeader className="px-3 sm:px-6">
+          <CardTitle className="text-lg sm:text-xl">My Carpools ({carpools?.length || 0})</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
+        <CardContent className="px-0 sm:px-6">
+          {/* Mobile view - card layout */}
+          <div className="block sm:hidden space-y-4">
+            {carpools?.map((carpool) => {
+              const details = carpoolDetailsMap[carpool.id || ''] || carpool;
+              
+              const safeString = (value: any): string => {
+                if (typeof value === 'string') return value;
+                if (value && typeof value === 'object' && 'String' in value && 'Valid' in value) {
+                  return value.Valid ? value.String : '';
+                }
+                return String(value || '');
+              };
+              
+              const safeDetails = {
+                ...details,
+                available_seats: details?.available_seats ?? 0,
+                seats: details?.seats ?? 0
+              };
+              
+              return (
+                <div key={carpool.id} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-semibold text-gray-900">{safeString(carpool.carpool_name)}</h3>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      safeDetails.available_seats <= 0 
+                        ? 'bg-red-100 text-red-700' 
+                        : safeDetails.available_seats <= 1 
+                          ? 'bg-orange-100 text-orange-700' 
+                          : 'bg-green-100 text-green-700'
+                    }`}>
+                      {safeDetails.available_seats} of {safeDetails.seats} seats
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Schedule:</span>
+                      <span>{safeString(carpool.recurring_option) || 'One-time'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Destination:</span>
+                      <span className="text-right max-w-[150px] truncate">{safeString(carpool.destination_address)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">Members:</span>
+                      <div className="flex items-center space-x-1">
+                        {carpool.id && membersMap[carpool.id]?.length ? (
+                          <>
+                            {(membersMap[carpool.id] as any[]).slice(0, 2).map((m: any, i: number) => {
+                              const memberName = typeof m === 'object' && m !== null 
+                                ? (m.name || m.display_name || m.email || 'U')
+                                : String(m || 'U');
+                              return (
+                                <span
+                                  key={i}
+                                  className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white border border-white"
+                                  style={{ background: stringToColor(memberName) }}
+                                >
+                                  {memberName?.charAt(0)?.toUpperCase() || 'U'}
+                                </span>
+                              );
+                            })}
+                            {(membersMap[carpool.id] as any[]).length > 2 && (
+                              <span className="text-xs text-gray-500">+{(membersMap[carpool.id] as any[]).length - 2}</span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-400">No members</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => carpool.id && handleInvite(carpool.id)}
+                      disabled={safeDetails.available_seats <= 0}
+                      className={`text-xs ${
+                        safeDetails.available_seats <= 0 
+                          ? 'bg-gray-200 text-gray-500' 
+                          : 'bg-blue-200 hover:bg-blue-300'
+                      }`}
+                    >
+                      {safeDetails.available_seats <= 0 ? 'Full' : 'Invite'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUpdateSchedule(carpool)}
+                      className="bg-green-200 hover:bg-green-300 text-xs"
+                    >
+                      <CalendarIcon className="h-3 w-3 mr-1" />
+                      Schedule
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => carpool.id && handleViewCalendar(carpool.id)}
+                      className="bg-[#2B5335] hover:bg-[#1e3b25] text-white text-xs"
+                    >
+                      <CalendarDaysIcon className="h-3 w-3 mr-1" />
+                      Calendar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => carpool.id && handleDelete(carpool.id)}
+                      className="text-xs"
+                    >
+                      <TrashIcon className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Desktop view - table layout */}
+          <div className="hidden sm:block rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
