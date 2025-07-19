@@ -249,7 +249,7 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
                     iOS Device Detected
                   </p>
                   <p className="text-xs text-blue-700">
-                    Due to iOS security restrictions, you'll need to manually copy the invite link. 
+                    Due to iOS security restrictions, you&apos;ll need to manually copy the invite link. 
                     The link will appear in a text field below for you to copy.
                   </p>
                 </div>
@@ -403,25 +403,25 @@ export function InviteModal({ carpoolId, isOpen, onClose }: InviteModalProps) {
                     <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-green-600 text-xs font-bold">💡</span>
                     </div>
-                    <p className="text-xs text-gray-700">
-                      <strong>Recommended:</strong> Use the "Easy Copy" button above - it's the fastest way!
-                    </p>
+                                         <p className="text-xs text-gray-700">
+                       <strong>Recommended:</strong> Use the &quot;Easy Copy&quot; button above - it&apos;s the fastest way!
+                     </p>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-blue-600 text-xs font-bold">📱</span>
                     </div>
-                    <p className="text-xs text-gray-700">
-                      If the button doesn't work, tap the blue text box above to copy instantly
-                    </p>
+                                         <p className="text-xs text-gray-700">
+                       If the button doesn&apos;t work, tap the blue text box above to copy instantly
+                     </p>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-gray-600 text-xs font-bold">⚙️</span>
                     </div>
-                    <p className="text-xs text-gray-700">
-                      Last resort: Tap the input field, then tap "Select All" → "Copy"
-                    </p>
+                                         <p className="text-xs text-gray-700">
+                       Last resort: Tap the input field, then tap &quot;Select All&quot; → &quot;Copy&quot;
+                     </p>
                   </div>
                 </div>
               ) : (

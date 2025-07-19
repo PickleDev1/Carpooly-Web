@@ -139,7 +139,7 @@ export function CarpoolList() {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No carpools yet</h3>
               <p className="text-gray-500 text-sm sm:text-base max-w-sm mx-auto">
-                You haven't created any carpools yet. Start by creating your first carpool to begin sharing rides!
+                You haven&apos;t created any carpools yet. Start by creating your first carpool to begin sharing rides!
               </p>
             </div>
             <Button 
