@@ -329,14 +329,56 @@ export default function Dashboard() {
     if (carpools && invites && user?.id) {
       const calculateStats = async () => {
         try {
-          // Calculate miles saved based on completed rides
-          const calculatedMilesSaved = await api.calculateMilesSaved(user.id)
+          // Calculate miles saved based on completed rides (same as analytics page)
+          let calculatedMilesSaved = 0
+          
+          // Get completed rides data
+          const completedRidesData = await api.getCompletedRides(100)
+          console.log('📊 Dashboard: Raw completed rides data:', completedRidesData)
+          
+          if (Array.isArray(completedRidesData) && completedRidesData.length > 0) {
+            // Filter rides to only include those where the current user is a participant
+            const userRides = completedRidesData.filter(ride => {
+              if (!ride.participants || !Array.isArray(ride.participants)) {
+                return false
+              }
+              
+              // Check if current user is in the participants array
+              const isUserParticipant = ride.participants.some((participant: any) => 
+                participant.id === user.id || participant.user_id === user.id
+              )
+              
+              console.log(`📊 Dashboard: Ride ${ride.id}: User ${user.id} is participant: ${isUserParticipant}`)
+              return isUserParticipant
+            })
+            
+            console.log(`📊 Dashboard: Filtered ${completedRidesData.length} total rides to ${userRides.length} user rides`)
+            
+            // Calculate miles saved from user-specific completed rides
+            calculatedMilesSaved = userRides.reduce((total, ride) => {
+              const rideDistance = ride.miles_saved || 5.0 // Use miles_saved if available, otherwise default to 5 miles
+              
+              // For user-specific rides, each ride represents miles saved through carpooling
+              // We don't multiply by participants since we're only counting rides the user participated in
+              const milesSavedForRide = rideDistance
+              
+              console.log(`📊 Dashboard: Ride ${ride.id}: ${rideDistance} miles saved for user`)
+              
+              return total + milesSavedForRide
+            }, 0)
+            
+            console.log('📊 Dashboard: Total miles saved from user completed rides:', calculatedMilesSaved)
+          } else {
+            // Fallback to API calculation if no completed rides data
+            calculatedMilesSaved = await api.calculateMilesSaved(user.id)
+            console.log('📊 Dashboard: Fallback miles saved from API:', calculatedMilesSaved)
+          }
           
           setStats({
             totalCarpools: carpools.length,
             activeRides: activeRidesCount,
             pendingInvites: invites.length,
-            milesSaved: calculatedMilesSaved
+            milesSaved: Math.round(calculatedMilesSaved)
           })
         } catch (error) {
           console.error('Error calculating stats:', error)

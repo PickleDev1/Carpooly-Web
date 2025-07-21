@@ -7,7 +7,7 @@ import { useUserUuid } from '@/contexts/UserContext'
 import { useCarpools } from '@/hooks/useCarpools'
 import { useApi } from '@/services/api'
 import { TrashIcon, CalendarIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
-import { ScheduleModal } from './ScheduleModal'
+
 import {
   Table,
   TableBody,
@@ -45,8 +45,7 @@ export function CarpoolList() {
   const { uuid, loading: uuidLoading, error: uuidError } = useUserUuid()
   const { carpools, deleteCarpool } = useCarpools()
   const api = useApi()
-  const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
-  const [selectedCarpool, setSelectedCarpool] = useState<Carpool | null>(null)
+
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const router = useRouter()
   const [membersMap, setMembersMap] = useState<Record<string, any[]>>({});
@@ -97,21 +96,7 @@ export function CarpoolList() {
     }
   }
 
-  const handleUpdateSchedule = (carpool: Carpool) => {
-    setSelectedCarpool(carpool)
-    setScheduleModalOpen(true)
-  }
 
-  const handleScheduleUpdate = async (schedule: any) => {
-    try {
-      // Changed from updateCarpoolSchedule to updateSchedule
-      await api.updateSchedule(schedule)
-      // Refresh carpools list
-    } catch (error) {
-      console.error('Error updating schedule:', error)
-      alert('Failed to update schedule')
-    }
-  }
 
   const handleInvite = (carpoolId: string) => {
     setSelectedCarpoolId(carpoolId)
@@ -248,15 +233,7 @@ export function CarpoolList() {
                     >
                       {safeDetails.available_seats <= 0 ? 'Full' : 'Invite'}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleUpdateSchedule(carpool)}
-                      className="bg-green-200 hover:bg-green-300 text-xs"
-                    >
-                      <CalendarIcon className="h-3 w-3 mr-1" />
-                      Schedule
-                    </Button>
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -396,16 +373,7 @@ export function CarpoolList() {
                             {safeDetails.available_seats <= 0 ? 'Full' : 'Invite'}
                           </Button>
                         </Tooltip>
-                        <Tooltip content={"Edit the schedule for this carpool (dates, times, frequency)."}>
-                          <Button
-                            variant="outline"
-                            onClick={() => handleUpdateSchedule(carpool)}
-                            size="icon"
-                            className="bg-green-200 hover:bg-green-300"
-                          >
-                            <CalendarIcon className="h-4 w-4" />
-                          </Button>
-                        </Tooltip>
+
                         <Tooltip content={"View the carpool calendar and manage participants."}>
                           <Button
                             variant="outline"
@@ -446,16 +414,7 @@ export function CarpoolList() {
         />
       )}
 
-      {scheduleModalOpen && (
-        <ScheduleModal
-          carpool={selectedCarpool}
-          isOpen={scheduleModalOpen}
-          onClose={() => {
-            setScheduleModalOpen(false)
-            setSelectedCarpool(null)
-          }}
-        />
-      )}
+
     </>
   )
 } 

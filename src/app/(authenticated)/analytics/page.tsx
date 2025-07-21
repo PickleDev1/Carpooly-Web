@@ -66,7 +66,24 @@ export default function AnalyticsPage() {
           const backendRides = completedRidesData as any[]
           console.log('🔄 Converting backend array format to frontend format')
           
-          const convertedRides: CompletedRide[] = backendRides.map(ride => {
+          // Filter rides to only include those where the current user is a participant
+          const userRides = backendRides.filter(ride => {
+            if (!ride.participants || !Array.isArray(ride.participants)) {
+              return false
+            }
+            
+            // Check if current user is in the participants array
+            const isUserParticipant = ride.participants.some((participant: any) => 
+              participant.id === user.id || participant.user_id === user.id
+            )
+            
+            console.log(`🔄 Ride ${ride.id}: User ${user.id} is participant: ${isUserParticipant}`)
+            return isUserParticipant
+          })
+          
+          console.log(`🔄 Filtered ${backendRides.length} total rides to ${userRides.length} user rides`)
+          
+          const convertedRides: CompletedRide[] = userRides.map(ride => {
             // Extract date from start_time
             const startDate = new Date(ride.start_time)
             const date = startDate.toISOString().split('T')[0]
@@ -160,24 +177,19 @@ export default function AnalyticsPage() {
         let calculatedMilesSaved = 0
         if (processedData.rides.length > 0) {
           // Calculate miles saved from completed rides
-          // Each ride with multiple participants saves miles by reducing cars on the road
+          // Since we're already filtering for user-specific rides, just sum the distances
           calculatedMilesSaved = processedData.rides.reduce((total, ride) => {
             const rideDistance = ride.distance || 0
-            const participants = ride.participants || 1
             
-            // For completed rides, assume at least 2 participants (driver + passenger)
-            // This ensures we calculate meaningful miles saved for carpooling
-            const effectiveParticipants = Math.max(2, participants)
+            // For user-specific rides, each ride represents miles saved through carpooling
+            // We don't multiply by participants since we're only counting rides the user participated in
+            const milesSavedForRide = rideDistance
             
-            // Each additional participant beyond 1 represents a car saved
-            const carsSaved = Math.max(1, effectiveParticipants - 1) // At least 1 car saved for carpooling
-            const milesSavedForRide = carsSaved * rideDistance
-            
-            console.log(`📊 Ride ${ride.id}: ${effectiveParticipants} participants, ${rideDistance} miles, ${carsSaved} cars saved, ${milesSavedForRide} miles saved`)
+            console.log(`📊 Ride ${ride.id}: ${rideDistance} miles saved for user`)
             
             return total + milesSavedForRide
           }, 0)
-          console.log('📊 Total miles saved from completed rides:', calculatedMilesSaved)
+          console.log('📊 Total miles saved from user completed rides:', calculatedMilesSaved)
         } else {
           // Fallback to API calculation if no completed rides data
           calculatedMilesSaved = await api.calculateMilesSaved(user.id)
