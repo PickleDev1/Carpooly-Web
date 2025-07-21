@@ -83,48 +83,50 @@ export default function CarpoolCalendarPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0 sm:p-6">
-          <div className="grid grid-cols-7 gap-px bg-gray-200">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div key={day} className="bg-white p-2 sm:p-4 text-center text-xs sm:text-sm font-semibold text-gray-700">
-                {day}
-              </div>
-            ))}
-            
-            {eachDayOfInterval({
-              start: startOfWeek(startOfMonth(currentDate)),
-              end: endOfWeek(endOfMonth(currentDate))
-            }).map((day) => {
-              const hasEvent = recurringDates.some(date => isSameDay(date, day))
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[560px] grid grid-cols-7 gap-px bg-gray-200">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                <div key={day} className="bg-white p-2 sm:p-4 text-center text-xs sm:text-sm font-semibold text-gray-700">
+                  {day}
+                </div>
+              ))}
               
-              return (
-                <div
-                  key={day.toString()}
-                  className={`
-                    bg-white p-1 sm:p-4 text-center relative min-h-[60px] sm:min-h-[100px]
-                    ${isToday(day) ? 'bg-green-50' : ''}
-                    ${!isSameMonth(day, currentDate) ? 'text-gray-400' : ''}
-                  `}
-                >
-                  <time
-                    dateTime={format(day, 'yyyy-MM-dd')}
+              {eachDayOfInterval({
+                start: startOfWeek(startOfMonth(currentDate)),
+                end: endOfWeek(endOfMonth(currentDate))
+              }).map((day) => {
+                const hasEvent = recurringDates.some(date => isSameDay(date, day))
+                
+                return (
+                  <div
+                    key={day.toString()}
                     className={`
-                      block w-5 h-5 sm:w-6 sm:h-6 mx-auto rounded-full flex items-center justify-center text-xs sm:text-sm
-                      ${isToday(day) ? 'bg-[#2B5335] text-white' : ''}
+                      bg-white p-1 sm:p-4 text-center relative min-h-[60px] sm:min-h-[100px]
+                      ${isToday(day) ? 'bg-green-50' : ''}
+                      ${!isSameMonth(day, currentDate) ? 'text-gray-400' : ''}
                     `}
                   >
-                    {format(day, 'd')}
-                  </time>
-                  {hasEvent && (
-                    <button
-                      onClick={() => handleEventClick(day)}
-                      className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-[#2B5335] hover:bg-[#1e3b25] transition-colors duration-200 flex items-center justify-center"
+                    <time
+                      dateTime={format(day, 'yyyy-MM-dd')}
+                      className={`
+                        block w-5 h-5 sm:w-6 sm:h-6 mx-auto rounded-full flex items-center justify-center text-xs sm:text-sm
+                        ${isToday(day) ? 'bg-[#2B5335] text-white' : ''}
+                      `}
                     >
-                      <PlusIcon className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                    </button>
-                  )}
-                </div>
-              )
-            })}
+                      {format(day, 'd')}
+                    </time>
+                    {hasEvent && (
+                      <button
+                        onClick={() => handleEventClick(day)}
+                        className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-[#2B5335] hover:bg-[#1e3b25] transition-colors duration-200 flex items-center justify-center"
+                      >
+                        <PlusIcon className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </CardContent>
       </Card>
