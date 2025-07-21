@@ -40,7 +40,7 @@ export default function CarpoolCalendarPage() {
 
     const dates: Date[] = []
     const startDate = new Date(scheduleData.start_date)
-    const endDate = addMonths(new Date(), 2) // 2 months from now
+    const endDate = scheduleData.end_date ? new Date(scheduleData.end_date) : startDate;
 
     if (scheduleData.schedule_type === 'daily') {
       let currentDate = startDate
