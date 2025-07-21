@@ -7,6 +7,7 @@ import { useUserUuid } from '@/contexts/UserContext'
 import { useCarpools } from '@/hooks/useCarpools'
 import { useApi } from '@/services/api'
 import { TrashIcon, CalendarIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
+import { format, parse, addHours } from 'date-fns';
 
 import {
   Table,
@@ -37,6 +38,20 @@ function stringToColor(str: string) {
     color += ('00' + value.toString(16)).slice(-2);
   }
   return color;
+}
+
+// Helper to format date and time
+function formatNextRide(startDate?: string, startTime?: string): string {
+  if (!startDate || !startTime) return 'N/A';
+  try {
+    let dateObj = parse(`${startDate} ${startTime}`, 'yyyy-MM-dd HH:mm', new Date());
+    if (isNaN(dateObj.getTime())) return 'N/A';
+    // Subtract 7 hours for Pacific Time quick fix
+    dateObj = addHours(dateObj, -7);
+    return format(dateObj, 'MMM d, yyyy h:mm a') + ' PT';
+  } catch {
+    return 'N/A';
+  }
 }
 
 export function CarpoolList() {
@@ -189,6 +204,16 @@ export function CarpoolList() {
                       <span className="text-gray-500">Destination:</span>
                       <span className="text-right max-w-[150px] truncate">{safeString(carpool.destination_address)}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Next Ride:</span>
+                      <span>
+                        {(() => {
+                          console.log('Carpool (mobile):', details);
+                          console.log('Schedule (mobile):', details?.schedule);
+                          return formatNextRide(details?.schedule?.start_date, details?.schedule?.start_time);
+                        })()}
+                      </span>
+                    </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-500">Members:</span>
                       <div className="flex items-center space-x-1">
@@ -267,6 +292,7 @@ export function CarpoolList() {
                   <TableHead>Available Seats</TableHead>
                   <TableHead>Members</TableHead>
                   <TableHead>Destination</TableHead>
+                  <TableHead>Next Ride</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -355,6 +381,13 @@ export function CarpoolList() {
                       )}
                     </TableCell>
                     <TableCell>{safeString(carpool.destination_address)}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        console.log('Carpool (desktop):', details);
+                        console.log('Schedule (desktop):', details?.schedule);
+                        return formatNextRide(details?.schedule?.start_date, details?.schedule?.start_time);
+                      })()}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Tooltip content={safeDetails.available_seats <= 0

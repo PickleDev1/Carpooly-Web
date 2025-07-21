@@ -116,31 +116,8 @@ export default function AnalyticsPage() {
             // Ensure at least 1 participant (the driver)
             participantCount = Math.max(1, participantCount)
             
-            // Calculate distance - use miles_saved if available, otherwise estimate
-            let distance = ride.miles_saved || 0
-            
-            // If no miles_saved, try to calculate from participant coordinates
-            if (distance === 0 && ride.participants) {
-              let participants = ride.participants
-              if (Array.isArray(participants) && participants.length > 0) {
-                const participant = participants[0]
-                if (participant.home_latitude && participant.home_latitude.Valid && 
-                    participant.home_longitude && participant.home_longitude.Valid) {
-                  // Calculate distance from home to a default destination
-                  distance = api.calculateDistance(
-                    participant.home_latitude.Float64,
-                    participant.home_longitude.Float64,
-                    37.547236, // Default destination lat
-                    -121.942220 // Default destination lng
-                  )
-                }
-              }
-            }
-            
-            // If still no distance, use a reasonable default based on typical carpool distances
-            if (distance === 0) {
-              distance = 5.0 // Default 5 miles for completed rides
-            }
+            // Always use miles_saved from API
+            const distance = ride.miles_saved
             
             const convertedRide = {
               id: ride.id,
@@ -193,14 +170,8 @@ export default function AnalyticsPage() {
           // Calculate miles saved from completed rides
           // Since we're already filtering for user-specific rides, just sum the distances
           calculatedMilesSaved = processedData.rides.reduce((total, ride) => {
-            const rideDistance = ride.distance || 0
-            
-            // For user-specific rides, each ride represents miles saved through carpooling
-            // We don't multiply by participants since we're only counting rides the user participated in
-            const milesSavedForRide = rideDistance
-            
-            console.log(`📊 Ride ${ride.id}: ${rideDistance} miles saved for user`)
-            
+            // Always use ride.distance (which is ride.miles_saved from API)
+            const milesSavedForRide = ride.distance || 0
             return total + milesSavedForRide
           }, 0)
           console.log('📊 Total miles saved from user completed rides:', calculatedMilesSaved)

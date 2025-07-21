@@ -232,32 +232,19 @@ export default function Dashboard() {
         // Handle both simple values and database objects with Valid property
         const latValue = userData.home_latitude?.Float64 !== undefined ? userData.home_latitude.Float64 : userData.home_latitude;
         const lngValue = userData.home_longitude?.Float64 !== undefined ? userData.home_longitude.Float64 : userData.home_longitude;
-        const latValid = userData.home_latitude?.Valid !== undefined ? userData.home_latitude.Valid : true;
-        const lngValid = userData.home_longitude?.Valid !== undefined ? userData.home_longitude.Valid : true;
+        const latValid = userData.home_latitude?.Valid !== undefined ? userData.home_latitude.Valid : (latValue !== null && latValue !== undefined);
+        const lngValid = userData.home_longitude?.Valid !== undefined ? userData.home_longitude.Valid : (lngValue !== null && lngValue !== undefined);
         
         console.log('🚀 Dashboard: Parsed values - lat:', latValue, 'lng:', lngValue, 'latValid:', latValid, 'lngValid:', lngValid);
         
-        if (
-          latValue === 0 ||
-          lngValue === 0 ||
-          latValue === null ||
-          lngValue === null ||
-          latValue === undefined ||
-          lngValue === undefined ||
-          latValue === '' ||
-          lngValue === '' ||
-          !latValid ||
-          !lngValid
-        ) {
-          console.log('🚀 Dashboard: Home location not set, redirecting to onboarding');
-          console.log('🚀 Dashboard: Redirect reason - lat:', latValue, 'lng:', lngValue, 'latValid:', latValid, 'lngValid:', lngValid);
+        // Only redirect if BOTH lat and lng are missing, null, undefined, 0, '', or invalid
+        const latMissing = latValue === 0 || latValue === null || latValue === undefined || latValue === '' || !latValid;
+        const lngMissing = lngValue === 0 || lngValue === null || lngValue === undefined || lngValue === '' || !lngValid;
+        if (latMissing && lngMissing) {
+          console.log('🚀 Dashboard: Both home_latitude and home_longitude are missing/invalid, redirecting to onboarding');
           if (isMounted) {
-            console.log('🚀 Dashboard: Home location not set, attempting router.push to onboarding');
-            // Use push instead of replace for better mobile compatibility
             router.push('/onboarding');
-            // Fallback to window.location if router doesn't work
             setTimeout(() => {
-              console.log('🚀 Dashboard: Fallback to window.location (no home location)');
               window.location.href = '/onboarding';
             }, 1000);
           }
@@ -370,17 +357,10 @@ export default function Dashboard() {
             
             // Calculate miles saved from user-specific completed rides
             calculatedMilesSaved = deduplicatedRides.reduce((total: number, ride: any) => {
-              const rideDistance = ride.miles_saved || 5.0 // Use miles_saved if available, otherwise default to 5 miles
-              
-              // For user-specific rides, each ride represents miles saved through carpooling
-              // We don't multiply by participants since we're only counting rides the user participated in
-              const milesSavedForRide = rideDistance
-              
-              console.log(`📊 Dashboard: Ride ${ride.id}: ${rideDistance} miles saved for user`)
-              
+              // Always use ride.miles_saved from API
+              const milesSavedForRide = ride.miles_saved
               return total + milesSavedForRide
             }, 0)
-            
             console.log('📊 Dashboard: Total miles saved from user completed rides:', calculatedMilesSaved)
           } else {
             // Fallback to API calculation if no completed rides data
