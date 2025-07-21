@@ -345,17 +345,31 @@ export default function Dashboard() {
               
               // Check if current user is in the participants array
               const isUserParticipant = ride.participants.some((participant: any) => 
-                participant.id === user.id || participant.user_id === user.id
+                participant.id === user.id || 
+                participant.user_id === user.id || 
+                participant.clerk_id === user.id
               )
               
               console.log(`📊 Dashboard: Ride ${ride.id}: User ${user.id} is participant: ${isUserParticipant}`)
               return isUserParticipant
             })
             
-            console.log(`📊 Dashboard: Filtered ${completedRidesData.length} total rides to ${userRides.length} user rides`)
+            // Deduplicate rides based on carpool_id and start_time to avoid counting the same carpool multiple times
+            const uniqueRides = userRides.reduce((acc, ride) => {
+              const key = `${ride.carpool_id}-${ride.start_time}`
+              if (!acc.has(key)) {
+                acc.set(key, ride)
+              }
+              return acc
+            }, new Map())
+            
+            const deduplicatedRides = Array.from(uniqueRides.values())
+            console.log(`📊 Dashboard: Deduplicated ${userRides.length} rides to ${deduplicatedRides.length} unique rides`)
+            
+            console.log(`📊 Dashboard: Filtered ${completedRidesData.length} total rides to ${deduplicatedRides.length} unique user rides`)
             
             // Calculate miles saved from user-specific completed rides
-            calculatedMilesSaved = userRides.reduce((total, ride) => {
+            calculatedMilesSaved = deduplicatedRides.reduce((total: number, ride: any) => {
               const rideDistance = ride.miles_saved || 5.0 // Use miles_saved if available, otherwise default to 5 miles
               
               // For user-specific rides, each ride represents miles saved through carpooling

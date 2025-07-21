@@ -74,16 +74,30 @@ export default function AnalyticsPage() {
             
             // Check if current user is in the participants array
             const isUserParticipant = ride.participants.some((participant: any) => 
-              participant.id === user.id || participant.user_id === user.id
+              participant.id === user.id || 
+              participant.user_id === user.id || 
+              participant.clerk_id === user.id
             )
             
             console.log(`🔄 Ride ${ride.id}: User ${user.id} is participant: ${isUserParticipant}`)
             return isUserParticipant
           })
           
-          console.log(`🔄 Filtered ${backendRides.length} total rides to ${userRides.length} user rides`)
+          // Deduplicate rides based on carpool_id and start_time to avoid counting the same carpool multiple times
+          const uniqueRides = userRides.reduce((acc, ride) => {
+            const key = `${ride.carpool_id}-${ride.start_time}`
+            if (!acc.has(key)) {
+              acc.set(key, ride)
+            }
+            return acc
+          }, new Map())
           
-          const convertedRides: CompletedRide[] = userRides.map(ride => {
+          const deduplicatedRides = Array.from(uniqueRides.values())
+          console.log(`🔄 Deduplicated ${userRides.length} rides to ${deduplicatedRides.length} unique rides`)
+          
+          console.log(`🔄 Filtered ${backendRides.length} total rides to ${deduplicatedRides.length} unique user rides`)
+          
+          const convertedRides: CompletedRide[] = deduplicatedRides.map((ride: any) => {
             // Extract date from start_time
             const startDate = new Date(ride.start_time)
             const date = startDate.toISOString().split('T')[0]
