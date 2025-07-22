@@ -52,31 +52,36 @@ export function CarpoolList() {
   const [membersMap, setMembersMap] = useState<Record<string, any[]>>({});
   const [carpoolDetailsMap, setCarpoolDetailsMap] = useState<Record<string, Carpool>>({});
   const [ridesMap, setRidesMap] = useState<Record<string, any[]>>({});
+  const [schedulesMap, setSchedulesMap] = useState<Record<string, any>>({});
   const [loadingRides, setLoadingRides] = useState(false);
 
   useEffect(() => {
-    async function fetchMembersDetailsAndRides() {
+    async function fetchMembersDetailsRidesAndSchedules() {
       if (!carpools) return;
       const membersMapTemp: Record<string, any[]> = {};
       const detailsMapTemp: Record<string, Carpool> = {};
       const ridesMapTemp: Record<string, any[]> = {};
+      const schedulesMapTemp: Record<string, any> = {};
       setLoadingRides(true);
       await Promise.all(
         carpools.map(async (carpool) => {
           if (carpool.id) {
             try {
-              const [members, carpoolDetails, rides] = await Promise.all([
+              const [members, carpoolDetails, rides, schedules] = await Promise.all([
                 api.getCarpoolMembers(carpool.id),
                 api.getCarpool(carpool.id),
-                api.getCarpoolRides(carpool.id)
+                api.getCarpoolRides(carpool.id),
+                api.getCarpoolSchedules(carpool.id)
               ]);
               membersMapTemp[carpool.id] = members || [];
               detailsMapTemp[carpool.id] = carpoolDetails;
               ridesMapTemp[carpool.id] = Array.isArray(rides) ? rides : [];
+              schedulesMapTemp[carpool.id] = Array.isArray(schedules) && schedules.length > 0 ? schedules[0] : null;
             } catch (e) {
               membersMapTemp[carpool.id] = [];
               detailsMapTemp[carpool.id] = carpool;
               ridesMapTemp[carpool.id] = [];
+              schedulesMapTemp[carpool.id] = null;
             }
           }
         })
@@ -84,9 +89,10 @@ export function CarpoolList() {
       setMembersMap(membersMapTemp);
       setCarpoolDetailsMap(detailsMapTemp);
       setRidesMap(ridesMapTemp);
+      setSchedulesMap(schedulesMapTemp);
       setLoadingRides(false);
     }
-    fetchMembersDetailsAndRides();
+    fetchMembersDetailsRidesAndSchedules();
   }, [carpools, api]);
 
   // Helper to get schedule type label
@@ -95,6 +101,12 @@ export function CarpoolList() {
     if (scheduleType === 'daily') return 'Daily';
     if (scheduleType === 'weekly') return 'Weekly';
     return 'One-time';
+  };
+
+  // Helper to get the schedule type for a carpool
+  const getCarpoolScheduleType = (carpoolId: string) => {
+    const schedule = schedulesMap[carpoolId];
+    return getScheduleTypeLabel(schedule?.schedule_type);
   };
 
   // Helper to find the next ride in the future (including today, after now)
@@ -223,7 +235,7 @@ export function CarpoolList() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-500">Schedule:</span>
-                      <span>{getScheduleTypeLabel(details?.schedule?.schedule_type)}</span>
+                      <span>{getCarpoolScheduleType(carpool.id || '')}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Destination:</span>
@@ -340,7 +352,7 @@ export function CarpoolList() {
                   return (
                     <TableRow key={carpool.id}>
                       <TableCell className="font-medium">{safeString(carpool.carpool_name)}</TableCell>
-                      <TableCell>{getScheduleTypeLabel(details?.schedule?.schedule_type)}</TableCell>
+                      <TableCell>{getCarpoolScheduleType(carpool.id || '')}</TableCell>
                       <TableCell>
                         <span className={`${
                           safeDetails.available_seats <= 0 
