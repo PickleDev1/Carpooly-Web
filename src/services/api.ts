@@ -1402,6 +1402,19 @@ export const useApi = () => {
         }
         return response.json();
       },
+
+      async getCarpoolRides(carpoolId: string) {
+        const headers = await getHeaders();
+        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/rides`, {
+          method: 'GET',
+          headers
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch carpool rides');
+        }
+        const data = await response.json();
+        return data;
+      },
     }
   }, [getToken])
 }

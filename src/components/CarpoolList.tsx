@@ -7,7 +7,7 @@ import { useUserUuid } from '@/contexts/UserContext'
 import { useCarpools } from '@/hooks/useCarpools'
 import { useApi } from '@/services/api'
 import { TrashIcon, CalendarIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
-import { format, parse, addHours } from 'date-fns';
+import { format, parseISO, isAfter, isEqual } from 'date-fns';
 
 import {
   Table,
@@ -40,20 +40,6 @@ function stringToColor(str: string) {
   return color;
 }
 
-// Helper to format date and time
-function formatNextRide(startDate?: string, startTime?: string): string {
-  if (!startDate || !startTime) return 'N/A';
-  try {
-    let dateObj = parse(`${startDate} ${startTime}`, 'yyyy-MM-dd HH:mm', new Date());
-    if (isNaN(dateObj.getTime())) return 'N/A';
-    // Subtract 7 hours for Pacific Time quick fix
-    dateObj = addHours(dateObj, -7);
-    return format(dateObj, 'MMM d, yyyy h:mm a') + ' PT';
-  } catch {
-    return 'N/A';
-  }
-}
-
 export function CarpoolList() {
   const { user, isLoaded } = useUser()
   const [selectedCarpoolId, setSelectedCarpoolId] = useState<string | null>(null)
@@ -65,34 +51,73 @@ export function CarpoolList() {
   const router = useRouter()
   const [membersMap, setMembersMap] = useState<Record<string, any[]>>({});
   const [carpoolDetailsMap, setCarpoolDetailsMap] = useState<Record<string, Carpool>>({});
+  const [ridesMap, setRidesMap] = useState<Record<string, any[]>>({});
+  const [loadingRides, setLoadingRides] = useState(false);
 
   useEffect(() => {
-    async function fetchMembersAndDetails() {
+    async function fetchMembersDetailsAndRides() {
       if (!carpools) return;
       const membersMapTemp: Record<string, any[]> = {};
       const detailsMapTemp: Record<string, Carpool> = {};
+      const ridesMapTemp: Record<string, any[]> = {};
+      setLoadingRides(true);
       await Promise.all(
         carpools.map(async (carpool) => {
           if (carpool.id) {
             try {
-              const [members, carpoolDetails] = await Promise.all([
+              const [members, carpoolDetails, rides] = await Promise.all([
                 api.getCarpoolMembers(carpool.id),
-                api.getCarpool(carpool.id)
+                api.getCarpool(carpool.id),
+                api.getCarpoolRides(carpool.id)
               ]);
               membersMapTemp[carpool.id] = members || [];
               detailsMapTemp[carpool.id] = carpoolDetails;
+              ridesMapTemp[carpool.id] = Array.isArray(rides) ? rides : [];
             } catch (e) {
               membersMapTemp[carpool.id] = [];
               detailsMapTemp[carpool.id] = carpool;
+              ridesMapTemp[carpool.id] = [];
             }
           }
         })
       );
       setMembersMap(membersMapTemp);
       setCarpoolDetailsMap(detailsMapTemp);
+      setRidesMap(ridesMapTemp);
+      setLoadingRides(false);
     }
-    fetchMembersAndDetails();
+    fetchMembersDetailsAndRides();
   }, [carpools, api]);
+
+  // Helper to get schedule type label
+  const getScheduleTypeLabel = (scheduleType?: string) => {
+    if (!scheduleType) return 'One-time';
+    if (scheduleType === 'daily') return 'Daily';
+    if (scheduleType === 'weekly') return 'Weekly';
+    return 'One-time';
+  };
+
+  // Helper to find the next ride in the future (including today, after now)
+  const getNextRide = (rides: any[]): string => {
+    if (!rides || rides.length === 0) return 'N/A';
+    const now = new Date();
+    // rides should have a start_time field (ISO string)
+    const futureRides = rides
+      .filter((ride) => {
+        if (!ride.start_time) return false;
+        const rideTime = parseISO(ride.start_time);
+        return isAfter(rideTime, now) || isEqual(rideTime, now);
+      })
+      .sort((a, b) => {
+        const aTime = parseISO(a.start_time);
+        const bTime = parseISO(b.start_time);
+        return aTime.getTime() - bTime.getTime();
+      });
+    if (futureRides.length === 0) return 'N/A';
+    const nextRide = futureRides[0];
+    const rideTime = parseISO(nextRide.start_time);
+    return format(rideTime, 'MMM d, yyyy h:mm a') + ' PT';
+  };
 
   if (!isLoaded || !user) {
     return null;
@@ -198,7 +223,7 @@ export function CarpoolList() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-500">Schedule:</span>
-                      <span>{safeString(carpool.recurring_option) || 'One-time'}</span>
+                      <span>{getScheduleTypeLabel(details?.schedule?.schedule_type)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Destination:</span>
@@ -207,11 +232,7 @@ export function CarpoolList() {
                     <div className="flex justify-between">
                       <span className="text-gray-500">Next Ride:</span>
                       <span>
-                        {(() => {
-                          console.log('Carpool (mobile):', details);
-                          console.log('Schedule (mobile):', details?.schedule);
-                          return formatNextRide(details?.schedule?.start_date, details?.schedule?.start_time);
-                        })()}
+                        {getNextRide(ridesMap[carpool.id ?? ''] || [])}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -319,7 +340,7 @@ export function CarpoolList() {
                   return (
                     <TableRow key={carpool.id}>
                       <TableCell className="font-medium">{safeString(carpool.carpool_name)}</TableCell>
-                      <TableCell>{safeString(carpool.recurring_option) || 'One-time'}</TableCell>
+                      <TableCell>{getScheduleTypeLabel(details?.schedule?.schedule_type)}</TableCell>
                       <TableCell>
                         <span className={`${
                           safeDetails.available_seats <= 0 
@@ -382,11 +403,7 @@ export function CarpoolList() {
                     </TableCell>
                     <TableCell>{safeString(carpool.destination_address)}</TableCell>
                     <TableCell>
-                      {(() => {
-                        console.log('Carpool (desktop):', details);
-                        console.log('Schedule (desktop):', details?.schedule);
-                        return formatNextRide(details?.schedule?.start_date, details?.schedule?.start_time);
-                      })()}
+                      {getNextRide(ridesMap[carpool.id ?? ''] || [])}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
