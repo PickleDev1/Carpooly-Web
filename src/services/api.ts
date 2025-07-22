@@ -1370,6 +1370,18 @@ export const useApi = () => {
         try {
           const parsedData = JSON.parse(text)
           console.log('✅ Parsed completed rides data:', parsedData)
+          
+          // Debug: Log the first ride's structure if available
+          if (Array.isArray(parsedData) && parsedData.length > 0) {
+            console.log('🔍 API Debug: First ride structure:', {
+              rideId: parsedData[0].id,
+              has_miles_saved: 'miles_saved' in parsedData[0],
+              miles_saved_value: parsedData[0].miles_saved,
+              miles_saved_type: typeof parsedData[0].miles_saved,
+              all_fields: Object.keys(parsedData[0])
+            })
+          }
+          
           return parsedData
         } catch (error) {
           console.error('JSON Parse Error:', error, 'Response:', text)
