@@ -11,7 +11,7 @@ export const useApi = () => {
   
   return useMemo(() => {
     const getHeaders = async () => {
-      const token = await getToken({template: "carpooly"})
+      const token = await getToken()
       return {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
@@ -208,7 +208,7 @@ export const useApi = () => {
         message: string 
       }) => {
         try {
-          const token = await getToken({template: "carpooly"})
+          const token = await getToken()
           
           // Log the full data for debugging (remove in production)
           console.log('Full invite data:', {
@@ -256,7 +256,7 @@ export const useApi = () => {
 
       getUserMe: async () => {
         try {
-          const token = await getToken({template: "carpooly"})
+          const token = await getToken()
           const response = await fetch(`${API_URL}/api/users/me`, {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -276,7 +276,7 @@ export const useApi = () => {
 
       getUserById: async (userId: string) => {
         try {
-          const token = await getToken({template: "carpooly"})
+          const token = await getToken()
           const response = await fetch(`${API_URL}/api/users/${userId}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -296,7 +296,7 @@ export const useApi = () => {
 
       updateUser: async (userId: string, userData: any) => {
         try {
-          const token = await getToken({template: "carpooly"})
+          const token = await getToken()
           const response = await fetch(`${API_URL}/api/users/${userId}`, {
             method: 'PUT',
             headers: {
@@ -319,7 +319,7 @@ export const useApi = () => {
 
       deleteUser: async (userId: string) => {
         try {
-          const token = await getToken({template: "carpooly"})
+          const token = await getToken()
           const response = await fetch(`${API_URL}/api/users/${userId}`, {
             method: 'DELETE',
             headers: {
