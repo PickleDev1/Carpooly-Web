@@ -11,6 +11,13 @@ export function SignInRedirect() {
 
   useEffect(() => {
     console.log('[SignInRedirect] Effect triggered - isSignedIn:', isSignedIn, 'pathname:', pathname);
+    console.log('[SignInRedirect] Clerk publishable key exists:', !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+    console.log('[SignInRedirect] Environment:', process.env.NODE_ENV);
+    
+    if (!isSignedIn) {
+      console.log('[SignInRedirect] User not signed in, skipping invite check');
+      return;
+    }
     
     // Check for pending invite code when user is authenticated
     if (isSignedIn) {

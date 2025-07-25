@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
 
 export async function POST() {
-  const { userId } = await auth();
-  
-  if (!userId) {
+  const { userId, getToken } = await auth();
+  const token = await getToken();
+
+  if (!userId || !token) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -12,6 +13,7 @@ export async function POST() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ clerk_id: userId }),
     });

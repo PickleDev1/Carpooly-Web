@@ -149,6 +149,10 @@ export default function RootLayout({
                 colorInputText: '#000000',
               },
             }}
+            afterSignInUrl="/dashboard"
+            afterSignUpUrl="/dashboard"
+            signInUrl="/sign-in"
+            signUpUrl="/sign-up"
           >
             <UserProvider>
               <ActivityNotificationsClient />
