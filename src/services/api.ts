@@ -1403,6 +1403,26 @@ export const useApi = () => {
         return response.json();
       },
 
+      async updateUserWithClerkData() {
+        try {
+          const response = await fetch('/api/auth', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to update user with Clerk data');
+          }
+
+          return response.json();
+        } catch (error) {
+          console.error('Update user with Clerk data error:', error);
+          throw error;
+        }
+      },
+
       async getCarpoolRides(carpoolId: string) {
         const headers = await getHeaders();
         const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/rides`, {

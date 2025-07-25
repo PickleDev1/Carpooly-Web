@@ -56,6 +56,26 @@ export default function OnboardingPage() {
       if (res.ok) {
         const userData = await res.json();
         
+        // Check if user is missing email, name, or display_name and update with Clerk data
+        const needsUpdate = !userData.email || !userData.name || !userData.display_name;
+        if (needsUpdate) {
+          console.log('Onboarding: User missing profile data, updating with Clerk data...');
+          try {
+            const updateRes = await fetch('/api/auth', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+            });
+            if (updateRes.ok) {
+              console.log('Onboarding: User profile updated with Clerk data');
+            }
+          } catch (error) {
+            console.error('Onboarding: Failed to update user with Clerk data:', error);
+          }
+        }
+        
         // Handle both simple values and database objects with Valid property
         const latValue = userData.home_latitude?.Float64 !== undefined ? userData.home_latitude.Float64 : userData.home_latitude;
         const lngValue = userData.home_longitude?.Float64 !== undefined ? userData.home_longitude.Float64 : userData.home_longitude;

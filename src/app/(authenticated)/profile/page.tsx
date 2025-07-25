@@ -21,12 +21,15 @@ import {
   Camera,
   Phone,
   CreditCard,
-  Trees
+  Trees,
+  Loader2
 } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 export default function ProfilePage() {
   const { user } = useUser();
   const api = useApi();
+  const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingAdditional, setIsEditingAdditional] = useState(false);
   const [editedName, setEditedName] = useState(user?.firstName || '');
@@ -45,6 +48,7 @@ export default function ProfilePage() {
   });
 
   const [editedAdditionalInfo, setEditedAdditionalInfo] = useState(additionalInfo);
+  const [isUpdatingClerkData, setIsUpdatingClerkData] = useState(false);
 
   // Stats and Activity state
   const [userStats, setUserStats] = useState({
@@ -125,6 +129,22 @@ export default function ProfilePage() {
   const handleCancelAdditional = () => {
     setEditedAdditionalInfo(additionalInfo);
     setIsEditingAdditional(false);
+  };
+
+  const handleUpdateClerkData = async () => {
+    setIsUpdatingClerkData(true);
+    try {
+      await api.updateUserWithClerkData();
+      // Refresh user data by refetching
+      const data = await api.getUserById(user?.id || '');
+      setUserData(data);
+      showToast("Your profile has been updated with your Clerk information.");
+    } catch (error) {
+      console.error('Failed to update user with Clerk data:', error);
+      showToast("Failed to update your profile with Clerk information.");
+    } finally {
+      setIsUpdatingClerkData(false);
+    }
   };
 
   const getLicenseStatusColor = (status: string) => {
@@ -234,6 +254,31 @@ export default function ProfilePage() {
                   </Button>
                   <Button onClick={handleCancel} variant="outline" size="sm" className="flex-1">
                     Cancel
+                  </Button>
+                </div>
+              )}
+              
+              {/* Update Clerk Data Button */}
+              {!isEditing && (
+                <div className="mt-4">
+                  <Button 
+                    onClick={handleUpdateClerkData} 
+                    disabled={isUpdatingClerkData}
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                  >
+                    {isUpdatingClerkData ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-4 h-4 mr-2" />
+                        Update Profile from Clerk
+                      </>
+                    )}
                   </Button>
                 </div>
               )}

@@ -206,6 +206,19 @@ export default function Dashboard() {
           has_home_lng: 'home_longitude' in userData
         });
         
+        // Check if user is missing email, name, or display_name and update with Clerk data
+        const needsUpdate = !userData.email || !userData.name || !userData.display_name;
+        if (needsUpdate) {
+          console.log('🚀 Dashboard: User missing profile data, updating with Clerk data...');
+          try {
+            await api.updateUserWithClerkData();
+            console.log('🚀 Dashboard: User profile updated with Clerk data');
+          } catch (error) {
+            console.error('🚀 Dashboard: Failed to update user with Clerk data:', error);
+            // Continue with the flow even if update fails
+          }
+        }
+        
         // Check if user data is valid
         if (!userData || typeof userData !== 'object') {
           console.log('Invalid user data received, redirecting to onboarding');
