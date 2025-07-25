@@ -16,7 +16,7 @@ export function useActivityNotifications() {
     const poll = async () => {
       try {
         // Use the backend API endpoint instead of frontend route
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/recent-activity?limit=10`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activity?limit=10`);
         const activities = await res.json();
         // Filter for new invite_accepted/invite_rejected activities
         const newActivities = activities

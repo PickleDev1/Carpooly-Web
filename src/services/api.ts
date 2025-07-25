@@ -1301,7 +1301,7 @@ export const useApi = () => {
         
         try {
           const headers = await getHeaders()
-          const response = await fetch(`${API_URL}/api/recent-activity?limit=${limit}`, { headers })
+          const response = await fetch(`${API_URL}/api/activity?limit=${limit}`, { headers })
           
           if (!response.ok) {
             console.warn('Recent activity endpoint not available, returning empty array')

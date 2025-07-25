@@ -191,7 +191,7 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
       const currentUserParticipant = dayDetails.participants.find(p => p.clerk_id === user.id);
       if (currentUserParticipant) {
         setRemovingParticipantId(currentUserParticipant.id);
-        // Optimistically remove the current user from the participants list
+        // Optimistically remove the current user from the participants list and clear driver if needed
         setDayDetails(prev => prev ? {
           ...prev,
           participants: prev.participants.filter(p => p.id !== currentUserParticipant.id),
@@ -250,8 +250,8 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
     if (!user?.id || !dayDetails?.id) return;
     try {
       setIsLoading(true);
-      console.log('[JoinBackButton] Clicked');
       setHasJoinedBack(true); // Hide button immediately
+      // Optimistically add user as participant, but do NOT set driver
       setDayDetails(prev => {
         const updated = prev ? {
           ...prev,
@@ -264,9 +264,9 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
               display_name: user.fullName || user.firstName || (user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress) || 'You',
               email: user.primaryEmailAddress?.emailAddress || user.emailAddresses?.[0]?.emailAddress || '',
             }
-          ]
+          ],
+          // Do NOT set driver field here
         } : null;
-        console.log('[JoinBackButton] Optimistic participants:', updated?.participants.map(p => p.id));
         return updated;
       });
       await api.addCarpoolParticipantById(dayDetails.id, user.id);
