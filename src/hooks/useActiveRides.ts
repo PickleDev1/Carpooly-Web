@@ -32,13 +32,32 @@ export function useActiveRides() {
         console.log('🔔 useActiveRides: API response received:', rides)
         console.log('🔔 useActiveRides: Number of active rides:', rides?.length || 0)
         
-        // Deduplicate rides based on ride ID to prevent duplicates
+        // Deduplicate rides based on carpool_id and start_time to prevent duplicates
+        console.log('🔔 useActiveRides: Starting deduplication with rides:', rides?.map((r: any) => ({
+          id: r.id,
+          carpool_id: r.carpool_id,
+          start_time: r.start_time
+        })))
+        
         const uniqueRides = rides ? rides.reduce((acc: any[], ride: any) => {
-          const existingRide = acc.find(r => r.id === ride.id)
+          const existingRide = acc.find(r => 
+            r.carpool_id === ride.carpool_id && 
+            r.start_time === ride.start_time
+          )
           if (!existingRide) {
+            console.log('🔔 useActiveRides: Adding unique ride:', {
+              id: ride.id,
+              carpool_id: ride.carpool_id,
+              start_time: ride.start_time
+            })
             acc.push(ride)
           } else {
-            console.log('🔔 useActiveRides: Duplicate ride found and removed:', ride.id)
+            console.log('🔔 useActiveRides: Duplicate ride found and removed:', {
+              id: ride.id,
+              carpool_id: ride.carpool_id,
+              start_time: ride.start_time,
+              existingRideId: existingRide.id
+            })
           }
           return acc
         }, []) : []
