@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useUser } from '@clerk/nextjs'
 import { useApi } from '@/services/api'
 import { GoogleMap, Marker, DirectionsRenderer } from '@react-google-maps/api'
 
@@ -28,18 +27,16 @@ export function ActiveRideSection() {
   const [isLoading, setIsLoading] = useState(true)
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null)
 
-  const { user } = useUser()
   const api = useApi()
 
   useEffect(() => {
     let mounted = true
 
     const fetchActiveRide = async () => {
-      if (!user?.id) return
       
       try {
-        console.log('🔔 ActiveRideSection: Fetching active rides for user:', user.id)
-        const rides = await api.getUserActiveRides(user.id)
+        console.log('🔔 ActiveRideSection: Fetching active rides')
+        const rides = await api.getActiveRides()
         console.log('🔔 ActiveRideSection: Raw rides data:', rides)
         
         if (mounted) {
@@ -75,7 +72,7 @@ export function ActiveRideSection() {
     return () => {
       mounted = false
     }
-  }, [user?.id, api])
+  }, [api])
 
   if (isLoading) return <div>Loading ride details...</div>
   if (!activeRide) return null

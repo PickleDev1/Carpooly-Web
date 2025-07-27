@@ -26,8 +26,8 @@ export function useActiveRides() {
         console.log('🔔 useActiveRides: Setting loading state to true')
         setLoading(true)
         
-        console.log('🔔 useActiveRides: Calling api.getUserActiveRides')
-        const rides = await api.getUserActiveRides(user.id)
+        console.log('🔔 useActiveRides: Calling api.getActiveRides')
+        const rides = await api.getActiveRides()
         
         console.log('🔔 useActiveRides: API response received:', rides)
         console.log('🔔 useActiveRides: Number of active rides:', rides?.length || 0)

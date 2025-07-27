@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useApi } from '@/services/api'
-import { useUser } from '@clerk/nextjs'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, Clock, Users, Navigation } from 'lucide-react'
@@ -27,19 +26,15 @@ export default function TrackLocationsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const api = useApi()
-  const { user } = useUser()
 
   useEffect(() => {
     const fetchActiveRides = async () => {
-      if (!user?.id) {
-        console.log('🔔 Live Map: No user ID available, skipping fetch')
-        return
-      }
+
 
       try {
         setIsLoading(true)
-        console.log('🔔 Live Map: Fetching active rides for user:', user.id)
-        const ridesData = await api.getUserActiveRides(user.id)
+        console.log('🔔 Live Map: Fetching active rides')
+        const ridesData = await api.getActiveRides()
 
         console.log('🔔 Live Map: Raw rides data:', ridesData)
         
@@ -95,7 +90,7 @@ export default function TrackLocationsPage() {
     }
 
     fetchActiveRides()
-  }, [api, user?.id])
+  }, [api])
 
   if (isLoading) {
     return (
