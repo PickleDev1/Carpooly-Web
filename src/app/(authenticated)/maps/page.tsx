@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useApi } from '@/services/api'
+import { useUser } from '@clerk/nextjs'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, Clock, Users, Navigation } from 'lucide-react'
@@ -26,13 +27,22 @@ export default function TrackLocationsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const api = useApi()
+  const { user } = useUser()
 
   useEffect(() => {
     const fetchActiveRides = async () => {
+      if (!user?.id) {
+        console.log('🔔 Live Map: No user ID available, skipping fetch')
+        return
+      }
+
       try {
         setIsLoading(true)
-        const ridesData = await api.getActiveRides()
+        console.log('🔔 Live Map: Fetching active rides for user:', user.id)
+        const ridesData = await api.getUserActiveRides(user.id)
 
+        console.log('🔔 Live Map: Raw rides data:', ridesData)
+        
         // Filter out rides that have no participants before processing them.
         const validRides = ridesData?.filter(
           (ride: any) => ride.participants && ride.participants.length > 0
@@ -60,14 +70,18 @@ export default function TrackLocationsPage() {
               }
             })
           )
-          // Deduplicate rides by carpool_id, start_time, and destination_address
-          const uniqueRides = enhancedRides.filter((ride, index, self) =>
-            index === self.findIndex((r) =>
-              r.carpool_id === ride.carpool_id &&
-              r.start_time === ride.start_time &&
-              r.destination_address === ride.destination_address
-            )
-          )
+          // Deduplicate rides by ride ID to prevent duplicates
+          const uniqueRides = enhancedRides.reduce((acc: any[], ride: any) => {
+            const existingRide = acc.find(r => r.id === ride.id)
+            if (!existingRide) {
+              acc.push(ride)
+            } else {
+              console.log('🔔 Live Map: Duplicate ride found and removed:', ride.id)
+            }
+            return acc
+          }, [])
+          
+          console.log('🔔 Live Map: After deduplication:', uniqueRides.length, 'rides')
           setActiveRides(uniqueRides)
         } else {
           setActiveRides([])
@@ -81,7 +95,7 @@ export default function TrackLocationsPage() {
     }
 
     fetchActiveRides()
-  }, [api])
+  }, [api, user?.id])
 
   if (isLoading) {
     return (

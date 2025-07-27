@@ -38,14 +38,33 @@ export function ActiveRideSection() {
       if (!user?.id) return
       
       try {
-        const data = await api.getActiveRide(user.id)
+        console.log('🔔 ActiveRideSection: Fetching active rides for user:', user.id)
+        const rides = await api.getUserActiveRides(user.id)
+        console.log('🔔 ActiveRideSection: Raw rides data:', rides)
+        
         if (mounted) {
-          setActiveRide(data)
+          // Deduplicate rides by ride ID to prevent duplicates
+          const uniqueRides = rides ? rides.reduce((acc: any[], ride: any) => {
+            const existingRide = acc.find(r => r.id === ride.id)
+            if (!existingRide) {
+              acc.push(ride)
+            } else {
+              console.log('🔔 ActiveRideSection: Duplicate ride found and removed:', ride.id)
+            }
+            return acc
+          }, []) : []
+          
+          console.log('🔔 ActiveRideSection: After deduplication:', uniqueRides.length, 'rides')
+          
+          // Use the first active ride if multiple exist
+          const firstRide = uniqueRides && uniqueRides.length > 0 ? uniqueRides[0] : null
+          setActiveRide(firstRide)
           setIsLoading(false)
         }
       } catch (err) {
-        console.error('Failed to fetch active ride:', err)
+        console.error('🔔 ActiveRideSection: Failed to fetch active ride:', err)
         if (mounted) {
+          setActiveRide(null)
           setIsLoading(false)
         }
       }

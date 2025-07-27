@@ -26,17 +26,30 @@ export function useActiveRides() {
         console.log('🔔 useActiveRides: Setting loading state to true')
         setLoading(true)
         
-        console.log('🔔 useActiveRides: Calling api.getActiveRides')
-        const rides = await api.getActiveRides()
+        console.log('🔔 useActiveRides: Calling api.getUserActiveRides')
+        const rides = await api.getUserActiveRides(user.id)
         
         console.log('🔔 useActiveRides: API response received:', rides)
         console.log('🔔 useActiveRides: Number of active rides:', rides?.length || 0)
         
+        // Deduplicate rides based on ride ID to prevent duplicates
+        const uniqueRides = rides ? rides.reduce((acc: any[], ride: any) => {
+          const existingRide = acc.find(r => r.id === ride.id)
+          if (!existingRide) {
+            acc.push(ride)
+          } else {
+            console.log('🔔 useActiveRides: Duplicate ride found and removed:', ride.id)
+          }
+          return acc
+        }, []) : []
+        
+        console.log('🔔 useActiveRides: After deduplication:', uniqueRides.length, 'rides')
+        
         // Fetch carpool details for each ride
-        if (rides && rides.length > 0) {
+        if (uniqueRides && uniqueRides.length > 0) {
           console.log('🔔 useActiveRides: Fetching carpool details for each ride...')
-          const ridesWithDetails = await Promise.all(
-            rides.map(async (ride: any) => {
+                      const ridesWithDetails = await Promise.all(
+              uniqueRides.map(async (ride: any) => {
               try {
                 console.log(`🔔 useActiveRides: Fetching carpool details for carpool_id: ${ride.carpool_id}`)
                 const carpoolDetails = await api.getCarpool(ride.carpool_id)
@@ -61,7 +74,7 @@ export function useActiveRides() {
           console.log('🔔 useActiveRides: Rides with carpool details:', ridesWithDetails)
           setActiveRides(ridesWithDetails)
         } else {
-          setActiveRides(rides || [])
+          setActiveRides(uniqueRides || [])
         }
         
         console.log('🔔 useActiveRides: Active rides state updated')

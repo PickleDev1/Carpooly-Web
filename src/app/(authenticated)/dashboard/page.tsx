@@ -108,9 +108,8 @@ export default function Dashboard() {
   const { carpools } = useCarpools();
   const { invites, refresh: refreshInvites, isRefreshing } = useInvites();
   const api = useApi();
-  const [activeRidesCount, setActiveRidesCount] = useState(0);
   const { activity: recentActivity, isLoading: isActivityLoading, error: activityError } = useRecentActivity(20);
-  const { activeRides } = useActiveRides();
+  const { activeRides, loading: activeRidesLoading } = useActiveRides();
   const notifiedRidesRef = useRef<Set<string>>(new Set());
   const { activeTooltip, showTooltip, hideTooltip, dismissTooltip } = useTooltips();
 
@@ -308,21 +307,7 @@ export default function Dashboard() {
     return () => { isMounted = false; };
   }, [router, getToken, user?.id]);
 
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchActiveRides() {
-      try {
-        const rides = await api.getActiveRides();
-        if (isMounted) setActiveRidesCount(rides?.length || 0);
-      } catch (e) {
-        if (isMounted) setActiveRidesCount(0);
-      }
-    }
-    fetchActiveRides();
-    // Optionally, poll every 30s for real-time update
-    const interval = setInterval(fetchActiveRides, 30000);
-    return () => { isMounted = false; clearInterval(interval); };
-  }, [api]);
+
 
   // Calculate stats
   useEffect(() => {
@@ -410,7 +395,7 @@ export default function Dashboard() {
           
           setStats({
             totalCarpools: carpools.length,
-            activeRides: activeRidesCount,
+            activeRides: activeRides?.length || 0,
             pendingInvites: invites.length,
             milesSaved: Math.round(calculatedMilesSaved)
           })
@@ -419,7 +404,7 @@ export default function Dashboard() {
           // Fallback to placeholder calculation
           setStats({
             totalCarpools: carpools.length,
-            activeRides: activeRidesCount,
+            activeRides: activeRides?.length || 0,
             pendingInvites: invites.length,
             milesSaved: 0
           })
@@ -428,7 +413,7 @@ export default function Dashboard() {
       
       calculateStats()
     }
-  }, [carpools, invites, activeRidesCount, user?.id, api])
+  }, [carpools, invites, activeRides, user?.id, api])
 
   useEffect(() => {
     console.log('🔔 Dashboard: Browser notification effect triggered')
@@ -445,12 +430,12 @@ export default function Dashboard() {
       return;
     }
     
-    console.log('🔔 Dashboard: Setting up notification interval, active rides count:', activeRides.length)
+    console.log('🔔 Dashboard: Setting up notification interval, active rides count:', activeRides?.length || 0)
     const interval = setInterval(() => {
       console.log('🔔 Dashboard: Notification interval triggered, checking rides...')
       const now = new Date();
       console.log('🔔 Dashboard: Current time:', now.toISOString())
-      activeRides.forEach((ride, index) => {
+      activeRides?.forEach((ride, index) => {
         console.log(`🔔 Dashboard: Checking ride ${index + 1}:`, ride)
         if (!ride.start_time || !ride.id) {
           console.log(`🔔 Dashboard: Skipping ride ${index + 1} - missing start_time or id`)
