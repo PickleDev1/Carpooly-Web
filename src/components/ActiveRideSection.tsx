@@ -2,30 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import { useApi } from '@/services/api'
-import { GoogleMap, Marker, DirectionsRenderer } from '@react-google-maps/api'
 
 interface ActiveRide {
   id: string
-  carpool_name: string
-  driver_name: string
-  current_location: {
-    lat: number
-    lng: number
-  }
-  destination: {
-    address: string
-    lat: number
-    lng: number
-  }
-  estimated_arrival: string
-  passengers: string[]
-  status: string
+  carpool_id: string
+  carpool_name?: string
+  destination_address?: string
+  start_time: string
+  status: number
+  participants?: Array<{
+    id: string
+    name: string
+    is_driver?: boolean
+  }>
 }
 
 export function ActiveRideSection() {
   const [activeRide, setActiveRide] = useState<ActiveRide | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null)
 
   const api = useApi()
 
@@ -85,55 +79,27 @@ export function ActiveRideSection() {
           {/* Left side: Ride details */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="space-y-2">
-              <p><strong>Carpool:</strong> {activeRide.carpool_name}</p>
-              <p><strong>Driver:</strong> {activeRide.driver_name}</p>
-              <p><strong>ETA:</strong> {activeRide.estimated_arrival}</p>
-              <p><strong>Destination:</strong> {activeRide.destination.address}</p>
-              <p><strong>Current Location:</strong> 
-                {`(${activeRide.current_location.lat}, ${activeRide.current_location.lng})`}
-              </p>
-              <p><strong>Passengers:</strong> {activeRide.passengers.join(', ')}</p>
+              <p><strong>Carpool:</strong> {activeRide.carpool_name || 'Unknown Carpool'}</p>
+              <p><strong>Start Time:</strong> {new Date(activeRide.start_time).toLocaleString()}</p>
+              <p><strong>Destination:</strong> {activeRide.destination_address || 'No destination set'}</p>
+              <p><strong>Status:</strong> {activeRide.status === 0 ? 'Active' : 'Inactive'}</p>
+              <p><strong>Participants:</strong> {activeRide.participants?.length || 0} members</p>
             </div>
           </div>
 
-          {/* Right side: Map */}
-          <div className="h-[400px]">
-            <GoogleMap
-              mapContainerStyle={{ height: '100%', width: '100%' }}
-              center={activeRide.current_location}
-              zoom={13}
-            >
-              {/* Current Location Marker */}
-              {activeRide.current_location && (
-                <Marker
-                  position={activeRide.current_location}
-                  label={{
-                    text: "🚗",
-                    color: "#2563eb" // blue color
-                  }}
-                />
-              )}
-              
-              {/* Destination Marker */}
-              {activeRide.destination && (
-                <Marker
-                  position={activeRide.destination}
-                  label={{
-                    text: "🎯",
-                    color: "#10b981" // green color
-                  }}
-                  icon={{
-                    path: google.maps.SymbolPath.CIRCLE,
-                    fillColor: "#10b981",
-                    fillOpacity: 0.6,
-                    strokeWeight: 1,
-                    scale: 8
-                  }}
-                />
-              )}
-              
-              {directions && <DirectionsRenderer directions={directions} />}
-            </GoogleMap>
+          {/* Right side: Ride Info */}
+          <div className="h-[400px] bg-gray-50 rounded-lg p-6 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🚗</div>
+              <h3 className="text-xl font-semibold mb-2">Active Carpool Ride</h3>
+              <p className="text-gray-600 mb-4">
+                This ride is currently active and being tracked.
+              </p>
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <p className="text-sm text-gray-500">Ride ID</p>
+                <p className="font-mono text-xs break-all">{activeRide.id}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
