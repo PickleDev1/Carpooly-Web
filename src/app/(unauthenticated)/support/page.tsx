@@ -3,7 +3,6 @@
 import { 
   HelpCircle, 
   MessageCircle, 
-  Phone, 
   Mail, 
   Clock, 
   Search,
@@ -30,7 +29,6 @@ import { useState } from 'react'
 
 export default function SupportPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const [showPhoneModal, setShowPhoneModal] = useState(false)
 
   const helpCategories = [
     {
@@ -93,14 +91,6 @@ export default function SupportPage() {
   ]
 
   const contactMethods = [
-    {
-      icon: Phone,
-      title: "Phone Support",
-      description: "Speak directly with our support specialists",
-      availability: "Mon-Fri 8AM-8PM EST",
-      response: "Immediate assistance",
-      action: "Call Now"
-    },
     {
       icon: Mail,
       title: "Email Support",
@@ -263,47 +253,9 @@ export default function SupportPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-1 gap-8 max-w-md mx-auto">
           {contactMethods.map((method, index) => {
             const Icon = method.icon
-            if (method.title === 'Email Support') {
-              return (
-                <Card key={index} className="hover-lift text-center">
-                  <CardContent className="pt-8">
-                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Icon className="w-8 h-8 text-primary" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-3">{method.title}</h3>
-                    <p className="text-gray-600 mb-4">{method.description}</p>
-                    <div className="space-y-2 mb-6">
-                      <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                        <Clock className="w-4 h-4" />
-                        {method.availability}
-                      </div>
-                      <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                        <CheckCircle className="w-4 h-4" />
-                        {method.response}
-                      </div>
-                    </div>
-                    <a
-                      href="mailto:cidambi.nikhil@gmail.com"
-                      className="w-full rounded-lg bg-green-600 text-white font-semibold py-3 text-lg hover:bg-green-700 transition-colors text-center block"
-                    >
-                      {method.action}
-                    </a>
-                  </CardContent>
-                </Card>
-              )
-            }
-            let buttonProps = {}
-            if (method.title === 'Phone Support') {
-              buttonProps = {
-                onClick: (e: any) => {
-                  e.preventDefault();
-                  setShowPhoneModal(true);
-                }
-              }
-            }
             return (
               <Card key={index} className="hover-lift text-center">
                 <CardContent className="pt-8">
@@ -322,28 +274,17 @@ export default function SupportPage() {
                       {method.response}
                     </div>
                   </div>
-                  <Button className="w-full" {...buttonProps}>
+                  <a
+                    href="mailto:carpooly.help@gmail.com"
+                    className="w-full rounded-lg bg-green-600 text-white font-semibold py-3 text-lg hover:bg-green-700 transition-colors text-center block"
+                  >
                     {method.action}
-                  </Button>
+                  </a>
                 </CardContent>
               </Card>
             )
           })}
         </div>
-
-        {/* Phone Modal */}
-        {showPhoneModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-xl shadow-xl p-8 max-w-sm w-full text-center">
-              <h2 className="text-2xl font-bold mb-4">Call Support</h2>
-              <p className="mb-6 text-lg">Please call <span className="font-mono text-blue-600">510-270-7810</span> to reach our support team.</p>
-              <div className="flex gap-4 justify-center">
-                <a href="tel:5102707810" className="btn btn-primary px-4 py-2 rounded bg-blue-600 text-white">Call Now</a>
-                <Button variant="outline" onClick={() => setShowPhoneModal(false)}>Close</Button>
-              </div>
-            </div>
-          </div>
-        )}
       </section>
 
       {/* FAQ Section */}

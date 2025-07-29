@@ -25,7 +25,7 @@ export default function HomePage() {
     {
       icon: Users,
       title: "Smart Matching",
-      description: "Find the perfect carpool partners based on your route, schedule, and preferences."
+      description: "Find the perfect carpool partners based on your route, schedule, and preferences. (Coming Soon)"
     },
     {
       icon: MapPin,
@@ -92,7 +92,7 @@ export default function HomePage() {
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium">
               <Star className="w-4 h-4" />
-              Trusted by 10,000+ families
+              Trusted by 10+ families
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
@@ -183,7 +183,14 @@ export default function HomePage() {
                   {feature.title}
                 </h3>
                 <p className="text-gray-600 leading-relaxed">
-                  {feature.description}
+                  {feature.title === "Smart Matching" ? (
+                    <>
+                      Find the perfect carpool partners based on your route, schedule, and preferences.{" "}
+                      <strong className="font-bold">(Coming Soon)</strong>
+                    </>
+                  ) : (
+                    feature.description
+                  )}
                 </p>
               </div>
             )
@@ -248,7 +255,7 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="container-responsive py-16 lg:py-24 bg-white">
+      {/* <section className="container-responsive py-16 lg:py-24 bg-white">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Loved by families everywhere
@@ -274,7 +281,7 @@ export default function HomePage() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section */}
       <section className="container-responsive py-16 lg:py-24 bg-gradient-to-r from-green-600 to-blue-600 text-white">
