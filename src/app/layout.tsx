@@ -127,6 +127,19 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#22c55e" />
         <meta name="msapplication-tap-highlight" content="no" />
+        
+        {/* Google Analytics */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-QVJY2D3PD3"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-QVJY2D3PD3');
+            `,
+          }}
+        />
       </head>
       <body className={`${inter.className} antialiased`}>
         <ToastProvider>
