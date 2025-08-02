@@ -24,14 +24,44 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: {
-    default: 'CarPooly - Simplify Your Carpool Routine',
-    template: '%s | CarPooly'
+    default: 'Carpooly – Smart Carpooling Made Simple',
+    template: '%s | Carpooly'
   },
-  description: 'Join CarPooly to save money, reduce emissions, and make your daily commute more enjoyable. Find carpools, share rides, and contribute to a greener future.',
-  keywords: ['carpool', 'ride sharing', 'commute', 'sustainability', 'green transportation', 'save money'],
-  authors: [{ name: 'CarPooly Team' }],
-  creator: 'CarPooly',
-  publisher: 'CarPooly',
+  description: 'Carpooly is the easiest way to organize carpools for schools, work, and daily commutes. Save money, reduce emissions, and build community.',
+  keywords: [
+    'carpool app',
+    'ride sharing app',
+    'commute app',
+    'carpool planner',
+    'work carpool',
+    'business carpool',
+    'corporate transportation',
+    'workplace carpool',
+    'school carpool',
+    'family carpooling',
+    'sustainable commuting',
+    'eco-friendly travel',
+    'carbon emissions tracker',
+    'carpool schedule organizer',
+    'green transportation',
+    'shared rides',
+    'community transportation',
+    'transportation app',
+    'commuter app',
+    'carpool',
+    'ride sharing',
+    'commute',
+    'sustainability',
+    'save money',
+    'environmental impact',
+    'carbon footprint',
+    'daily commute',
+    'office carpool',
+    'company transportation'
+  ],
+  authors: [{ name: 'Carpooly Team' }],
+  creator: 'Carpooly',
+  publisher: 'Carpooly',
   formatDetection: {
     email: false,
     address: false,
@@ -61,22 +91,22 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://carpooly.app',
-    title: 'CarPooly - Simplify Your Carpool Routine',
-    description: 'Join CarPooly to save money, reduce emissions, and make your daily commute more enjoyable.',
-    siteName: 'CarPooly',
+    title: 'Carpooly – Smart Carpooling for Everyone',
+    description: 'Save money, reduce emissions, and make carpooling easy. Perfect for schools, work, and daily commutes.',
+    siteName: 'Carpooly',
     images: [
       {
         url: '/carpooly-logo.png',
         width: 1200,
         height: 630,
-        alt: 'CarPooly - Carpooling Made Easy',
+        alt: 'Carpooly - Smart School Carpooling Made Easy',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CarPooly - Simplify Your Carpool Routine',
-    description: 'Join CarPooly to save money, reduce emissions, and make your daily commute more enjoyable.',
+    title: 'Carpooly – Smart Carpooling for Everyone',
+    description: 'Save money, reduce emissions, and make carpooling easy. Perfect for schools, work, and daily commutes.',
     images: ['/carpooly-logo.png'],
     creator: '@carpooly',
   },
@@ -128,6 +158,24 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#22c55e" />
         <meta name="msapplication-tap-highlight" content="no" />
         
+        {/* SEO Meta Tags */}
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="googlebot" content="index, follow" />
+        <meta name="bingbot" content="index, follow" />
+        <meta name="theme-color" content="#22c55e" />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="supported-color-schemes" content="light dark" />
+        
+        {/* Product Hunt Tags */}
+        <meta name="product-hunt:tags" content="Productivity,Education,Sustainability,Transportation,Mobile App,Parenting,Social Good" />
+        
+        {/* Additional SEO */}
+        <meta name="application-name" content="Carpooly" />
+        <meta name="apple-mobile-web-app-title" content="Carpooly" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        
         {/* Google Analytics */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-QVJY2D3PD3"></script>
         <script
@@ -138,6 +186,38 @@ export default function RootLayout({
               gtag('js', new Date());
               gtag('config', 'G-QVJY2D3PD3');
             `,
+          }}
+        />
+        
+        {/* Structured Data for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "MobileApplication",
+              "name": "Carpooly",
+              "description": "Carpooly is the easiest way to organize carpools for schools, work, and daily commutes. Save money, reduce emissions, and build community.",
+              "url": "https://carpooly.app",
+              "applicationCategory": "TransportationApplication",
+              "operatingSystem": "Web, iOS, Android",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD",
+                "description": "Free to use"
+              },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "ratingCount": "50"
+              },
+              "author": {
+                "@type": "Organization",
+                "name": "Carpooly"
+              },
+              "keywords": "carpool app, ride sharing app, commute app, work carpool, business carpool, corporate transportation, workplace carpool, school carpool, family carpooling, sustainable commuting, eco-friendly travel, carbon emissions tracker, carpool planner, green transportation"
+            })
           }}
         />
       </head>

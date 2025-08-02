@@ -96,14 +96,14 @@ export default function HomePage() {
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Simplify Your{' '}
+              Smart{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600">
-                Carpool Routine
+                Carpooling Made Simple
               </span>
             </h1>
 
             <p className="text-xl text-gray-600 leading-relaxed">
-              Join thousands of families who are saving money, reducing emissions, and building community through smart carpooling.
+              Carpooly is the easiest way to organize carpools for schools, work, and daily commutes. Save money, reduce emissions, and build community — all in one simple app.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -283,6 +283,41 @@ export default function HomePage() {
         </div>
       </section> */}
 
+      {/* SEO Content Section */}
+      <section className="container-responsive py-16 lg:py-24 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-8 text-center">
+            Why Choose Carpooly for Smart Transportation?
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Perfect for All Types of Carpools</h3>
+              <p className="text-gray-600 mb-4">
+                Carpooly works for school carpools, work commutes, and daily transportation needs. Coordinate rides, share schedules, and ensure everyone gets where they need to go safely and on time.
+              </p>
+              <ul className="space-y-2 text-gray-600">
+                <li>• Simple carpool scheduling and coordination</li>
+                <li>• Real-time location tracking for safety</li>
+                <li>• Easy communication between parents</li>
+                <li>• Carbon footprint tracking for environmental awareness</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Sustainable Transportation Solution</h3>
+              <p className="text-gray-600 mb-4">
+                Reduce your family&apos;s carbon footprint while saving money on gas and parking. Carpooly helps you make eco-friendly transportation choices that benefit both your wallet and the planet.
+              </p>
+              <ul className="space-y-2 text-gray-600">
+                <li>• Track miles saved and emissions reduced</li>
+                <li>• Build community connections</li>
+                <li>• Reduce traffic congestion</li>
+                <li>• Save money on transportation costs</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="container-responsive py-16 lg:py-24 bg-gradient-to-r from-green-600 to-blue-600 text-white">
         <div className="text-center max-w-4xl mx-auto">
@@ -290,7 +325,7 @@ export default function HomePage() {
             Ready to start your carpooling journey?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of families who are already saving money and helping the environment.
+            Join users who are already saving money and helping the environment with smart carpooling.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
