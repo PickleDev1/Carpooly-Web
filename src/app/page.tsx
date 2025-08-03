@@ -103,7 +103,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-xl text-gray-600 leading-relaxed">
-              Carpooly is the easiest way to organize carpools for schools, work, and daily commutes. Save money, reduce emissions, and build community — all in one simple app.
+              Carpooly is the easiest way to organize carpools for schools, work, and daily commutes. Organize rides easily, save money, and build community — all in one simple app.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">

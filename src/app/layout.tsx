@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     default: 'Carpooly – Smart Carpooling Made Simple',
     template: '%s | Carpooly'
   },
-  description: 'Carpooly is the easiest way to organize carpools for schools, work, and daily commutes. Save money, reduce emissions, and build community.',
+  description: 'Carpooly is the easiest way to organize carpools for schools, work, and daily commutes. Organize rides easily, save money, and find carpools.',
   keywords: [
     'carpool app',
     'ride sharing app',
@@ -92,7 +92,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://carpooly.app',
     title: 'Carpooly – Smart Carpooling for Everyone',
-    description: 'Save money, reduce emissions, and make carpooling easy. Perfect for schools, work, and daily commutes.',
+    description: 'Organize rides easily, save money, and make carpooling simple. Perfect for schools, work, and daily commutes.',
     siteName: 'Carpooly',
     images: [
       {
@@ -106,7 +106,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Carpooly – Smart Carpooling for Everyone',
-    description: 'Save money, reduce emissions, and make carpooling easy. Perfect for schools, work, and daily commutes.',
+    description: 'Organize rides easily, save money, and make carpooling simple. Perfect for schools, work, and daily commutes.',
     images: ['/carpooly-logo.png'],
     creator: '@carpooly',
   },
@@ -197,7 +197,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "MobileApplication",
               "name": "Carpooly",
-              "description": "Carpooly is the easiest way to organize carpools for schools, work, and daily commutes. Save money, reduce emissions, and build community.",
+              "description": "Carpooly is the easiest way to organize carpools for schools, work, and daily commutes. Organize rides easily, save money, and build community.",
               "url": "https://carpooly.app",
               "applicationCategory": "TransportationApplication",
               "operatingSystem": "Web, iOS, Android",
