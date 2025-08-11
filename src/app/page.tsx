@@ -92,7 +92,7 @@ export default function HomePage() {
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium">
               <Star className="w-4 h-4" />
-              Trusted by 50+ families
+              Trusted by 100+ families
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
