@@ -79,7 +79,7 @@ export default function HomePage() {
     {
       name: "Sohum Wadhwani",
       role: "Student",
-      content: "Perfect for getting to campus! I've met so many great people and we are all helping the environment.",
+      content: "It's perfect for getting to campus! I've met so many great people and we are all helping the environment.",
       rating: 5
     }
   ]
