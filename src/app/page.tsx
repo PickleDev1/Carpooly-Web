@@ -65,19 +65,19 @@ export default function HomePage() {
 
   const testimonials = [
     {
-      name: "Sarah Johnson",
+      name: "Suja Nagarajan",
       role: "Working Parent",
       content: "CarPooly has been a game-changer for our family. We save money and our kids love riding with their friends!",
       rating: 5
     },
     {
-      name: "Mike Chen",
+      name: "Chandrasekhar Cidambi",
       role: "Daily Commuter",
-      content: "I've been using CarPooly for 6 months and it&apos;s made my commute so much more enjoyable and affordable.",
+      content: "I've been using CarPooly for 2 months and it&apos;s made my commute so much more enjoyable and affordable.",
       rating: 5
     },
     {
-      name: "Emily Rodriguez",
+      name: "Sohum Wadhwani",
       role: "Student",
       content: "Perfect for getting to campus! I've met so many great people and we're all helping the environment.",
       rating: 5
