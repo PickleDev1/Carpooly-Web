@@ -8,6 +8,11 @@ import { MainLayout } from '@/components/layouts/MainLayout'
 import { ToastProvider } from '@/components/ui/toast'
 import { ActivityNotificationsClient } from '@/components/ActivityNotificationsClient'
 
+// Validate required environment variables
+if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  throw new Error('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required. Please check your environment variables.')
+}
+
 // Enhanced font configuration
 const inter = Inter({ 
   subsets: ['latin'],
