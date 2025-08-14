@@ -43,7 +43,7 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold mt-12 mb-4">The Birth of CarPooly</h2>
           
           <p className="text-gray-600 mb-6">
-            In 2023, during his junior year at high school, Nikhil began developing CarPooly. His vision was simple yet powerful: create a platform that would help parents coordinate their carpools efficiently, saving time, reducing stress, and building stronger community connections - all while making a meaningful impact on carbon emissions.
+            In 2021, during his freshman year at high school, Nikhil began developing CarPooly. His vision was simple yet powerful: create a platform that would help parents coordinate their carpools efficiently, saving time, reducing stress, and building stronger community connections - all while making a meaningful impact on carbon emissions.
           </p>
 
           <div className="bg-green-50 rounded-lg p-6 my-8">
