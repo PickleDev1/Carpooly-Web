@@ -2,11 +2,12 @@
 import { useEffect, useRef } from "react";
 import { useToast } from "@/components/ui/toast";
 import { addInviteAcceptedNotification } from "@/components/NotificationPopup";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useAuth } from "@clerk/nextjs";
 
 export function useActivityNotifications() {
   const { showToast } = useToast();
   const { user } = useUser();
+  const { getToken } = useAuth();
   const lastSeenId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -15,8 +16,22 @@ export function useActivityNotifications() {
 
     const poll = async () => {
       try {
-        // Use the backend API endpoint instead of frontend route
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activity?limit=10`);
+        // Get the authentication token
+        const token = await getToken();
+        
+        // Use the backend API endpoint with proper authentication
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activity?limit=10`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!res.ok) {
+          console.error('Activity API Error:', res.status, res.statusText);
+          return;
+        }
+        
         const activities = await res.json();
         // Filter for new invite_accepted/invite_rejected activities
         const newActivities = activities
@@ -44,6 +59,7 @@ export function useActivityNotifications() {
           });
         }
       } catch (e) {
+        console.error('Activity notifications error:', e);
         // Optionally handle errors
       }
     };
@@ -52,5 +68,5 @@ export function useActivityNotifications() {
     interval = setInterval(poll, 15000); // Poll every 15 seconds
 
     return () => clearInterval(interval);
-  }, [user?.id, showToast]);
+  }, [user?.id, showToast, getToken]);
 } 
