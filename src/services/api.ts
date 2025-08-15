@@ -12,11 +12,23 @@ export const useApi = () => {
   return useMemo(() => {
     const getHeaders = async () => {
       const token = await getToken()
-      return {
+      console.log('🔐 API Service: Token retrieved:', token ? 'Token exists' : 'No token')
+      console.log('🔐 API Service: Token length:', token ? token.length : 0)
+      console.log('🔐 API Service: Token preview:', token ? `${token.substring(0, 20)}...` : 'No token')
+      
+      const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         'X-User-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
       }
+      
+      console.log('🔐 API Service: Headers being sent:', {
+        'Content-Type': headers['Content-Type'],
+        'Authorization': headers['Authorization'] ? 'Bearer [TOKEN]' : 'No Authorization',
+        'X-User-Timezone': headers['X-User-Timezone']
+      })
+      
+      return headers
     }
 
     // Helper function to convert local time to UTC
@@ -131,18 +143,35 @@ export const useApi = () => {
         if (useMockApi) {
           return mockService.getCarpools()
         }
+        console.log('🔐 getCarpools: Starting API call for userId:', userId)
         const headers = await getHeaders()
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/carpools/users/${userId}`, { 
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/carpools/users/${userId}`
+        console.log('🔐 getCarpools: Making request to:', url)
+        console.log('🔐 getCarpools: Request headers:', {
+          'Content-Type': headers['Content-Type'],
+          'Authorization': headers['Authorization'] ? 'Bearer [TOKEN]' : 'No Authorization',
+          'X-User-Timezone': headers['X-User-Timezone']
+        })
+        
+        const response = await fetch(url, { 
           method: 'GET',
           headers 
         })
 
-        console.log('API: getCarpools response status:', response.status)
+        console.log('🔐 getCarpools: Response status:', response.status)
+        console.log('🔐 getCarpools: Response headers:', Object.fromEntries(response.headers.entries()))
 
         if (!response.ok) {
-          console.error('Carpools API Error:', response.status, response.statusText)
+          console.error('🔐 getCarpools: API Error - Status:', response.status, response.statusText)
           const responseText = await response.text()
-          console.error('Response body:', responseText)
+          console.error('🔐 getCarpools: Error response body:', responseText)
+          console.error('🔐 getCarpools: Full error details:', {
+            status: response.status,
+            statusText: response.statusText,
+            url: url,
+            headers: Object.fromEntries(response.headers.entries()),
+            body: responseText
+          })
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
