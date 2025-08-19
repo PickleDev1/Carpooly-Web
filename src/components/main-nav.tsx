@@ -19,6 +19,7 @@ export default function MainNav() {
           </Link>
           <div className="flex items-center space-x-6">
             <Link href="/create-carpool" className="text-white hover:text-gray-200">Carpools</Link>
+            <Link href="/matching" className="text-white hover:text-gray-200">Find Matches</Link>
             <Link href="/history" className="text-white hover:text-gray-200">History</Link>
             <Link href="/analytics" className="text-white hover:text-gray-200">Analytics</Link>
             <UserButton afterSignOutUrl="/" />
