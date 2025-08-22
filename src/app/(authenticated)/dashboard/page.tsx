@@ -538,6 +538,13 @@ export default function Dashboard() {
       color: 'bg-primary text-primary-foreground'
     },
     {
+      title: 'Find Matches',
+      description: 'Discover carpool partners',
+      icon: Users,
+      href: '/matching',
+      color: 'bg-orange-500 text-white'
+    },
+    {
       title: 'My Carpools',
       description: 'View and manage your carpools',
       icon: Car,
@@ -578,7 +585,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6">
         <Card className="hover-lift">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6">
             <CardTitle className="text-xs sm:text-sm font-medium">Total Carpools</CardTitle>
@@ -654,6 +661,31 @@ export default function Dashboard() {
             >
               Awaiting response
             </button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover-lift">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Potential Matches</CardTitle>
+            <div className="flex items-center gap-2">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold">0</div>
+            <Link 
+              href="/matching"
+              className="text-xs text-muted-foreground underline hover:text-primary focus:outline-none"
+              onMouseEnter={() => showTooltip({
+                id: 'potential-matches-link',
+                title: 'View Potential Matches',
+                content: 'Click to see and manage your carpool matches',
+                position: 'top'
+              })}
+              onMouseLeave={hideTooltip}
+            >
+              Find carpool partners
+            </Link>
           </CardContent>
         </Card>
 
@@ -784,6 +816,38 @@ export default function Dashboard() {
                 <InvitesTable />
               </CardContent>
             )}
+          </Card>
+
+          {/* Matching Section */}
+          <Card>
+            <CardHeader className="px-4 sm:px-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base sm:text-lg">Carpool Matching</CardTitle>
+                  <CardDescription className="text-sm">Find and connect with carpool partners</CardDescription>
+                </div>
+                <Link href="/matching">
+                  <Button variant="outline" size="sm">
+                    View All Matches
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="px-4 sm:px-6">
+              <div className="text-center py-8">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Ready to find carpool partners?</h3>
+                <p className="text-gray-600 mb-4">
+                  Set your preferences and discover compatible carpool buddies in your area
+                </p>
+                <Link href="/matching">
+                  <Button className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Start Matching
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
           </Card>
 
           {/* Active Ride Section */}
