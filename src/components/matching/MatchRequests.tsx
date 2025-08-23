@@ -15,7 +15,6 @@ import {
   Users
 } from 'lucide-react'
 import { useMatchingService, MatchRequest } from '@/services/matching'
-import Link from 'next/link'
 
 interface MatchRequestsProps {
   onStatsUpdate?: () => void
@@ -237,12 +236,24 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
               <h3 className="text-lg font-semibold mb-2">No incoming requests</h3>
               <p className="text-gray-600 mb-4">You don&apos;t have any carpool requests at the moment.</p>
               <p className="text-sm text-gray-500 mb-4">Start by finding potential carpool partners!</p>
-              <Link href="/matching">
-                <Button className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Find New Matches
-                </Button>
-              </Link>
+              <Button 
+                onClick={async () => {
+                  try {
+                    // Call the find-matches endpoint to generate new matches
+                    await matchingService.findMatches(true, 10)
+                    // Navigate to potential matches tab to see the results
+                    window.location.href = '/matching?tab=potential-matches'
+                  } catch (error) {
+                    console.error('Failed to find new matches:', error)
+                    // Still navigate even if finding matches fails
+                    window.location.href = '/matching?tab=potential-matches'
+                  }
+                }}
+                className="flex items-center gap-2"
+              >
+                <Users className="w-4 h-4" />
+                Find New Matches
+              </Button>
             </CardContent>
           </Card>
         ) : (
@@ -335,12 +346,24 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
               <h3 className="text-lg font-semibold mb-2">No outgoing requests</h3>
               <p className="text-gray-600 mb-4">You haven&apos;t sent any carpool requests yet.</p>
               <p className="text-sm text-gray-500 mb-4">Start by finding potential carpool partners!</p>
-              <Link href="/matching">
-                <Button className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Find New Matches
-                </Button>
-              </Link>
+              <Button 
+                onClick={async () => {
+                  try {
+                    // Call the find-matches endpoint to generate new matches
+                    await matchingService.findMatches(true, 10)
+                    // Navigate to potential matches tab to see the results
+                    window.location.href = '/matching?tab=potential-matches'
+                  } catch (error) {
+                    console.error('Failed to find new matches:', error)
+                    // Still navigate even if finding matches fails
+                    window.location.href = '/matching?tab=potential-matches'
+                  }
+                }}
+                className="flex items-center gap-2"
+              >
+                <Users className="w-4 h-4" />
+                Find New Matches
+              </Button>
             </CardContent>
           </Card>
         ) : (
