@@ -173,11 +173,11 @@ export default function MatchingPage() {
         </TabsList>
 
         <TabsContent value="matches" className="space-y-6">
-          <PotentialMatches onStatsUpdate={loadStats} />
+          <PotentialMatches onStatsUpdate={loadStats} onTabChange={setActiveTab} />
         </TabsContent>
 
         <TabsContent value="requests" className="space-y-6">
-          <MatchRequests onStatsUpdate={loadStats} />
+          <MatchRequests onStatsUpdate={loadStats} onTabChange={setActiveTab} />
         </TabsContent>
 
         <TabsContent value="stats" className="space-y-6">

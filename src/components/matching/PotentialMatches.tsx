@@ -10,11 +10,12 @@ import { useMatchingService, PotentialMatch } from '@/services/matching'
 
 interface PotentialMatchesProps {
   onStatsUpdate?: () => void
+  onTabChange?: (tab: string) => void
 }
 
 // No mock data needed - backend returns counts
 
-export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
+export function PotentialMatches({ onStatsUpdate, onTabChange }: PotentialMatchesProps) {
   const [matches, setMatches] = useState<{
     pending: PotentialMatch[]
     accepted: PotentialMatch[]
@@ -98,9 +99,9 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
           </p>
           <div className="flex gap-3 justify-center">
             <Button onClick={loadMatches} variant="outline">Refresh Matches</Button>
-            <Button onClick={() => window.location.href = '/matching?tab=preferences'}>
-              Adjust Preferences
-            </Button>
+                            <Button onClick={() => onTabChange?.('preferences')}>
+                  Adjust Preferences
+                </Button>
           </div>
         </CardContent>
       </Card>

@@ -18,6 +18,7 @@ import { useMatchingService, MatchRequest } from '@/services/matching'
 
 interface MatchRequestsProps {
   onStatsUpdate?: () => void
+  onTabChange?: (tab: string) => void
 }
 
 interface RequestsState {
@@ -67,7 +68,7 @@ const mockRequests: RequestsState = {
   ]
 }
 
-export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
+export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps) {
   const [requests, setRequests] = useState(mockRequests)
   const [loading, setLoading] = useState(false)
   const [processingRequest, setProcessingRequest] = useState<string | null>(null)
@@ -242,11 +243,11 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
                     // Call the find-matches endpoint to generate new matches
                     await matchingService.findMatches(true, 10)
                     // Navigate to potential matches tab to see the results
-                    window.location.href = '/matching?tab=potential-matches'
+                    onTabChange?.('matches')
                   } catch (error) {
                     console.error('Failed to find new matches:', error)
                     // Still navigate even if finding matches fails
-                    window.location.href = '/matching?tab=potential-matches'
+                    onTabChange?.('matches')
                   }
                 }}
                 className="flex items-center gap-2"
@@ -352,11 +353,11 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
                     // Call the find-matches endpoint to generate new matches
                     await matchingService.findMatches(true, 10)
                     // Navigate to potential matches tab to see the results
-                    window.location.href = '/matching?tab=potential-matches'
+                    onTabChange?.('matches')
                   } catch (error) {
                     console.error('Failed to find new matches:', error)
                     // Still navigate even if finding matches fails
-                    window.location.href = '/matching?tab=potential-matches'
+                    onTabChange?.('matches')
                   }
                 }}
                 className="flex items-center gap-2"
