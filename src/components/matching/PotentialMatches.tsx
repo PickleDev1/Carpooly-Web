@@ -30,8 +30,8 @@ const mockMatches: PotentialMatch[] = [
       id: 'user1',
       name: 'Sarah Johnson',
       display_name: 'Sarah J.',
-      home_location: { lat: 37.7749, lng: -122.4194 }
-      // destination_location omitted since backend uses home_location for both
+      home_location: { lat: 37.7749, lng: -122.4194 },
+      destination_location: { lat: 37.7849, lng: -122.4094 }
     },
     compatibility_score: 0.92,
     route_overlap_percentage: 85,
@@ -50,8 +50,8 @@ const mockMatches: PotentialMatch[] = [
       id: 'user2',
       name: 'Mike Chen',
       display_name: 'Mike C.',
-      home_location: { lat: 37.7849, lng: -122.4294 }
-      // destination_location omitted since backend uses home_location for both
+      home_location: { lat: 37.7849, lng: -122.4294 },
+      destination_location: { lat: 37.7849, lng: -122.4094 }
     },
     compatibility_score: 0.87,
     route_overlap_percentage: 78,

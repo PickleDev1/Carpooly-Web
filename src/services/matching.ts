@@ -2,6 +2,9 @@ import { useAuth } from '@clerk/nextjs'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
+console.log('🔐 Matching Service: API_URL:', API_URL)
+console.log('🔐 Matching Service: API_URL exists:', !!API_URL)
+
 export interface MatchingPreferences {
   max_detour_minutes: number
   preferred_group_size: number
@@ -60,10 +63,26 @@ export const useMatchingService = () => {
 
   const getHeaders = async () => {
     const token = await getToken()
-    return {
+    console.log('🔐 Matching Service: Token received:', token ? 'Token exists' : 'No token')
+    console.log('🔐 Matching Service: Token length:', token ? token.length : 0)
+    console.log('🔐 Matching Service: Token preview:', token ? `${token.substring(0, 20)}...` : 'No token')
+    
+    if (!token) {
+      console.error('🔐 Matching Service: No token available!')
+      throw new Error('No authentication token available')
+    }
+    
+    const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     }
+    
+    console.log('🔐 Matching Service: Headers being sent:', {
+      'Content-Type': headers['Content-Type'],
+      'Authorization': headers['Authorization'] ? 'Bearer [TOKEN]' : 'No Authorization',
+    })
+    
+    return headers
   }
 
   return {
