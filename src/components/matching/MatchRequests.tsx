@@ -84,6 +84,7 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
       const data = await matchingService.getRequests()
       console.log('✅ MatchRequests: Successfully loaded requests:', data)
       setRequests(data)
+      console.log('🔄 MatchRequests: Setting loading to false (success)')
     } catch (error) {
       console.error('❌ MatchRequests: Failed to load requests:', error)
       if (error instanceof Error) {
@@ -96,14 +97,16 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
       }
       // Use mock data for development
       setRequests(mockRequests)
+      console.log('🔄 MatchRequests: Setting loading to false (error)')
     } finally {
       setLoading(false)
+      console.log('🔄 MatchRequests: Loading state set to false')
     }
-  }, [matchingService])
+  }, [])
 
   useEffect(() => {
     loadRequests()
-  }, [loadRequests])
+  }, []) // Only run once on mount
 
   const handleAcceptRequest = async (requestId: string) => {
     setProcessingRequest(requestId)
@@ -185,12 +188,15 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
     return 'Expires soon'
   }
 
+  console.log('🔄 MatchRequests: Current loading state:', loading)
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading requests...</p>
+          <p className="text-sm text-gray-500 mt-2">Debug: loading = {loading.toString()}</p>
         </div>
       </div>
     )
