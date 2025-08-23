@@ -11,9 +11,11 @@ import {
   Check, 
   X,
   User,
-  Calendar
+  Calendar,
+  Users
 } from 'lucide-react'
 import { useMatchingService, MatchRequest } from '@/services/matching'
+import Link from 'next/link'
 
 interface MatchRequestsProps {
   onStatsUpdate?: () => void
@@ -196,7 +198,14 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
             <CardContent className="p-8 text-center">
               <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No incoming requests</h3>
-              <p className="text-gray-600">You don&apos;t have any carpool requests at the moment.</p>
+              <p className="text-gray-600 mb-4">You don&apos;t have any carpool requests at the moment.</p>
+              <p className="text-sm text-gray-500 mb-4">Start by finding potential carpool partners!</p>
+              <Link href="/matching">
+                <Button className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Find New Matches
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         ) : (
@@ -287,7 +296,14 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
             <CardContent className="p-8 text-center">
               <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No outgoing requests</h3>
-              <p className="text-gray-600">You haven&apos;t sent any carpool requests yet.</p>
+              <p className="text-gray-600 mb-4">You haven&apos;t sent any carpool requests yet.</p>
+              <p className="text-sm text-gray-500 mb-4">Start by finding potential carpool partners!</p>
+              <Link href="/matching">
+                <Button className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Find New Matches
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         ) : (

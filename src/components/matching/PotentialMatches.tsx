@@ -140,7 +140,15 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
           <p className="text-gray-600 mb-4">
             We couldn&apos;t find any compatible carpool partners in your area right now.
           </p>
-          <Button onClick={loadMatches}>Refresh Matches</Button>
+          <p className="text-sm text-gray-500 mb-4">
+            Try adjusting your preferences or expanding your search area to find more potential matches.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button onClick={loadMatches} variant="outline">Refresh Matches</Button>
+            <Button onClick={() => window.location.href = '/matching?tab=preferences'}>
+              Adjust Preferences
+            </Button>
+          </div>
         </CardContent>
       </Card>
     )
