@@ -138,13 +138,31 @@ export const useMatchingService = () => {
       expired_matches: PotentialMatch[]
     }> {
       const headers = await getHeaders()
-      const response = await fetch(`${API_URL}/api/matching/potential-matches`, { headers })
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch potential matches')
+      // Add timeout to prevent hanging
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      
+      try {
+        const response = await fetch(`${API_URL}/api/matching/potential-matches`, { 
+          headers,
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch potential matches: ${response.status} ${response.statusText}`)
+        }
+        
+        return response.json()
+      } catch (error) {
+        clearTimeout(timeoutId)
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error('Request timed out after 10 seconds')
+        }
+        throw error
       }
-      
-      return response.json()
     },
 
     // Send carpool request
@@ -188,13 +206,31 @@ export const useMatchingService = () => {
       outgoing: MatchRequest[]
     }> {
       const headers = await getHeaders()
-      const response = await fetch(`${API_URL}/api/matching/requests`, { headers })
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch requests')
+      // Add timeout to prevent hanging
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      
+      try {
+        const response = await fetch(`${API_URL}/api/matching/requests`, { 
+          headers,
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch requests: ${response.status} ${response.statusText}`)
+        }
+        
+        return response.json()
+      } catch (error) {
+        clearTimeout(timeoutId)
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error('Request timed out after 10 seconds')
+        }
+        throw error
       }
-      
-      return response.json()
     },
 
     // Start or update matching session

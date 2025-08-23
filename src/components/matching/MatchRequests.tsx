@@ -72,16 +72,28 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
   const [requests, setRequests] = useState(mockRequests)
   const [loading, setLoading] = useState(false)
   const [processingRequest, setProcessingRequest] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   
   const matchingService = useMatchingService()
 
   const loadRequests = useCallback(async () => {
     setLoading(true)
+    setError(null)
     try {
+      console.log('🔄 MatchRequests: Starting to load requests...')
       const data = await matchingService.getRequests()
+      console.log('✅ MatchRequests: Successfully loaded requests:', data)
       setRequests(data)
     } catch (error) {
-      console.error('Failed to load requests:', error)
+      console.error('❌ MatchRequests: Failed to load requests:', error)
+      if (error instanceof Error) {
+        console.error('❌ MatchRequests: Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        })
+        setError(error.message)
+      }
       // Use mock data for development
       setRequests(mockRequests)
     } finally {
@@ -186,11 +198,30 @@ export function MatchRequests({ onStatsUpdate }: MatchRequestsProps) {
 
   return (
     <div className="space-y-8">
+      {/* Error Display */}
+      {error && (
+        <Card className="mb-6 border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <X className="w-5 h-5 text-red-500" />
+                <span className="text-red-700 font-medium">Error loading requests: {error}</span>
+              </div>
+              <Button variant="outline" size="sm" onClick={loadRequests} className="text-red-600 border-red-300 hover:bg-red-100">
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Incoming Requests */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Incoming Requests ({requests.incoming.filter(r => r.status === 'pending').length})</h2>
-          <Button variant="outline" size="sm" onClick={loadRequests}>Refresh</Button>
+          <Button variant="outline" size="sm" onClick={loadRequests} disabled={loading}>
+            {loading ? 'Loading...' : 'Refresh'}
+          </Button>
         </div>
         
         {requests.incoming.length === 0 ? (
