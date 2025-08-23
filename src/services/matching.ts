@@ -266,6 +266,55 @@ export const useMatchingService = () => {
       }
       
       return response.json()
+    },
+
+    // Get matching statistics
+    async getStats(): Promise<{
+      total_matches_generated: number
+      match_acceptance_rate: number
+      average_compatibility_score: number
+      total_carpools_formed: number
+      total_savings: number
+      average_route_overlap: number
+      most_common_match_reasons: string[]
+      geographic_distribution: {
+        nearby: number
+        medium_distance: number
+        far: number
+      }
+      time_to_acceptance: number
+      monthly_trends: {
+        month: string
+        matches: number
+        acceptances: number
+      }[]
+    }> {
+      const headers = await getHeaders()
+      
+      // Add timeout to prevent hanging
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      
+      try {
+        const response = await fetch(`${API_URL}/api/matching/stats`, { 
+          headers,
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch stats: ${response.status} ${response.statusText}`)
+        }
+        
+        return response.json()
+      } catch (error) {
+        clearTimeout(timeoutId)
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error('Request timed out after 10 seconds')
+        }
+        throw error
+      }
     }
   }
 } 

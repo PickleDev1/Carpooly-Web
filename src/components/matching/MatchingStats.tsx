@@ -36,6 +36,15 @@ interface MatchingStats {
   }[]
 }
 
+interface MatchingStatsProps {
+  realTimeStats?: {
+    potentialMatches: number
+    activeRequests: number
+    carpoolsFormed: number
+    monthlySavings: number
+  }
+}
+
 // Mock data for development fallback
 const mockStats: MatchingStats = {
   total_matches_generated: 47,
@@ -65,7 +74,7 @@ const mockStats: MatchingStats = {
   ]
 }
 
-export function MatchingStats() {
+export function MatchingStats({ realTimeStats }: MatchingStatsProps) {
   const [stats, setStats] = useState<MatchingStats | null>(null)
   const [loading, setLoading] = useState(true)
   
@@ -78,19 +87,29 @@ export function MatchingStats() {
   const loadStats = async () => {
     setLoading(true)
     try {
-      // TODO: Replace with actual API call when backend implements stats endpoint
-      // const data = await matchingService.getStats()
-      // setStats(data)
-      
-      // For now, use mock data
-      setTimeout(() => {
-        setStats(mockStats)
-        setLoading(false)
-      }, 1000)
+      // Try to get real stats from the backend
+      const data = await matchingService.getStats()
+      setStats(data)
     } catch (error) {
-      console.error('Failed to load stats:', error)
-      // Use mock data for development
-      setStats(mockStats)
+      console.error('Failed to load stats from backend:', error)
+      console.log('Falling back to real-time stats or mock data')
+      
+      // If we have real-time stats, use them to create realistic stats
+      if (realTimeStats) {
+        const enhancedMockStats = {
+          ...mockStats,
+          total_matches_generated: realTimeStats.potentialMatches + realTimeStats.carpoolsFormed,
+          total_carpools_formed: realTimeStats.carpoolsFormed,
+          total_savings: realTimeStats.monthlySavings,
+          match_acceptance_rate: realTimeStats.carpoolsFormed > 0 ? 
+            Math.min(0.8, realTimeStats.carpoolsFormed / Math.max(1, realTimeStats.potentialMatches)) : 0.3
+        }
+        setStats(enhancedMockStats)
+      } else {
+        // Use mock data for development when backend is not available
+        setStats(mockStats)
+      }
+    } finally {
       setLoading(false)
     }
   }

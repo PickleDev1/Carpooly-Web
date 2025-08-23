@@ -181,7 +181,7 @@ export default function MatchingPage() {
         </TabsContent>
 
         <TabsContent value="stats" className="space-y-6">
-          <MatchingStats />
+          <MatchingStats realTimeStats={stats} />
         </TabsContent>
 
         <TabsContent value="preferences" className="space-y-6">
