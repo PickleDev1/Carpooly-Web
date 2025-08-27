@@ -23,11 +23,23 @@ const defaultPreferences: MatchingPreferences = {
   driver_preference: 'flexible',
   schedule_flexibility_minutes: 30,
   max_pickup_distance_miles: 5.0,
-  min_compatibility_score: 0.7,
   notification_preferences: {
     email: true,
     push: true,
     sms: false
+  },
+  user_demographics: {
+    age_range: '26-35',
+    gender: 'prefer_not_to_say',
+    occupation: '',
+    student_status: 'not_student',
+    company: ''
+  },
+  demographic_preferences: {
+    age_preferences: ['18-25', '26-35', '36-45', '46-55'],
+    gender_preferences: ['any'],
+    student_preference: 'both',
+    occupation_preferences: []
   }
 }
 
@@ -196,40 +208,216 @@ export function MatchingPreferences() {
               Schedule Preferences
             </CardTitle>
             <CardDescription>
-              Set your schedule flexibility and compatibility requirements
+              Set your schedule flexibility
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="flexibility">Schedule Flexibility (minutes)</Label>
+              <Input
+                id="flexibility"
+                type="number"
+                value={preferences.schedule_flexibility_minutes}
+                onChange={(e) => updatePreference('schedule_flexibility_minutes', parseInt(e.target.value))}
+                min="0"
+                max="120"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                How much your departure time can vary
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* User Demographics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Your Demographics
+            </CardTitle>
+            <CardDescription>
+              Tell us about yourself to help with matching
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="flexibility">Schedule Flexibility (minutes)</Label>
-                <Input
-                  id="flexibility"
-                  type="number"
-                  value={preferences.schedule_flexibility_minutes}
-                  onChange={(e) => updatePreference('schedule_flexibility_minutes', parseInt(e.target.value))}
-                  min="0"
-                  max="120"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  How much your departure time can vary
-                </p>
+                <Label htmlFor="age_range">Age Range</Label>
+                <MatchingSelect
+                  value={preferences.user_demographics.age_range}
+                  onValueChange={(value) => updatePreference('user_demographics', {
+                    ...preferences.user_demographics,
+                    age_range: value as any
+                  })}
+                >
+                  <MatchingSelectTrigger>
+                    <MatchingSelectValue />
+                  </MatchingSelectTrigger>
+                  <MatchingSelectContent>
+                    <MatchingSelectItem value="18-25">18-25</MatchingSelectItem>
+                    <MatchingSelectItem value="26-35">26-35</MatchingSelectItem>
+                    <MatchingSelectItem value="36-45">36-45</MatchingSelectItem>
+                    <MatchingSelectItem value="46-55">46-55</MatchingSelectItem>
+                    <MatchingSelectItem value="56-65">56-65</MatchingSelectItem>
+                    <MatchingSelectItem value="65+">65+</MatchingSelectItem>
+                  </MatchingSelectContent>
+                </MatchingSelect>
               </div>
               
               <div>
-                <Label htmlFor="compatibility">Minimum Compatibility Score</Label>
+                <Label htmlFor="gender">Gender</Label>
+                <MatchingSelect
+                  value={preferences.user_demographics.gender}
+                  onValueChange={(value) => updatePreference('user_demographics', {
+                    ...preferences.user_demographics,
+                    gender: value as any
+                  })}
+                >
+                  <MatchingSelectTrigger>
+                    <MatchingSelectValue />
+                  </MatchingSelectTrigger>
+                  <MatchingSelectContent>
+                    <MatchingSelectItem value="male">Male</MatchingSelectItem>
+                    <MatchingSelectItem value="female">Female</MatchingSelectItem>
+                    <MatchingSelectItem value="non-binary">Non-binary</MatchingSelectItem>
+                    <MatchingSelectItem value="prefer_not_to_say">Prefer not to say</MatchingSelectItem>
+                  </MatchingSelectContent>
+                </MatchingSelect>
+              </div>
+              
+              <div>
+                <Label htmlFor="occupation">Occupation</Label>
                 <Input
-                  id="compatibility"
-                  type="number"
-                  step="0.1"
-                  value={preferences.min_compatibility_score}
-                  onChange={(e) => updatePreference('min_compatibility_score', parseFloat(e.target.value))}
-                  min="0.1"
-                  max="1.0"
+                  id="occupation"
+                  value={preferences.user_demographics.occupation}
+                  onChange={(e) => updatePreference('user_demographics', {
+                    ...preferences.user_demographics,
+                    occupation: e.target.value
+                  })}
+                  placeholder="e.g., Software Engineer, Student, Teacher"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Minimum match quality (0.1 - 1.0)
-                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="student_status">Student Status</Label>
+                <MatchingSelect
+                  value={preferences.user_demographics.student_status || 'not_student'}
+                  onValueChange={(value) => updatePreference('user_demographics', {
+                    ...preferences.user_demographics,
+                    student_status: value as any
+                  })}
+                >
+                  <MatchingSelectTrigger>
+                    <MatchingSelectValue />
+                  </MatchingSelectTrigger>
+                  <MatchingSelectContent>
+                    <MatchingSelectItem value="undergraduate">Undergraduate Student</MatchingSelectItem>
+                    <MatchingSelectItem value="graduate">Graduate Student</MatchingSelectItem>
+                    <MatchingSelectItem value="not_student">Not a Student</MatchingSelectItem>
+                  </MatchingSelectContent>
+                </MatchingSelect>
+              </div>
+              
+              <div className="md:col-span-2">
+                <Label htmlFor="company">Company/Institution (Optional)</Label>
+                <Input
+                  id="company"
+                  value={preferences.user_demographics.company || ''}
+                  onChange={(e) => updatePreference('user_demographics', {
+                    ...preferences.user_demographics,
+                    company: e.target.value
+                  })}
+                  placeholder="e.g., Google, Stanford University"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Demographic Preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Demographic Preferences
+            </CardTitle>
+            <CardDescription>
+              What demographics are you comfortable carpooling with?
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Age Preferences</Label>
+                <div className="space-y-2 mt-2">
+                  {(['18-25', '26-35', '36-45', '46-55', '56-65', '65+'] as const).map((age) => (
+                    <div key={age} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`age-${age}`}
+                        checked={preferences.demographic_preferences.age_preferences.includes(age)}
+                        onChange={(e) => {
+                          const newPreferences = e.target.checked
+                            ? [...preferences.demographic_preferences.age_preferences, age]
+                            : preferences.demographic_preferences.age_preferences.filter(a => a !== age)
+                          updatePreference('demographic_preferences', {
+                            ...preferences.demographic_preferences,
+                            age_preferences: newPreferences
+                          })
+                        }}
+                        className="rounded"
+                      />
+                      <Label htmlFor={`age-${age}`} className="text-sm">{age}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <Label>Gender Preferences</Label>
+                <div className="space-y-2 mt-2">
+                  {(['male', 'female', 'non-binary', 'any'] as const).map((gender) => (
+                    <div key={gender} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`gender-${gender}`}
+                        checked={preferences.demographic_preferences.gender_preferences.includes(gender)}
+                        onChange={(e) => {
+                          const newPreferences = e.target.checked
+                            ? [...preferences.demographic_preferences.gender_preferences, gender]
+                            : preferences.demographic_preferences.gender_preferences.filter(g => g !== gender)
+                          updatePreference('demographic_preferences', {
+                            ...preferences.demographic_preferences,
+                            gender_preferences: newPreferences
+                          })
+                        }}
+                        className="rounded"
+                      />
+                      <Label htmlFor={`gender-${gender}`} className="text-sm capitalize">{gender}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="md:col-span-2">
+                <Label htmlFor="student_preference">Student Preference</Label>
+                <MatchingSelect
+                  value={preferences.demographic_preferences.student_preference}
+                  onValueChange={(value) => updatePreference('demographic_preferences', {
+                    ...preferences.demographic_preferences,
+                    student_preference: value as any
+                  })}
+                >
+                  <MatchingSelectTrigger>
+                    <MatchingSelectValue />
+                  </MatchingSelectTrigger>
+                  <MatchingSelectContent>
+                    <MatchingSelectItem value="students_only">Students Only</MatchingSelectItem>
+                    <MatchingSelectItem value="professionals_only">Professionals Only</MatchingSelectItem>
+                    <MatchingSelectItem value="both">Both Students and Professionals</MatchingSelectItem>
+                  </MatchingSelectContent>
+                </MatchingSelect>
               </div>
             </div>
           </CardContent>

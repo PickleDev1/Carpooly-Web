@@ -11,11 +11,25 @@ export interface MatchingPreferences {
   driver_preference: 'driver_only' | 'passenger_only' | 'flexible'
   schedule_flexibility_minutes: number
   max_pickup_distance_miles: number
-  min_compatibility_score: number
   notification_preferences: {
     email: boolean
     push: boolean
     sms: boolean
+  }
+  // User demographics
+  user_demographics: {
+    age_range: '18-25' | '26-35' | '36-45' | '46-55' | '56-65' | '65+'
+    gender: 'male' | 'female' | 'non-binary' | 'prefer_not_to_say'
+    occupation: string
+    student_status?: 'undergraduate' | 'graduate' | 'not_student'
+    company?: string
+  }
+  // Demographic preferences for matching
+  demographic_preferences: {
+    age_preferences: ('18-25' | '26-35' | '36-45' | '46-55' | '56-65' | '65+')[]
+    gender_preferences: ('male' | 'female' | 'non-binary' | 'any')[]
+    student_preference: 'students_only' | 'professionals_only' | 'both'
+    occupation_preferences: string[]
   }
 }
 
