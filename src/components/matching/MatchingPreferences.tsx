@@ -53,7 +53,21 @@ export function MatchingPreferences() {
   const loadPreferences = useCallback(async () => {
     try {
       const data = await matchingService.getPreferences()
-      setPreferences(data)
+      // Merge with default preferences to ensure all new fields exist
+      const mergedPreferences = {
+        ...defaultPreferences,
+        ...data,
+        // Ensure new demographic fields exist
+        user_demographics: {
+          ...defaultPreferences.user_demographics,
+          ...(data.user_demographics || {})
+        },
+        demographic_preferences: {
+          ...defaultPreferences.demographic_preferences,
+          ...(data.demographic_preferences || {})
+        }
+      }
+      setPreferences(mergedPreferences)
     } catch (error) {
       console.error('Failed to load preferences:', error)
       // Use default preferences for development
@@ -245,7 +259,7 @@ export function MatchingPreferences() {
               <div>
                 <Label htmlFor="age_range">Age Range</Label>
                 <MatchingSelect
-                  value={preferences.user_demographics.age_range}
+                  value={preferences.user_demographics?.age_range || '26-35'}
                   onValueChange={(value) => updatePreference('user_demographics', {
                     ...preferences.user_demographics,
                     age_range: value as any
@@ -268,7 +282,7 @@ export function MatchingPreferences() {
               <div>
                 <Label htmlFor="gender">Gender</Label>
                 <MatchingSelect
-                  value={preferences.user_demographics.gender}
+                  value={preferences.user_demographics?.gender || 'prefer_not_to_say'}
                   onValueChange={(value) => updatePreference('user_demographics', {
                     ...preferences.user_demographics,
                     gender: value as any
@@ -290,7 +304,7 @@ export function MatchingPreferences() {
                 <Label htmlFor="occupation">Occupation</Label>
                 <Input
                   id="occupation"
-                  value={preferences.user_demographics.occupation}
+                  value={preferences.user_demographics?.occupation || ''}
                   onChange={(e) => updatePreference('user_demographics', {
                     ...preferences.user_demographics,
                     occupation: e.target.value
@@ -302,7 +316,7 @@ export function MatchingPreferences() {
               <div>
                 <Label htmlFor="student_status">Student Status</Label>
                 <MatchingSelect
-                  value={preferences.user_demographics.student_status || 'not_student'}
+                  value={preferences.user_demographics?.student_status || 'not_student'}
                   onValueChange={(value) => updatePreference('user_demographics', {
                     ...preferences.user_demographics,
                     student_status: value as any
@@ -323,7 +337,7 @@ export function MatchingPreferences() {
                 <Label htmlFor="company">Company/Institution (Optional)</Label>
                 <Input
                   id="company"
-                  value={preferences.user_demographics.company || ''}
+                  value={preferences.user_demographics?.company || ''}
                   onChange={(e) => updatePreference('user_demographics', {
                     ...preferences.user_demographics,
                     company: e.target.value
@@ -356,11 +370,12 @@ export function MatchingPreferences() {
                       <input
                         type="checkbox"
                         id={`age-${age}`}
-                        checked={preferences.demographic_preferences.age_preferences.includes(age)}
+                        checked={preferences.demographic_preferences?.age_preferences?.includes(age) || false}
                         onChange={(e) => {
+                          const currentPreferences = preferences.demographic_preferences?.age_preferences || []
                           const newPreferences = e.target.checked
-                            ? [...preferences.demographic_preferences.age_preferences, age]
-                            : preferences.demographic_preferences.age_preferences.filter(a => a !== age)
+                            ? [...currentPreferences, age]
+                            : currentPreferences.filter(a => a !== age)
                           updatePreference('demographic_preferences', {
                             ...preferences.demographic_preferences,
                             age_preferences: newPreferences
@@ -382,11 +397,12 @@ export function MatchingPreferences() {
                       <input
                         type="checkbox"
                         id={`gender-${gender}`}
-                        checked={preferences.demographic_preferences.gender_preferences.includes(gender)}
+                        checked={preferences.demographic_preferences?.gender_preferences?.includes(gender) || false}
                         onChange={(e) => {
+                          const currentPreferences = preferences.demographic_preferences?.gender_preferences || []
                           const newPreferences = e.target.checked
-                            ? [...preferences.demographic_preferences.gender_preferences, gender]
-                            : preferences.demographic_preferences.gender_preferences.filter(g => g !== gender)
+                            ? [...currentPreferences, gender]
+                            : currentPreferences.filter(g => g !== gender)
                           updatePreference('demographic_preferences', {
                             ...preferences.demographic_preferences,
                             gender_preferences: newPreferences
@@ -403,7 +419,7 @@ export function MatchingPreferences() {
               <div className="md:col-span-2">
                 <Label htmlFor="student_preference">Student Preference</Label>
                 <MatchingSelect
-                  value={preferences.demographic_preferences.student_preference}
+                  value={preferences.demographic_preferences?.student_preference || 'both'}
                   onValueChange={(value) => updatePreference('demographic_preferences', {
                     ...preferences.demographic_preferences,
                     student_preference: value as any
