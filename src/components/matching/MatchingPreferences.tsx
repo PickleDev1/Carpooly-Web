@@ -93,17 +93,27 @@ export function MatchingPreferences() {
   }
 
   const updatePreference = (key: keyof MatchingPreferences, value: any) => {
-    setPreferences(prev => ({ ...prev, [key]: value }))
+    console.log('Updating preference:', key, 'with value:', value)
+    setPreferences(prev => {
+      const newState = { ...prev, [key]: value }
+      console.log('New state:', newState)
+      return newState
+    })
   }
 
   const updateNestedPreference = (parentKey: keyof MatchingPreferences, childKey: string, value: any) => {
-    setPreferences(prev => ({
-      ...prev,
-      [parentKey]: {
-        ...(prev[parentKey] as any),
-        [childKey]: value
+    console.log('Updating nested preference:', parentKey, childKey, 'with value:', value)
+    setPreferences(prev => {
+      const newState = {
+        ...prev,
+        [parentKey]: {
+          ...(prev[parentKey] as any || {}),
+          [childKey]: value
+        }
       }
-    }))
+      console.log('New nested state:', newState)
+      return newState
+    })
   }
 
   const updateNotificationPreference = (key: keyof MatchingPreferences['notification_preferences'], value: boolean) => {
