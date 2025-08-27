@@ -48,6 +48,8 @@ export function MatchingPreferences() {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   
+  console.log('🔧 MatchingPreferences render - preferences state:', preferences)
+  
   const matchingService = useMatchingService()
 
   const loadPreferences = useCallback(async () => {
@@ -73,9 +75,10 @@ export function MatchingPreferences() {
       // Use default preferences for development
       setPreferences(defaultPreferences)
     }
-  }, [matchingService])
+  }, [])
 
   useEffect(() => {
+    console.log('🔧 MatchingPreferences component mounted')
     loadPreferences()
   }, [loadPreferences])
 
