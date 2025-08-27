@@ -96,6 +96,16 @@ export function MatchingPreferences() {
     setPreferences(prev => ({ ...prev, [key]: value }))
   }
 
+  const updateNestedPreference = (parentKey: keyof MatchingPreferences, childKey: string, value: any) => {
+    setPreferences(prev => ({
+      ...prev,
+      [parentKey]: {
+        ...(prev[parentKey] as any),
+        [childKey]: value
+      }
+    }))
+  }
+
   const updateNotificationPreference = (key: keyof MatchingPreferences['notification_preferences'], value: boolean) => {
     setPreferences(prev => ({
       ...prev,
@@ -260,10 +270,7 @@ export function MatchingPreferences() {
                 <Label htmlFor="age_range">Age Range</Label>
                 <MatchingSelect
                   value={preferences.user_demographics?.age_range || '26-35'}
-                  onValueChange={(value) => updatePreference('user_demographics', {
-                    ...preferences.user_demographics,
-                    age_range: value as any
-                  })}
+                  onValueChange={(value) => updateNestedPreference('user_demographics', 'age_range', value)}
                 >
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
@@ -283,10 +290,7 @@ export function MatchingPreferences() {
                 <Label htmlFor="gender">Gender</Label>
                 <MatchingSelect
                   value={preferences.user_demographics?.gender || 'prefer_not_to_say'}
-                  onValueChange={(value) => updatePreference('user_demographics', {
-                    ...preferences.user_demographics,
-                    gender: value as any
-                  })}
+                  onValueChange={(value) => updateNestedPreference('user_demographics', 'gender', value)}
                 >
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
@@ -305,10 +309,7 @@ export function MatchingPreferences() {
                 <Input
                   id="occupation"
                   value={preferences.user_demographics?.occupation || ''}
-                  onChange={(e) => updatePreference('user_demographics', {
-                    ...preferences.user_demographics,
-                    occupation: e.target.value
-                  })}
+                  onChange={(e) => updateNestedPreference('user_demographics', 'occupation', e.target.value)}
                   placeholder="e.g., Software Engineer, Student, Teacher"
                 />
               </div>
@@ -317,10 +318,7 @@ export function MatchingPreferences() {
                 <Label htmlFor="student_status">Student Status</Label>
                 <MatchingSelect
                   value={preferences.user_demographics?.student_status || 'not_student'}
-                  onValueChange={(value) => updatePreference('user_demographics', {
-                    ...preferences.user_demographics,
-                    student_status: value as any
-                  })}
+                  onValueChange={(value) => updateNestedPreference('user_demographics', 'student_status', value)}
                 >
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
@@ -338,10 +336,7 @@ export function MatchingPreferences() {
                 <Input
                   id="company"
                   value={preferences.user_demographics?.company || ''}
-                  onChange={(e) => updatePreference('user_demographics', {
-                    ...preferences.user_demographics,
-                    company: e.target.value
-                  })}
+                  onChange={(e) => updateNestedPreference('user_demographics', 'company', e.target.value)}
                   placeholder="e.g., Google, Stanford University"
                 />
               </div>
@@ -376,10 +371,7 @@ export function MatchingPreferences() {
                           const newPreferences = e.target.checked
                             ? [...currentPreferences, age]
                             : currentPreferences.filter(a => a !== age)
-                          updatePreference('demographic_preferences', {
-                            ...preferences.demographic_preferences,
-                            age_preferences: newPreferences
-                          })
+                          updateNestedPreference('demographic_preferences', 'age_preferences', newPreferences)
                         }}
                         className="rounded"
                       />
@@ -403,10 +395,7 @@ export function MatchingPreferences() {
                           const newPreferences = e.target.checked
                             ? [...currentPreferences, gender]
                             : currentPreferences.filter(g => g !== gender)
-                          updatePreference('demographic_preferences', {
-                            ...preferences.demographic_preferences,
-                            gender_preferences: newPreferences
-                          })
+                          updateNestedPreference('demographic_preferences', 'gender_preferences', newPreferences)
                         }}
                         className="rounded"
                       />
@@ -420,10 +409,7 @@ export function MatchingPreferences() {
                 <Label htmlFor="student_preference">Student Preference</Label>
                 <MatchingSelect
                   value={preferences.demographic_preferences?.student_preference || 'both'}
-                  onValueChange={(value) => updatePreference('demographic_preferences', {
-                    ...preferences.demographic_preferences,
-                    student_preference: value as any
-                  })}
+                  onValueChange={(value) => updateNestedPreference('demographic_preferences', 'student_preference', value)}
                 >
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
