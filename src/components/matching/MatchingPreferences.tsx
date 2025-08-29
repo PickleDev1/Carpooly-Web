@@ -47,6 +47,7 @@ export function MatchingPreferences() {
   const [preferences, setPreferences] = useState<MatchingPreferences>(defaultPreferences)
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [autoSaving, setAutoSaving] = useState(false)
   
   console.log('🔧 MatchingPreferences render - preferences state:', preferences)
   
@@ -81,6 +82,29 @@ export function MatchingPreferences() {
     console.log('🔧 MatchingPreferences component mounted')
     loadPreferences()
   }, [loadPreferences])
+
+  // Auto-save preferences when component mounts (when user clicks "Adjust Preferences")
+  useEffect(() => {
+    const autoSavePreferences = async () => {
+      try {
+        setAutoSaving(true)
+        console.log('🔧 Auto-saving preferences to database...')
+        await matchingService.updatePreferences(preferences)
+        console.log('🔧 Preferences auto-saved successfully')
+        setSaved(true)
+        setTimeout(() => setSaved(false), 3000)
+      } catch (error) {
+        console.error('🔧 Failed to auto-save preferences:', error)
+      } finally {
+        setAutoSaving(false)
+      }
+    }
+
+    // Only auto-save if we have loaded preferences from the backend
+    if (preferences !== defaultPreferences) {
+      autoSavePreferences()
+    }
+  }, []) // Only run once when component mounts
 
   const handleSave = async () => {
     setLoading(true)
@@ -141,6 +165,27 @@ export function MatchingPreferences() {
 
   return (
     <div className="space-y-6">
+      {/* Auto-save indicator */}
+      {autoSaving && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+            <p className="text-blue-700 text-sm">Saving your preferences to database...</p>
+          </div>
+        </div>
+      )}
+      
+      {saved && !autoSaving && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+            </div>
+            <p className="text-green-700 text-sm">Preferences saved successfully!</p>
+          </div>
+        </div>
+      )}
+
       <div>
         <h2 className="text-xl font-semibold mb-2">Matching Preferences</h2>
         <p className="text-gray-600">

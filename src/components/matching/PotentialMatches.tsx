@@ -134,7 +134,7 @@ export function PotentialMatches({ onStatsUpdate, onTabChange }: PotentialMatche
                 <Button onClick={handleFindNewMatches} disabled={loading}>
                   {loading ? 'Finding Matches...' : 'Find New Matches'}
                 </Button>
-                <Button onClick={() => window.location.href = '/matching?tab=preferences'} variant="outline">
+                <Button onClick={() => onTabChange?.('preferences')} variant="outline">
                   Adjust Preferences
                 </Button>
               </div>
