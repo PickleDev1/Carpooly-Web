@@ -18,28 +18,29 @@ import {
 import { useMatchingService, type MatchingPreferences } from '@/services/matching'
 
 const defaultPreferences: MatchingPreferences = {
-  max_detour_minutes: 15,
-  preferred_group_size: 4,
-  driver_preference: 'flexible',
-  schedule_flexibility_minutes: 30,
-  max_pickup_distance_miles: 5.0,
-  notification_preferences: {
+  maxDetourMinutes: 15,
+  preferredGroupSize: 4,
+  driverPreference: 'flexible',
+  scheduleFlexibilityMinutes: 30,
+  maxPickupDistanceMiles: 5.0,
+  minCompatibilityScore: 70,
+  notificationPreferences: {
     email: true,
     push: true,
     sms: false
   },
-  user_demographics: {
-    age_range: '26-35',
+  userDemographics: {
+    ageRange: '26-35',
     gender: 'prefer_not_to_say',
     occupation: '',
-    student_status: 'not_student',
+    studentStatus: 'not_student',
     company: ''
   },
-  demographic_preferences: {
-    age_preferences: ['18-25', '26-35', '36-45', '46-55'],
-    gender_preferences: ['any'],
-    student_preference: 'both',
-    occupation_preferences: []
+  demographicPreferences: {
+    agePreferences: ['18-25', '26-35', '36-45', '46-55'],
+    genderPreferences: ['any'],
+    studentPreference: 'both',
+    occupationPreferences: []
   }
 }
 
@@ -61,13 +62,13 @@ export function MatchingPreferences() {
         ...defaultPreferences,
         ...data,
         // Ensure new demographic fields exist
-        user_demographics: {
-          ...defaultPreferences.user_demographics,
-          ...(data.user_demographics || {})
+        userDemographics: {
+          ...defaultPreferences.userDemographics,
+          ...(data.userDemographics || {})
         },
-        demographic_preferences: {
-          ...defaultPreferences.demographic_preferences,
-          ...(data.demographic_preferences || {})
+        demographicPreferences: {
+          ...defaultPreferences.demographicPreferences,
+          ...(data.demographicPreferences || {})
         }
       }
       setPreferences(mergedPreferences)
@@ -126,14 +127,14 @@ export function MatchingPreferences() {
     })
   }
 
-  const updateNotificationPreference = (key: keyof MatchingPreferences['notification_preferences'], value: boolean) => {
+  const updateNotificationPreference = (key: keyof MatchingPreferences['notificationPreferences'], value: boolean) => {
     console.log('🔧 updateNotificationPreference called with:', { key, value })
     setPreferences(prev => {
       console.log('🔧 Previous state for notification update:', prev)
       const newState = {
         ...prev,
-        notification_preferences: {
-          ...prev.notification_preferences,
+        notificationPreferences: {
+          ...prev.notificationPreferences,
           [key]: value
         }
       }
@@ -182,10 +183,10 @@ export function MatchingPreferences() {
                 <Input
                   id="max_detour"
                   type="number"
-                  value={preferences.max_detour_minutes}
+                  value={preferences.maxDetourMinutes}
                   onChange={(e) => {
                     console.log('🔧 max_detour onChange triggered:', e.target.value)
-                    updatePreference('max_detour_minutes', parseInt(e.target.value))
+                    updatePreference('maxDetourMinutes', parseInt(e.target.value))
                   }}
                   min="5"
                   max="60"
@@ -201,10 +202,10 @@ export function MatchingPreferences() {
                   id="pickup_distance"
                   type="number"
                   step="0.5"
-                  value={preferences.max_pickup_distance_miles}
+                  value={preferences.maxPickupDistanceMiles}
                   onChange={(e) => {
                     console.log('🔧 max_pickup_distance onChange triggered:', e.target.value)
-                    updatePreference('max_pickup_distance_miles', parseFloat(e.target.value))
+                    updatePreference('maxPickupDistanceMiles', parseFloat(e.target.value))
                   }}
                   min="1"
                   max="20"
@@ -233,10 +234,10 @@ export function MatchingPreferences() {
               <div>
                 <Label htmlFor="group_size">Preferred Group Size</Label>
                 <MatchingSelect
-                  value={preferences.preferred_group_size.toString()}
+                  value={preferences.preferredGroupSize.toString()}
                   onValueChange={(value) => {
                     console.log('🔧 preferred_group_size onValueChange triggered:', value)
-                    updatePreference('preferred_group_size', parseInt(value))
+                    updatePreference('preferredGroupSize', parseInt(value))
                   }}
                 >
                   <MatchingSelectTrigger>
@@ -254,18 +255,18 @@ export function MatchingPreferences() {
               <div>
                 <Label htmlFor="driver_preference">Driver Preference</Label>
                 <MatchingSelect
-                  value={preferences.driver_preference}
+                  value={preferences.driverPreference}
                   onValueChange={(value) => {
                     console.log('🔧 driver_preference onValueChange triggered:', value)
-                    updatePreference('driver_preference', value)
+                    updatePreference('driverPreference', value)
                   }}
                 >
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
                   </MatchingSelectTrigger>
                   <MatchingSelectContent>
-                    <MatchingSelectItem value="driver_only">Driver only</MatchingSelectItem>
-                    <MatchingSelectItem value="passenger_only">Passenger only</MatchingSelectItem>
+                    <MatchingSelectItem value="driver">Driver only</MatchingSelectItem>
+                    <MatchingSelectItem value="passenger">Passenger only</MatchingSelectItem>
                     <MatchingSelectItem value="flexible">Flexible</MatchingSelectItem>
                   </MatchingSelectContent>
                 </MatchingSelect>
@@ -291,10 +292,10 @@ export function MatchingPreferences() {
               <Input
                 id="flexibility"
                 type="number"
-                value={preferences.schedule_flexibility_minutes}
+                value={preferences.scheduleFlexibilityMinutes}
                 onChange={(e) => {
                   console.log('🔧 schedule_flexibility onChange triggered:', e.target.value)
-                  updatePreference('schedule_flexibility_minutes', parseInt(e.target.value))
+                  updatePreference('scheduleFlexibilityMinutes', parseInt(e.target.value))
                 }}
                 min="0"
                 max="120"
@@ -322,10 +323,10 @@ export function MatchingPreferences() {
               <div>
                 <Label htmlFor="age_range">Age Range</Label>
                 <MatchingSelect
-                  value={preferences.user_demographics?.age_range || '26-35'}
+                  value={preferences.userDemographics?.ageRange || '26-35'}
                   onValueChange={(value) => {
-                    console.log('🔧 user_demographics age_range onValueChange triggered:', value)
-                    updateNestedPreference('user_demographics', 'age_range', value)
+                    console.log('🔧 userDemographics ageRange onValueChange triggered:', value)
+                    updateNestedPreference('userDemographics', 'ageRange', value)
                   }}
                 >
                   <MatchingSelectTrigger>
@@ -345,10 +346,10 @@ export function MatchingPreferences() {
               <div>
                 <Label htmlFor="gender">Gender</Label>
                 <MatchingSelect
-                  value={preferences.user_demographics?.gender || 'prefer_not_to_say'}
+                  value={preferences.userDemographics?.gender || 'prefer_not_to_say'}
                   onValueChange={(value) => {
-                    console.log('🔧 user_demographics gender onValueChange triggered:', value)
-                    updateNestedPreference('user_demographics', 'gender', value)
+                    console.log('🔧 userDemographics gender onValueChange triggered:', value)
+                    updateNestedPreference('userDemographics', 'gender', value)
                   }}
                 >
                   <MatchingSelectTrigger>
@@ -367,10 +368,10 @@ export function MatchingPreferences() {
                 <Label htmlFor="occupation">Occupation</Label>
                 <Input
                   id="occupation"
-                  value={preferences.user_demographics?.occupation || ''}
+                  value={preferences.userDemographics?.occupation || ''}
                   onChange={(e) => {
-                    console.log('🔧 user_demographics occupation onChange triggered:', e.target.value)
-                    updateNestedPreference('user_demographics', 'occupation', e.target.value)
+                    console.log('🔧 userDemographics occupation onChange triggered:', e.target.value)
+                    updateNestedPreference('userDemographics', 'occupation', e.target.value)
                   }}
                   placeholder="e.g., Software Engineer, Student, Teacher"
                 />
@@ -379,10 +380,10 @@ export function MatchingPreferences() {
               <div>
                 <Label htmlFor="student_status">Student Status</Label>
                 <MatchingSelect
-                  value={preferences.user_demographics?.student_status || 'not_student'}
+                  value={preferences.userDemographics?.studentStatus || 'not_student'}
                   onValueChange={(value) => {
-                    console.log('🔧 user_demographics student_status onValueChange triggered:', value)
-                    updateNestedPreference('user_demographics', 'student_status', value)
+                    console.log('🔧 userDemographics studentStatus onValueChange triggered:', value)
+                    updateNestedPreference('userDemographics', 'studentStatus', value)
                   }}
                 >
                   <MatchingSelectTrigger>
@@ -400,10 +401,10 @@ export function MatchingPreferences() {
                 <Label htmlFor="company">Company/Institution (Optional)</Label>
                 <Input
                   id="company"
-                  value={preferences.user_demographics?.company || ''}
+                  value={preferences.userDemographics?.company || ''}
                   onChange={(e) => {
-                    console.log('🔧 user_demographics company onChange triggered:', e.target.value)
-                    updateNestedPreference('user_demographics', 'company', e.target.value)
+                    console.log('🔧 userDemographics company onChange triggered:', e.target.value)
+                    updateNestedPreference('userDemographics', 'company', e.target.value)
                   }}
                   placeholder="e.g., Google, Stanford University"
                 />
@@ -433,16 +434,16 @@ export function MatchingPreferences() {
                       <input
                         type="checkbox"
                         id={`age-${age}`}
-                        checked={preferences.demographic_preferences?.age_preferences?.includes(age) || false}
+                        checked={preferences.demographicPreferences?.agePreferences?.includes(age) || false}
                         onChange={(e) => {
                           console.log('🔧 age preference checkbox onChange triggered:', { age, checked: e.target.checked })
-                          const currentPreferences = preferences.demographic_preferences?.age_preferences || []
+                          const currentPreferences = preferences.demographicPreferences?.agePreferences || []
                           const newPreferences = e.target.checked
                             ? [...currentPreferences, age]
                             : currentPreferences.filter(a => a !== age)
                           console.log('🔧 age preferences before update:', currentPreferences)
                           console.log('🔧 age preferences after update:', newPreferences)
-                          updateNestedPreference('demographic_preferences', 'age_preferences', newPreferences)
+                          updateNestedPreference('demographicPreferences', 'agePreferences', newPreferences)
                         }}
                         className="rounded"
                       />
@@ -460,16 +461,16 @@ export function MatchingPreferences() {
                       <input
                         type="checkbox"
                         id={`gender-${gender}`}
-                        checked={preferences.demographic_preferences?.gender_preferences?.includes(gender) || false}
+                        checked={preferences.demographicPreferences?.genderPreferences?.includes(gender) || false}
                         onChange={(e) => {
                           console.log('🔧 gender preference checkbox onChange triggered:', { gender, checked: e.target.checked })
-                          const currentPreferences = preferences.demographic_preferences?.gender_preferences || []
+                          const currentPreferences = preferences.demographicPreferences?.genderPreferences || []
                           const newPreferences = e.target.checked
                             ? [...currentPreferences, gender]
                             : currentPreferences.filter(g => g !== gender)
                           console.log('🔧 gender preferences before update:', currentPreferences)
                           console.log('🔧 gender preferences after update:', newPreferences)
-                          updateNestedPreference('demographic_preferences', 'gender_preferences', newPreferences)
+                          updateNestedPreference('demographicPreferences', 'genderPreferences', newPreferences)
                         }}
                         className="rounded"
                       />
@@ -482,10 +483,10 @@ export function MatchingPreferences() {
               <div className="md:col-span-2">
                 <Label htmlFor="student_preference">Student Preference</Label>
                 <MatchingSelect
-                  value={preferences.demographic_preferences?.student_preference || 'both'}
+                  value={preferences.demographicPreferences?.studentPreference || 'both'}
                   onValueChange={(value) => {
-                    console.log('🔧 demographic_preferences student_preference onValueChange triggered:', value)
-                    updateNestedPreference('demographic_preferences', 'student_preference', value)
+                    console.log('🔧 demographicPreferences studentPreference onValueChange triggered:', value)
+                    updateNestedPreference('demographicPreferences', 'studentPreference', value)
                   }}
                 >
                   <MatchingSelectTrigger>
@@ -521,7 +522,7 @@ export function MatchingPreferences() {
                   <p className="text-xs text-gray-500">Get notified via email</p>
                 </div>
                 <Switch
-                  checked={preferences.notification_preferences.email}
+                  checked={preferences.notificationPreferences.email}
                   onCheckedChange={(checked) => {
                     console.log('🔧 notification email onCheckedChange triggered:', checked)
                     updateNotificationPreference('email', checked)
@@ -535,7 +536,7 @@ export function MatchingPreferences() {
                   <p className="text-xs text-gray-500">Get notified in the app</p>
                 </div>
                 <Switch
-                  checked={preferences.notification_preferences.push}
+                  checked={preferences.notificationPreferences.push}
                   onCheckedChange={(checked) => {
                     console.log('🔧 notification push onCheckedChange triggered:', checked)
                     updateNotificationPreference('push', checked)
@@ -549,7 +550,7 @@ export function MatchingPreferences() {
                   <p className="text-xs text-gray-500">Get notified via text message</p>
                 </div>
                 <Switch
-                  checked={preferences.notification_preferences.sms}
+                  checked={preferences.notificationPreferences.sms}
                   onCheckedChange={(checked) => {
                     console.log('🔧 notification sms onCheckedChange triggered:', checked)
                     updateNotificationPreference('sms', checked)

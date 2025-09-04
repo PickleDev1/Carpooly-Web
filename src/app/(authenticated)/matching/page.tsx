@@ -46,10 +46,10 @@ export default function MatchingPage() {
       ])
 
       setStats({
-        potentialMatches: potentialMatches.pending_matches.length,
+        potentialMatches: potentialMatches.pendingMatches.length,
         activeRequests: requests.incoming.filter(r => r.status === 'pending').length,
-        carpoolsFormed: potentialMatches.accepted_matches.length,
-        monthlySavings: potentialMatches.accepted_matches.reduce((sum, match) => sum + match.estimated_savings_per_month, 0)
+        carpoolsFormed: potentialMatches.acceptedMatches.length,
+        monthlySavings: potentialMatches.acceptedMatches.reduce((sum, match) => sum + match.estimatedSavingsPerMonth, 0)
       })
     } catch (error) {
       console.error('Failed to load stats:', error)
@@ -71,8 +71,11 @@ export default function MatchingPage() {
   const handleRefreshMatches = async () => {
     setIsLoading(true)
     try {
-      const result = await matchingService.findMatches(true, 10)
-      console.log('Matches found:', result.matches_found, result.message)
+      const result = await matchingService.findMatches({
+        forceRefresh: true,
+        limit: 10
+      })
+      console.log('Matches found:', result.matchesFound, result.message)
       await loadStats() // Refresh stats after finding new matches
     } catch (error) {
       console.error('Failed to refresh matches:', error)
@@ -97,7 +100,7 @@ export default function MatchingPage() {
             className="flex items-center gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Finding Matches...' : 'Find New Matches'}
+            {isLoading ? 'Finding Matches...' : 'Find Carpool Partners'}
           </Button>
         </div>
 

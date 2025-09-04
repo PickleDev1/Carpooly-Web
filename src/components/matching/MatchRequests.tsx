@@ -241,7 +241,10 @@ export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps
                 onClick={async () => {
                   try {
                     // Call the find-matches endpoint to generate new matches
-                    await matchingService.findMatches(true, 10)
+                    await matchingService.findMatches({
+                      forceRefresh: true,
+                      limit: 10
+                    })
                     // Navigate to potential matches tab to see the results
                     onTabChange?.('matches')
                   } catch (error) {
@@ -253,7 +256,7 @@ export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps
                 className="flex items-center gap-2"
               >
                 <Users className="w-4 h-4" />
-                Find New Matches
+                Find Carpool Partners
               </Button>
             </CardContent>
           </Card>
@@ -351,7 +354,10 @@ export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps
                 onClick={async () => {
                   try {
                     // Call the find-matches endpoint to generate new matches
-                    await matchingService.findMatches(true, 10)
+                    await matchingService.findMatches({
+                      forceRefresh: true,
+                      limit: 10
+                    })
                     // Navigate to potential matches tab to see the results
                     onTabChange?.('matches')
                   } catch (error) {
@@ -363,7 +369,7 @@ export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps
                 className="flex items-center gap-2"
               >
                 <Users className="w-4 h-4" />
-                Find New Matches
+                Find Carpool Partners
               </Button>
             </CardContent>
           </Card>
