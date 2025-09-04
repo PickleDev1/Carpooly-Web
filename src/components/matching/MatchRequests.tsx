@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useEffect, useState, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -10,127 +10,58 @@ import {
   Clock, 
   Check, 
   X,
-  User,
-  Calendar,
-  Users
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
-import { useMatchingService } from '@/services/matchingWrapper'
-import { MatchRequest } from '@/services/matching'
+import { useMatchingService, type MatchRequest } from '@/services/matching'
 
-interface MatchRequestsProps {
-  onStatsUpdate?: () => void
-  onTabChange?: (tab: string) => void
-}
+interface Props { onStatsUpdate?: () => void }
 
-interface RequestsState {
-  incoming: MatchRequest[]
-  outgoing: MatchRequest[]
-}
+export function MatchRequests({ onStatsUpdate }: Props) {
+  const matching = useMatchingService()
+  const [loading, setLoading] = useState(false)
+  const [requests, setRequests] = useState<{ incoming: MatchRequest[]; outgoing: MatchRequest[] }>({ incoming: [], outgoing: [] })
+  const [processing, setProcessing] = useState<string | null>(null)
+  const [incomingIndex, setIncomingIndex] = useState(0)
 
-// Mock data for development fallback
-const mockRequests: RequestsState = {
-  incoming: [
-    {
-      id: '1',
-      from_user: {
-        id: 'user1',
-        name: 'Sarah Johnson',
-        display_name: 'Sarah J.'
-      },
-      to_user: {
-        id: 'current-user',
-        name: 'You',
-        display_name: 'You'
-      },
-      message: 'Hi! I saw we have similar routes. Would you like to carpool together?',
-      status: 'pending',
-      created_at: '2024-01-15T10:30:00Z',
-      expires_at: '2024-01-18T10:30:00Z'
-    } as MatchRequest
-  ],
-  outgoing: [
-    {
-      id: '2',
-      from_user: {
-        id: 'current-user',
-        name: 'You',
-        display_name: 'You'
-      },
-      to_user: {
-        id: 'user2',
-        name: 'Mike Chen',
-        display_name: 'Mike C.'
-      },
-      message: 'Hey Mike! I noticed we have similar routes. Interested in carpooling?',
-      status: 'pending',
-      created_at: '2024-01-14T15:45:00Z',
-      expires_at: '2024-01-17T15:45:00Z'
-    } as MatchRequest
-  ]
-}
-
-export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps) {
-  const [requests, setRequests] = useState(mockRequests)
-  const [loading, setLoading] = useState(true)
-  const [processingRequest, setProcessingRequest] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  
-  const matchingService = useMatchingService()
-
-  const loadRequests = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true)
-    setError(null)
     try {
-      const data = await matchingService.getRequests()
+      const data = await matching.getRequests()
       setRequests(data)
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message)
-      }
-      // Use mock data for development
-      setRequests(mockRequests)
+      setIncomingIndex(0)
     } finally {
       setLoading(false)
     }
   }, [])
 
-  useEffect(() => {
-    loadRequests()
-  }, []) // Only run once on mount
+  useEffect(() => { load() }, [load])
 
-  const handleAcceptRequest = async (requestId: string) => {
-    setProcessingRequest(requestId)
+  const accept = async (id: string) => {
+    setProcessing(id)
     try {
-      await matchingService.respondToRequest(requestId, 'accept', 'Great! Let\'s carpool together.')
+      await matching.respondToRequest(id, 'accept')
       setRequests(prev => ({
-        ...prev,
-        incoming: prev.incoming.map(req => 
-          req.id === requestId ? { ...req, status: 'accepted' as const } : req
-        )
+        incoming: prev.incoming.map(r => (r.id === id ? { ...r, status: 'accepted' as const } : r)),
+        outgoing: prev.outgoing
       }))
       onStatsUpdate?.()
-    } catch (error) {
-      // swallow for demo
     } finally {
-      setProcessingRequest(null)
+      setProcessing(null)
     }
   }
 
-  const handleRejectRequest = async (requestId: string) => {
-    setProcessingRequest(requestId)
+  const reject = async (id: string) => {
+    setProcessing(id)
     try {
-      await matchingService.respondToRequest(requestId, 'reject', 'Thanks for the offer, but I\'ll pass for now.')
+      await matching.respondToRequest(id, 'reject')
       setRequests(prev => ({
-        ...prev,
-        incoming: prev.incoming.map(req => 
-          req.id === requestId ? { ...req, status: 'rejected' as const } : req
-        )
+        incoming: prev.incoming.map(r => (r.id === id ? { ...r, status: 'rejected' as const } : r)),
+        outgoing: prev.outgoing
       }))
       onStatsUpdate?.()
-    } catch (error) {
-      // swallow for demo
     } finally {
-      setProcessingRequest(null)
+      setProcessing(null)
     }
   }
 
@@ -153,16 +84,13 @@ export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps
     })
   }
 
-  const getTimeUntilExpiry = (expiresAt: string) => {
+  const timeUntil = (expiresAt: string) => {
     const now = new Date()
     const expiry = new Date(expiresAt)
     const diff = expiry.getTime() - now.getTime()
-    
     if (diff <= 0) return 'Expired'
-    
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-    
     if (days > 0) return `${days}d ${hours}h left`
     if (hours > 0) return `${hours}h left`
     return 'Expires soon'
@@ -179,208 +107,141 @@ export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps
     )
   }
 
+  const hasIncoming = requests.incoming.length > 0
+  const currentIncoming = hasIncoming ? requests.incoming[incomingIndex] : null
+
   return (
     <div className="space-y-8">
-      {/* Error Display */}
-      {error && (
-        <Card className="mb-6 border-red-200 bg-red-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <X className="w-5 h-5 text-red-500" />
-                <span className="text-red-700 font-medium">Error loading requests: {error}</span>
-              </div>
-              <Button variant="outline" size="sm" onClick={loadRequests} className="text-red-600 border-red-300 hover:bg-red-100">
-                Retry
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Incoming Requests */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Incoming Requests ({requests.incoming.filter(r => r.status === 'pending').length})</h2>
-          <Button variant="outline" size="sm" onClick={loadRequests} disabled={loading}>
-            {loading ? 'Loading...' : 'Refresh'}
-          </Button>
+          <div>
+            <h2 className="text-xl font-semibold">Incoming Requests ({requests.incoming.filter(r => r.status === 'pending').length})</h2>
+            {hasIncoming && (
+              <>
+                <p className="text-sm text-muted-foreground">{incomingIndex + 1} of {requests.incoming.length}</p>
+                <p className="text-xs text-muted-foreground mt-1">Use Back/Next to review requests</p>
+              </>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={load}>Refresh</Button>
+            <Button variant="outline" size="sm" onClick={() => setIncomingIndex(i => Math.max(0, i - 1))} disabled={!hasIncoming || incomingIndex <= 0}>
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Back
+            </Button>
+            <Button size="sm" onClick={() => setIncomingIndex(i => Math.min(requests.incoming.length - 1, i + 1))} disabled={!hasIncoming || incomingIndex >= requests.incoming.length - 1}>
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
         </div>
-        
-        {requests.incoming.length === 0 ? (
+        {!hasIncoming ? (
           <Card>
             <CardContent className="p-8 text-center">
               <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No incoming requests</h3>
-              <p className="text-gray-600 mb-4">You don&apos;t have any carpool requests at the moment.</p>
-              <p className="text-sm text-gray-500 mb-4">Start by finding potential carpool partners!</p>
-              <Button 
-                onClick={async () => {
-                  try {
-                    // Call the find-matches endpoint to generate new matches
-                    await matchingService.findMatches({
-                      forceRefresh: true,
-                      limit: 10
-                    })
-                    // Navigate to potential matches tab to see the results
-                    onTabChange?.('matches')
-                  } catch (error) {
-                    console.error('Failed to find new matches:', error)
-                    // Still navigate even if finding matches fails
-                    onTabChange?.('matches')
-                  }
-                }}
-                className="flex items-center gap-2"
-              >
-                <Users className="w-4 h-4" />
-                Find Carpool Partners
-              </Button>
+              <p className="text-gray-600">You don&apos;t have any carpool requests at the moment.</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {requests.incoming.map((request) => (
-              <Card key={request.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${request.from_user.name}`} />
-                        <AvatarFallback>{request.from_user.display_name}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-lg">{request.from_user.name}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 mt-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{formatDate(request.created_at)}</span>
-                          <span>•</span>
-                          <span>{getTimeUntilExpiry(request.expires_at)}</span>
-                        </CardDescription>
-                      </div>
+          <div>
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${currentIncoming!.from_user.name}`} />
+                      <AvatarFallback>{currentIncoming!.from_user.display_name}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-lg">{currentIncoming!.from_user.name}</CardTitle>
+                      <CardDescription className="flex items-center gap-2 mt-1">
+                        <Clock className="w-4 h-4" />
+                        <span>{formatDate(currentIncoming!.created_at)}</span>
+                        <span>•</span>
+                        <span>{timeUntil(currentIncoming!.expires_at)}</span>
+                      </CardDescription>
                     </div>
-                    <Badge className={getStatusColor(request.status)}>
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                    </Badge>
                   </div>
-                </CardHeader>
-                
-                <CardContent>
-                  {request.message && (
-                    <p className="text-gray-700 mb-4">{request.message}</p>
-                  )}
-                  
-                  {request.status === 'pending' && (
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={() => handleAcceptRequest(request.id)}
-                        disabled={processingRequest === request.id}
-                        className="flex-1"
-                      >
-                        {processingRequest === request.id ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Accepting...
-                          </>
-                        ) : (
-                          <>
-                            <Check className="w-4 h-4 mr-2" />
-                            Accept
-                          </>
-                        )}
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        onClick={() => handleRejectRequest(request.id)}
-                        disabled={processingRequest === request.id}
-                      >
-                        {processingRequest === request.id ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                            Rejecting...
-                          </>
-                        ) : (
-                          <>
-                            <X className="w-4 h-4 mr-2" />
-                            Decline
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                  <Badge className={getStatusColor(currentIncoming!.status)}>{currentIncoming!.status}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {currentIncoming!.message && <p className="text-gray-700 mb-4">{currentIncoming!.message}</p>}
+                {currentIncoming!.status === 'pending' && (
+                  <div className="flex gap-2">
+                    <Button onClick={() => accept(currentIncoming!.id)} disabled={processing === currentIncoming!.id} className="flex-1">
+                      {processing === currentIncoming!.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Accepting...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          Accept
+                        </>
+                      )}
+                    </Button>
+                    <Button variant="outline" onClick={() => reject(currentIncoming!.id)} disabled={processing === currentIncoming!.id}>
+                      {processing === currentIncoming!.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                          Rejecting...
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-4 h-4 mr-2" />
+                          Decline
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
 
-      {/* Outgoing Requests */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Outgoing Requests ({requests.outgoing.length})</h2>
         </div>
-        
         {requests.outgoing.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No outgoing requests</h3>
-              <p className="text-gray-600 mb-4">You haven&apos;t sent any carpool requests yet.</p>
-              <p className="text-sm text-gray-500 mb-4">Start by finding potential carpool partners!</p>
-              <Button 
-                onClick={async () => {
-                  try {
-                    // Call the find-matches endpoint to generate new matches
-                    await matchingService.findMatches({
-                      forceRefresh: true,
-                      limit: 10
-                    })
-                    // Navigate to potential matches tab to see the results
-                    onTabChange?.('matches')
-                  } catch (error) {
-                    console.error('Failed to find new matches:', error)
-                    // Still navigate even if finding matches fails
-                    onTabChange?.('matches')
-                  }
-                }}
-                className="flex items-center gap-2"
-              >
-                <Users className="w-4 h-4" />
-                Find Carpool Partners
-              </Button>
+              <p className="text-gray-600">You haven&apos;t sent any carpool requests yet.</p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {requests.outgoing.map((request) => (
-              <Card key={request.id} className="hover:shadow-md transition-shadow">
+            {requests.outgoing.map((r) => (
+              <Card key={r.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
                       <Avatar className="w-12 h-12">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${request.to_user.name}`} />
-                        <AvatarFallback>{request.to_user.display_name}</AvatarFallback>
+                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${r.to_user.name}`} />
+                        <AvatarFallback>{r.to_user.display_name}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-lg">{request.to_user.name}</CardTitle>
+                        <CardTitle className="text-lg">{r.to_user.name}</CardTitle>
                         <CardDescription className="flex items-center gap-2 mt-1">
                           <Clock className="w-4 h-4" />
-                          <span>{formatDate(request.created_at)}</span>
+                          <span>{formatDate(r.created_at)}</span>
                           <span>•</span>
-                          <span>{getTimeUntilExpiry(request.expires_at)}</span>
+                          <span>{timeUntil(r.expires_at)}</span>
                         </CardDescription>
                       </div>
                     </div>
-                    <Badge className={getStatusColor(request.status)}>
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                    </Badge>
+                    <Badge className={getStatusColor(r.status)}>{r.status}</Badge>
                   </div>
                 </CardHeader>
-                
                 <CardContent>
-                  {request.message && (
-                    <p className="text-gray-700">{request.message}</p>
-                  )}
+                  {r.message && <p className="text-gray-700">{r.message}</p>}
                 </CardContent>
               </Card>
             ))}
