@@ -1,112 +1,119 @@
 import { useAuth } from '@clerk/nextjs'
 import { mockPotentialMatches, mockMatchingPreferences, mockMatchRequests, mockMatchingStats } from '@/mocks/data/matching'
-import { useMatchingServiceDemo } from "./matchingDemo"
+
+// DEMO MODE: Completely disable all API calls - only return mock data
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-console.log('🔐 Matching Service: API_URL:', API_URL)
-
-// DEMO MODE: Set to true to force mock data usage for demo purposes
-const useMockMatching = true
-console.log('🔐 Matching Service: API_URL exists:', !!API_URL)
+console.log('🎬 DEMO MODE: Matching service using ONLY mock data - no API calls')
 
 // Enhanced Matching Preferences - matches backend exactly
 export interface UserMatchingPreferences {
   maxDetourMinutes: number
   preferredGroupSize: number
-  driverPreference: 'driver' | 'passenger' | 'flexible'
-  scheduleFlexibilityMinutes: number
-  maxPickupDistanceMiles: number
-  minCompatibilityScore: number
-  notificationPreferences: {
-    email: boolean
-    push: boolean
-    sms: boolean
+  maxPickupDistance: number
+  preferredGender: string[]
+  preferredAgeRange: {
+    min: number
+    max: number
   }
+  smokingPreference: string
+  musicPreference: string
+  conversationPreference: string
   userDemographics: {
-    ageRange: string
+    age: number
     gender: string
     occupation: string
-    studentStatus: string
-    company: string
+    interests: string[]
   }
   demographicPreferences: {
-    agePreferences: string[]
+    ageRange: {
+      min: number
+      max: number
+    }
     genderPreferences: string[]
-    studentPreference: string
     occupationPreferences: string[]
   }
 }
 
-// Keep old interface for backward compatibility
-export interface MatchingPreferences extends UserMatchingPreferences {}
-
-// Enhanced User Profile Interface - matches backend exactly
-export interface UserProfile {
-  id: string
-  name: string
-  displayName: string
-  homeLocation: {
-    latitude: number
-    longitude: number
-    address: string
+export interface MatchingPreferences {
+  maxDetourMinutes: number
+  preferredGroupSize: number
+  maxPickupDistance: number
+  preferredGender: string[]
+  preferredAgeRange: {
+    min: number
+    max: number
   }
-  destinationLocation: {
-    latitude: number
-    longitude: number
-    address: string
+  smokingPreference: string
+  musicPreference: string
+  conversationPreference: string
+  userDemographics: {
+    age: number
+    gender: string
+    occupation: string
+    interests: string[]
   }
-  schedule: {
-    departureTime: string // "08:30"
-    frequency: 'daily' | 'weekly' | 'custom'
-    flexibilityMinutes: number
-    daysOfWeek: string[] // ["monday", "tuesday", ...]
+  demographicPreferences: {
+    ageRange: {
+      min: number
+      max: number
+    }
+    genderPreferences: string[]
+    occupationPreferences: string[]
   }
-  currentGroupSize: number
-  isAvailableForMatching: boolean
-  lastActive: string
-  preferences: UserMatchingPreferences
 }
 
-// Match Score Interface - matches backend exactly
-export interface MatchScore {
-  totalScore: number
-  locationScore: number
-  scheduleScore: number
-  demographicScore: number
-  routeScore: number
-  groupSizeScore: number
-  roleCompatibilityScore: number
-  reasons: string[]
-  dealbreakers: string[]
-}
-
-// Enhanced Potential Match - matches backend exactly
 export interface PotentialMatch {
   id: string
-  user1Id: string
-  user2Id: string
-  compatibilityScore: number
-  routeOverlapPercentage: number
-  totalDistanceMiles: number
-  estimatedSavingsPerMonth: number
-  matchReasons: string[]
-  status: 'active' | 'expired' | 'accepted' | 'rejected'
-  expiresAt: string
-  createdAt: string
-  updatedAt: string
-  user1: UserProfile
-  user2: UserProfile
-  matchScore: MatchScore
+  user: {
+    id: string
+    name: string
+    display_name: string
+    profile_picture?: string
+  }
+  compatibility_score: number
+  route_overlap: number
+  estimated_detour_minutes: number
+  pickup_location: {
+    address: string
+    coordinates: {
+      lat: number
+      lng: number
+    }
+  }
+  dropoff_location: {
+    address: string
+    coordinates: {
+      lat: number
+      lng: number
+    }
+  }
+  schedule: {
+    departure_time: string
+    return_time?: string
+    days: string[]
+  }
+  preferences: {
+    smoking: boolean
+    music: string
+    conversation: string
+  }
+  created_at: string
+  expires_at: string
 }
 
-// Match Filters - matches backend exactly
 export interface MatchFilters {
-  minScore?: number
-  maxDistance?: number
-  ageRanges?: string[]
-  genders?: string[]
-  studentPreference?: string
-  driverPreference?: string
+  maxDetourMinutes?: number
+  preferredGroupSize?: number
+  maxPickupDistance?: number
+  preferredGender?: string[]
+  preferredAgeRange?: {
+    min: number
+    max: number
+  }
+  smokingPreference?: string
+  musicPreference?: string
+  conversationPreference?: string
 }
 
 export interface MatchRequest {
@@ -121,73 +128,74 @@ export interface MatchRequest {
     name: string
     display_name: string
   }
-  message?: string
-  status: 'pending' | 'accepted' | 'rejected' | 'expired'
+  status: "pending" | "accepted" | "rejected" | "expired"
+  message: string
   created_at: string
   expires_at: string
 }
 
-export const useMatchingService = () => {
-  // DEMO MODE: Return demo service immediately if flag is set
-  const { getToken } = useAuth()
-  const getHeaders = async () => {
-    const token = await getToken()
-    console.log('🔐 Matching Service: Token received:', token ? 'Token exists' : 'No token')
-    console.log('🔐 Matching Service: Token length:', token ? token.length : 0)
-    console.log('🔐 Matching Service: Token preview:', token ? `${token.substring(0, 20)}...` : 'No token')
-    
-    if (!token) {
-      console.error('🔐 Matching Service: No token available!')
-      throw new Error('No authentication token available')
-    }
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    }
-    
-    console.log('🔐 Matching Service: Headers being sent:', {
-      'Content-Type': headers['Content-Type'],
-      'Authorization': headers['Authorization'] ? 'Bearer [TOKEN]' : 'No Authorization',
-    })
-    
-    return headers
-  }
+export interface MatchScore {
+  user_id: string
+  compatibility_score: number
+  route_overlap: number
+  estimated_detour_minutes: number
+  match_reasons: string[]
+}
 
+export interface UserProfile {
+  id: string
+  name: string
+  display_name: string
+  profile_picture?: string
+  age: number
+  gender: string
+  occupation: string
+  interests: string[]
+  rating: number
+  total_rides: number
+  verified: boolean
+}
+
+export interface MatchingStats {
+  total_matches_generated: number
+  match_acceptance_rate: number
+  average_compatibility_score: number
+  total_carpools_formed: number
+  total_savings: number
+  average_route_overlap: number
+  most_common_match_reasons: string[]
+  geographic_distribution: {
+    nearby: number
+    medium_distance: number
+    far: number
+  }
+  time_to_acceptance: number
+  monthly_trends: {
+    month: string
+    matches: number
+    acceptances: number
+  }[]
+}
+
+// DEMO MODE: Real matching service that returns ONLY mock data
+export const useMatchingService = () => {
+  const { getToken } = useAuth()
+  
   return {
     // Get user's matching preferences
     async getPreferences(): Promise<MatchingPreferences> {
-      try {
-        const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/api/matching/preferences`, { headers })
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch preferences')
-        }
-        
-        return response.json()
-      } catch (error) {
-        // Return mock data for development when API fails
-        console.log('🔧 API failed, returning mock preferences for development')
-        return mockMatchingPreferences
-      }
+      console.log("🎬 DEMO MODE: Returning mock preferences")
+      return mockMatchingPreferences
     },
 
     // Update user's matching preferences
     async updatePreferences(preferences: Partial<MatchingPreferences>): Promise<void> {
-      const headers = await getHeaders()
-      const response = await fetch(`${API_URL}/api/matching/preferences`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(preferences)
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to update preferences')
-      }
+      console.log("🎬 DEMO MODE: Mock update preferences", preferences)
+      // Simulate a small delay for realism
+      await new Promise(resolve => setTimeout(resolve, 100))
     },
 
-    // Find potential matches - updated to match backend exactly
+    // Find potential matches
     async findMatches(request: {
       forceRefresh: boolean
       limit: number
@@ -198,32 +206,17 @@ export const useMatchingService = () => {
       message: string
       processingTimeMs: number
     }> {
-      try {
-        const headers = await getHeaders()
-        const response = await fetch(`${API_URL}/api/matching/find-matches`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(request)
-        })
-        
-        if (!response.ok) {
-          throw new Error('Failed to find matches')
-        }
-        
-        return response.json()
-      } catch (error) {
-        // Return mock data for development when API fails
-        console.log('🔧 API failed, returning mock find matches response for development')
-        return {
-          success: true,
-          matchesFound: mockPotentialMatches.length,
-          message: `Found ${mockPotentialMatches.length} potential matches using mock data`,
-          processingTimeMs: 150
-        }
+      console.log("🎬 DEMO MODE: Mock find matches", request)
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return {
+        success: true,
+        matchesFound: mockPotentialMatches.length,
+        message: `Found ${mockPotentialMatches.length} potential matches using mock data`,
+        processingTimeMs: 100
       }
     },
 
-    // Get potential matches - updated to match backend exactly
+    // Get potential matches
     async getPotentialMatches(filters?: MatchFilters): Promise<{
       success: boolean
       pendingMatches: PotentialMatch[]
@@ -232,331 +225,142 @@ export const useMatchingService = () => {
       totalAvailable: number
       filtersApplied: MatchFilters
     }> {
-      const headers = await getHeaders()
-      // DEMO MODE: Return mock data immediately if flag is set
-      if (useMockMatching) {
-        console.log("🎬 DEMO MODE: Using mock data for potential matches")
-        return {
-          success: true,
-          pendingMatches: mockPotentialMatches,
-          acceptedMatches: [],
-          expiredMatches: [],
-          totalAvailable: mockPotentialMatches.length,
-          filtersApplied: filters || {}
-        }
-      }
-      
-      // Add timeout to prevent hanging
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-      
-      try {
-        const queryParams = filters ? `?${new URLSearchParams(filters as any).toString()}` : ''
-        const response = await fetch(`${API_URL}/api/matching/potential-matches${queryParams}`, { 
-          headers,
-          signal: controller.signal
-        })
-        
-        clearTimeout(timeoutId)
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch potential matches: ${response.status} ${response.statusText}`)
-        }
-        
-        const result = await response.json()
-        return result
-      } catch (error) {
-        clearTimeout(timeoutId)
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('Request timed out after 10 seconds')
-        }
-        
-        // Return mock data for development when API fails
-        console.log('🔧 API failed, returning mock data for development')
-        return {
-          success: true,
-          pendingMatches: mockPotentialMatches,
-          acceptedMatches: [],
-          expiredMatches: [],
-          totalAvailable: mockPotentialMatches.length,
-          filtersApplied: filters || {}
-        }
+      console.log("🎬 DEMO MODE: Returning mock potential matches")
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return {
+        success: true,
+        pendingMatches: mockPotentialMatches,
+        acceptedMatches: [],
+        expiredMatches: [],
+        totalAvailable: mockPotentialMatches.length,
+        filtersApplied: filters || {}
       }
     },
 
-    // Send carpool request
+    // Send a match request
     async sendRequest(toUserId: string, potentialMatchId: string, message?: string): Promise<void> {
-      const headers = await getHeaders()
-      const response = await fetch(`${API_URL}/api/matching/request`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          to_user_id: toUserId,
-          potential_match_id: potentialMatchId,
-          message
-        })
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to send request')
-      }
+      console.log("🎬 DEMO MODE: Mock send request", { toUserId, potentialMatchId, message })
+      await new Promise(resolve => setTimeout(resolve, 100))
     },
 
-    // Accept or reject a carpool request
+    // Respond to a match request
     async respondToRequest(requestId: string, action: 'accept' | 'reject', message?: string): Promise<void> {
-      const headers = await getHeaders()
-      const response = await fetch(`${API_URL}/api/matching/request/${requestId}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          status: action,
-          message
-        })
-      })
-      
-      if (!response.ok) {
-        throw new Error(`Failed to ${action} request`)
-      }
+      console.log("🎬 DEMO MODE: Mock respond to request", { requestId, action, message })
+      await new Promise(resolve => setTimeout(resolve, 100))
     },
 
     // Get match requests
-    async getRequests(): Promise<{
-      incoming: MatchRequest[]
-      outgoing: MatchRequest[]
-    }> {
-      const headers = await getHeaders()
-      
-      // Add timeout to prevent hanging
-      const controller = new AbortController()
-      // DEMO MODE: Return mock data immediately if flag is set
-      if (useMockMatching) {
-        console.log("🎬 DEMO MODE: Using mock data for match requests")
-        return {
-          incoming: mockMatchRequests,
-          outgoing: []
-        }
-      }
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-      
-      try {
-        const response = await fetch(`${API_URL}/api/matching/requests`, { 
-          headers,
-          signal: controller.signal
-        })
-        
-        clearTimeout(timeoutId)
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch requests: ${response.status} ${response.statusText}`)
-        }
-        
-        return response.json() as Promise<{ incoming: MatchRequest[]; outgoing: MatchRequest[] }>
-      } catch (error) {
-        clearTimeout(timeoutId)
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('Request timed out after 10 seconds')
-        }
-        
-        // Return mock data for development when API fails
-        console.log('🔧 API failed, returning mock requests for development')
-        return {
-          incoming: mockMatchRequests,
-          outgoing: []
-        }
-      }
+    async getRequests(): Promise<{ incoming: MatchRequest[]; outgoing: MatchRequest[] }> {
+      console.log("🎬 DEMO MODE: Returning mock requests")
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return { incoming: mockMatchRequests, outgoing: [] }
     },
 
-    // Start or update matching session
+    // Update matching session
     async updateMatchingSession(sessionType: 'daily' | 'weekly' | 'on_demand', status?: 'active' | 'paused'): Promise<void> {
-      const headers = await getHeaders()
-      const response = await fetch(`${API_URL}/api/matching/session`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          session_type: sessionType,
-          status: status || 'active'
-        })
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to update matching session')
-      }
+      console.log("🎬 DEMO MODE: Mock update matching session", { sessionType, status })
+      await new Promise(resolve => setTimeout(resolve, 100))
     },
 
-    // Get matching session status
+    // Get matching session
     async getMatchingSession(): Promise<{
-      session_id: string
       session_type: string
       status: string
       last_match_run: string
       next_match_run: string
     }> {
-      const headers = await getHeaders()
-      const response = await fetch(`${API_URL}/api/matching/session`, { headers })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch matching session')
+      console.log("🎬 DEMO MODE: Returning mock matching session")
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return {
+        session_type: 'daily',
+        status: 'active',
+        last_match_run: new Date().toISOString(),
+        next_match_run: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       }
-      
-      return response.json()
     },
 
     // Get matching statistics
-    async getStats(): Promise<{
-      total_matches_generated: number
-      match_acceptance_rate: number
-      average_compatibility_score: number
-      total_carpools_formed: number
-      total_savings: number
-      average_route_overlap: number
-      most_common_match_reasons: string[]
-      geographic_distribution: {
-        nearby: number
-        medium_distance: number
-        far: number
-      }
-      time_to_acceptance: number
-      monthly_trends: {
-        month: string
-        matches: number
-        acceptances: number
-      }[]
-    }> {
-      const headers = await getHeaders()
-      // DEMO MODE: Return mock data immediately if flag is set
-      if (useMockMatching) {
-        console.log("🎬 DEMO MODE: Using mock data for matching stats")
-        return mockMatchingStats
-      }
-      
-      // Add timeout to prevent hanging
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-      
-      try {
-        const response = await fetch(`${API_URL}/api/matching/stats`, { 
-          headers,
-          signal: controller.signal
-        })
-        
-        clearTimeout(timeoutId)
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch stats: ${response.status} ${response.statusText}`)
-        }
-        
-        const result = await response.json()
-        return result
-      } catch (error) {
-        clearTimeout(timeoutId)
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('Request timed out after 10 seconds')
-        }
-        throw error
-      }
+    async getStats(): Promise<MatchingStats> {
+      console.log("🎬 DEMO MODE: Returning mock stats")
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return mockMatchingStats
     },
 
-    // NEW: Get user profile for matching - matches backend exactly
+    // Get user profile
     async getUserProfile(): Promise<{
-      success: boolean
       profile: UserProfile
     }> {
-      const headers = await getHeaders()
-      
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000)
-      
-      try {
-        const response = await fetch(`${API_URL}/api/matching/user-profile`, { 
-          headers,
-          signal: controller.signal
-        })
-        
-        clearTimeout(timeoutId)
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch user profile: ${response.status} ${response.statusText}`)
+      console.log("🎬 DEMO MODE: Returning mock user profile")
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return {
+        profile: {
+          id: 'demo-user-1',
+          name: 'Demo User',
+          display_name: 'Demo User',
+          age: 28,
+          gender: 'Other',
+          occupation: 'Software Engineer',
+          interests: ['Technology', 'Music', 'Travel'],
+          rating: 4.8,
+          total_rides: 45,
+          verified: true
         }
-        
-        const result = await response.json()
-        return result
-      } catch (error) {
-        clearTimeout(timeoutId)
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('Request timed out after 10 seconds')
-        }
-        throw error
       }
     },
 
-    // NEW: Get all available users for matching - matches backend exactly
+    // Get available users
     async getAvailableUsers(filters?: MatchFilters): Promise<{
-      success: boolean
       users: UserProfile[]
       totalCount: number
     }> {
-      const headers = await getHeaders()
-      
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000)
-      
-      try {
-        const queryParams = filters ? `?${new URLSearchParams(filters as any).toString()}` : ''
-        const response = await fetch(`${API_URL}/api/matching/available-users${queryParams}`, { 
-          headers,
-          signal: controller.signal
-        })
-        
-        clearTimeout(timeoutId)
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch available users: ${response.status} ${response.statusText}`)
-        }
-        
-        const result = await response.json()
-        return result
-      } catch (error) {
-        clearTimeout(timeoutId)
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('Request timed out after 10 seconds')
-        }
-        throw error
+      console.log("🎬 DEMO MODE: Returning mock available users")
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return {
+        users: [
+          {
+            id: 'demo-user-2',
+            name: 'Sarah Johnson',
+            display_name: 'Sarah J.',
+            age: 26,
+            gender: 'Female',
+            occupation: 'Designer',
+            interests: ['Art', 'Photography', 'Coffee'],
+            rating: 4.9,
+            total_rides: 32,
+            verified: true
+          },
+          {
+            id: 'demo-user-3',
+            name: 'Mike Chen',
+            display_name: 'Mike C.',
+            age: 30,
+            gender: 'Male',
+            occupation: 'Marketing',
+            interests: ['Sports', 'Gaming', 'Food'],
+            rating: 4.7,
+            total_rides: 28,
+            verified: true
+          }
+        ],
+        totalCount: 2
       }
     },
 
-    // NEW: Calculate match scores for specific users - matches backend exactly
+    // Calculate match scores
     async calculateMatchScores(userIds: string[]): Promise<{
-      success: boolean
       matchScores: MatchScore[]
     }> {
-      const headers = await getHeaders()
-      
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout for calculations
-      
-      try {
-        const response = await fetch(`${API_URL}/api/matching/calculate-scores`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ user_ids: userIds }),
-          signal: controller.signal
-        })
-        
-        clearTimeout(timeoutId)
-        
-        if (!response.ok) {
-          throw new Error(`Failed to calculate match scores: ${response.status} ${response.statusText}`)
-        }
-        
-        const result = await response.json()
-        return result
-      } catch (error) {
-        clearTimeout(timeoutId)
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('Request timed out after 15 seconds')
-        }
-        throw error
+      console.log("🎬 DEMO MODE: Returning mock match scores", userIds)
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return {
+        matchScores: userIds.map(id => ({
+          user_id: id,
+          compatibility_score: Math.random() * 0.4 + 0.6, // 0.6-1.0
+          route_overlap: Math.random() * 0.3 + 0.7, // 0.7-1.0
+          estimated_detour_minutes: Math.floor(Math.random() * 10) + 5, // 5-15 minutes
+          match_reasons: ['Similar route', 'Close pickup location', 'Compatible schedule']
+        }))
       }
     }
   }
-} 
+}
