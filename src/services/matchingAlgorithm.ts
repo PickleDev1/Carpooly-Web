@@ -1,5 +1,8 @@
 import { UserProfile, MatchScore } from './matching'
 
+// DEMO MODE: All matching algorithm code commented out - using pure mock data
+
+/*
 // Utility function to calculate distance between two points using Haversine formula
 export const calculateDistance = (
   lat1: number,
@@ -49,7 +52,7 @@ export const calculateLocationScore = (
     score += 0.1
     reasons.push("Acceptable pickup distance")
   } else {
-    dealbreakers.push("Pickup location too far")
+    dealbreakers.push("Too far for pickup")
   }
 
   // Route overlap scoring (60% of location score)
@@ -57,77 +60,88 @@ export const calculateLocationScore = (
     score += 0.6
     reasons.push("Excellent route overlap")
   } else if (routeOverlap >= 0.6) {
-    score += 0.4
+    score += 0.45
     reasons.push("Good route overlap")
   } else if (routeOverlap >= 0.4) {
-    score += 0.2
+    score += 0.3
     reasons.push("Moderate route overlap")
+  } else if (routeOverlap >= 0.2) {
+    score += 0.15
+    reasons.push("Some route overlap")
   } else {
-    dealbreakers.push("Poor route overlap")
+    dealbreakers.push("Minimal route overlap")
   }
 
-  return { score: Math.min(score, 1.0), reasons, dealbreakers }
+  return { score, reasons, dealbreakers }
 }
 
-// Schedule scoring (25% weight) - matches backend exactly
+// Schedule scoring (30% weight) - matches backend exactly
 export const calculateScheduleScore = (
   user1: UserProfile,
   user2: UserProfile
 ): { score: number; reasons: string[]; dealbreakers: string[] } => {
   const time1 = new Date(`2000-01-01T${user1.schedule.departureTime}`)
   const time2 = new Date(`2000-01-01T${user2.schedule.departureTime}`)
+  
   const timeDiff = Math.abs(time1.getTime() - time2.getTime()) / (1000 * 60) // minutes
-
-  const flexibilityOverlap = Math.min(
+  
+  const flexibilityScore = Math.min(
     user1.schedule.flexibilityMinutes,
     user2.schedule.flexibilityMinutes
   ) / Math.max(user1.schedule.flexibilityMinutes, user2.schedule.flexibilityMinutes)
-
+  
   const dayOverlap = calculateDayOverlap(user1.schedule.daysOfWeek, user2.schedule.daysOfWeek)
-
+  
   let score = 0
   const reasons: string[] = []
   const dealbreakers: string[] = []
 
-  // Time difference scoring (40% of schedule score)
-  if (timeDiff <= 15) {
-    score += 0.4
+  // Time compatibility (50% of schedule score)
+  if (timeDiff <= 5) {
+    score += 0.5
     reasons.push("Perfect departure time match")
+  } else if (timeDiff <= 15) {
+    score += 0.4
+    reasons.push("Very close departure times")
   } else if (timeDiff <= 30) {
     score += 0.3
-    reasons.push("Good departure time match")
+    reasons.push("Close departure times")
   } else if (timeDiff <= 60) {
     score += 0.2
-    reasons.push("Acceptable departure time difference")
-  } else if (timeDiff <= 120) {
-    score += 0.1
-    reasons.push("Moderate departure time difference")
+    reasons.push("Acceptable time difference")
   } else {
-    dealbreakers.push("Departure times too different")
+    dealbreakers.push("Too different departure times")
   }
 
-  // Flexibility overlap scoring (30% of schedule score)
-  score += flexibilityOverlap * 0.3
-  if (flexibilityOverlap > 0.7) {
-    reasons.push("Flexible schedules")
+  // Flexibility compatibility (30% of schedule score)
+  if (flexibilityScore >= 0.8) {
+    score += 0.3
+    reasons.push("Both users are very flexible")
+  } else if (flexibilityScore >= 0.6) {
+    score += 0.225
+    reasons.push("Good flexibility match")
+  } else if (flexibilityScore >= 0.4) {
+    score += 0.15
+    reasons.push("Moderate flexibility")
+  } else {
+    dealbreakers.push("Incompatible flexibility")
   }
 
-  // Day overlap scoring (30% of schedule score)
-  score += dayOverlap * 0.3
-  if (dayOverlap > 0.8) {
-    reasons.push("Same travel days")
-  } else if (dayOverlap < 0.3) {
-    dealbreakers.push("Different travel days")
+  // Day overlap (20% of schedule score)
+  if (dayOverlap >= 0.8) {
+    score += 0.2
+    reasons.push("Excellent day overlap")
+  } else if (dayOverlap >= 0.6) {
+    score += 0.15
+    reasons.push("Good day overlap")
+  } else if (dayOverlap >= 0.4) {
+    score += 0.1
+    reasons.push("Moderate day overlap")
+  } else {
+    dealbreakers.push("Minimal day overlap")
   }
 
-  return { score: Math.min(score, 1.0), reasons, dealbreakers }
-}
-
-// Helper function to calculate day overlap
-const calculateDayOverlap = (days1: string[], days2: string[]): number => {
-  if (days1.length === 0 || days2.length === 0) return 0
-  const intersection = days1.filter(day => days2.includes(day))
-  return intersection.length / Math.max(days1.length, days2.length)
+  return { score, reasons, dealbreakers }
 }
 
 // Demographic scoring (20% weight) - matches backend exactly
@@ -139,233 +153,308 @@ export const calculateDemographicScore = (
   const reasons: string[] = []
   const dealbreakers: string[] = []
 
-  // Age preference matching (30% of demographic score)
+  // Age compatibility (40% of demographic score)
   const ageMatch = user1.preferences.demographicPreferences.agePreferences.includes(
     user2.preferences.userDemographics.ageRange
   )
+  
   if (ageMatch) {
-    score += 0.3
-    reasons.push("Age preference match")
+    score += 0.4
+    reasons.push("Age preferences match")
   } else {
-    dealbreakers.push("Age preference mismatch")
+    dealbreakers.push("Age preferences don't match")
   }
 
-  // Gender preference matching (30% of demographic score)
+  // Gender compatibility (30% of demographic score)
   const genderMatch = user1.preferences.demographicPreferences.genderPreferences.includes(
     user2.preferences.userDemographics.gender
   ) || user1.preferences.demographicPreferences.genderPreferences.includes("any")
   
   if (genderMatch) {
     score += 0.3
-    reasons.push("Gender preference match")
+    reasons.push("Gender preferences compatible")
   } else {
-    dealbreakers.push("Gender preference mismatch")
+    dealbreakers.push("Gender preferences incompatible")
   }
 
-  // Student status matching (20% of demographic score)
-  const studentMatch = checkStudentCompatibility(
-    user1.preferences.demographicPreferences.studentPreference,
-    user2.preferences.userDemographics.studentStatus
-  )
+  // Student status compatibility (15% of demographic score)
+  const studentMatch = user1.preferences.demographicPreferences.studentPreference === "both" ||
+    (user1.preferences.demographicPreferences.studentPreference === "students_only" && 
+     user2.preferences.userDemographics.studentStatus === "student") ||
+    (user1.preferences.demographicPreferences.studentPreference === "non_students_only" && 
+     user2.preferences.userDemographics.studentStatus === "not_student")
   
   if (studentMatch) {
-    score += 0.2
-    reasons.push("Student status match")
+    score += 0.15
+    reasons.push("Student status compatible")
   } else {
-    dealbreakers.push("Student status mismatch")
+    dealbreakers.push("Student status incompatible")
   }
 
-  // Occupation preference matching (20% of demographic score)
+  // Occupation compatibility (15% of demographic score)
   const occupationMatch = user1.preferences.demographicPreferences.occupationPreferences.length === 0 ||
     user1.preferences.demographicPreferences.occupationPreferences.includes(
       user2.preferences.userDemographics.occupation
     )
   
-  if (occupationMatch && user1.preferences.demographicPreferences.occupationPreferences.length > 0) {
-    score += 0.2
-    reasons.push("Occupation preference match")
+  if (occupationMatch) {
+    score += 0.15
+    reasons.push("Occupation preferences compatible")
+  } else {
+    dealbreakers.push("Occupation preferences incompatible")
   }
 
-  return { score: Math.min(score, 1.0), reasons, dealbreakers }
+  return { score, reasons, dealbreakers }
 }
 
-// Helper function to check student compatibility
-const checkStudentCompatibility = (preference: string, status: string): boolean => {
-  if (preference === 'both') return true
-  if (preference === 'students_only' && status !== 'not_student') return true
-  if (preference === 'professionals_only' && status === 'not_student') return true
-  return false
-}
-
-// Route scoring (15% weight) - matches backend exactly
+// Route scoring (25% weight) - matches backend exactly
 export const calculateRouteScore = (
   user1: UserProfile,
   user2: UserProfile
 ): { score: number; reasons: string[]; dealbreakers: string[] } => {
-  const homeDistance = calculateDistance(
+  const distance = calculateDistance(
     user1.homeLocation.latitude, user1.homeLocation.longitude,
     user2.homeLocation.latitude, user2.homeLocation.longitude
   )
-  
-  // Estimate detour time (rough calculation)
-  const estimatedDetourMinutes = homeDistance * 3 // Rough estimate: 3 minutes per mile
 
+  const maxDetour = user1.preferences.maxDetourMinutes
+  const maxPickupDistance = user1.preferences.maxPickupDistanceMiles
+  
   let score = 0
   const reasons: string[] = []
   const dealbreakers: string[] = []
 
-  // Detour time scoring (60% of route score)
-  const maxDetour = user1.preferences.maxDetourMinutes
-  if (estimatedDetourMinutes <= maxDetour) {
-    const detourScore = Math.max(0, 60 - (estimatedDetourMinutes / maxDetour) * 60)
-    score += detourScore / 100 // Convert to 0-1 scale
-    reasons.push(`Detour: ${estimatedDetourMinutes.toFixed(0)} minutes (within your ${maxDetour} min limit)`)
-  } else {
-    dealbreakers.push(`Detour: ${estimatedDetourMinutes.toFixed(0)} minutes (exceeds your ${maxDetour} min limit)`)
+  // Pickup distance check
+  if (distance > maxPickupDistance) {
+    dealbreakers.push("Pickup distance exceeds preference")
+    return { score: 0, reasons, dealbreakers }
   }
 
-  // Pickup distance scoring (40% of route score)
-  const maxPickupDistance = user1.preferences.maxPickupDistanceMiles
-  if (homeDistance <= maxPickupDistance) {
-    const pickupScore = Math.max(0, 40 - (homeDistance / maxPickupDistance) * 40)
-    score += pickupScore / 100 // Convert to 0-1 scale
-    reasons.push(`Pickup distance: ${homeDistance.toFixed(1)} miles`)
-  } else {
-    dealbreakers.push(`Pickup distance: ${homeDistance.toFixed(1)} miles (exceeds your ${maxPickupDistance} mile limit)`)
+  // Detour calculation (simplified)
+  const estimatedDetour = distance * 2 // Simplified: 2 minutes per mile
+  if (estimatedDetour > maxDetour) {
+    dealbreakers.push("Estimated detour exceeds preference")
+    return { score: 0, reasons, dealbreakers }
   }
 
-  return { score: Math.min(score, 1.0), reasons, dealbreakers }
+  // Route efficiency scoring
+  const efficiency = Math.max(0, 1 - (estimatedDetour / maxDetour))
+  score = efficiency
+
+  if (efficiency >= 0.8) {
+    reasons.push("Very efficient route")
+  } else if (efficiency >= 0.6) {
+    reasons.push("Efficient route")
+  } else if (efficiency >= 0.4) {
+    reasons.push("Acceptable route efficiency")
+  } else {
+    reasons.push("Route efficiency could be better")
+  }
+
+  return { score, reasons, dealbreakers }
 }
 
-// Group size scoring (10% weight) - matches backend exactly
-export const calculateGroupSizeScore = (
+// Group size compatibility check
+export const checkGroupSizeCompatibility = (
   user1: UserProfile,
   user2: UserProfile
-): { score: number; reasons: string[]; dealbreakers: string[] } => {
+): { compatible: boolean; reason: string } => {
   const currentGroupSize = user1.currentGroupSize + user2.currentGroupSize
-  const preferredGroupSize = Math.min(
+  const maxGroupSize = Math.min(
     user1.preferences.preferredGroupSize,
     user2.preferences.preferredGroupSize
   )
 
-  let score = 0
-  const reasons: string[] = []
-  const dealbreakers: string[] = []
-
-  // Group size compatibility (60% of group size score)
-  if (currentGroupSize <= preferredGroupSize) {
-    score += 0.6
-    reasons.push("Group size preference match")
-  } else if (currentGroupSize <= preferredGroupSize + 1) {
-    score += 0.4
-    reasons.push("Slightly larger group")
-  } else if (currentGroupSize <= preferredGroupSize + 2) {
-    score += 0.2
-    reasons.push("Moderately larger group")
+  if (currentGroupSize <= maxGroupSize) {
+    return { compatible: true, reason: "Group size within preferences" }
   } else {
-    dealbreakers.push("Group size too large")
+    return { compatible: false, reason: "Group size exceeds preferences" }
   }
-
-  // Group size efficiency (40% of group size score)
-  if (currentGroupSize >= 3) {
-    score += 0.4
-    reasons.push("Efficient group size")
-  } else if (currentGroupSize >= 2) {
-    score += 0.2
-    reasons.push("Good group size")
-  }
-
-  return { score: Math.min(score, 1.0), reasons, dealbreakers }
 }
 
-// Role compatibility scoring (5% weight) - matches backend exactly
-export const calculateRoleCompatibilityScore = (
+// Driver preference compatibility
+export const checkDriverPreference = (
   user1: UserProfile,
   user2: UserProfile
-): { score: number; reasons: string[]; dealbreakers: string[] } => {
+): { compatible: boolean; reason: string } => {
   const driver1 = user1.preferences.driverPreference
   const driver2 = user2.preferences.driverPreference
 
-  let score = 0
-  const reasons: string[] = []
-  const dealbreakers: string[] = []
-
-  // Role compatibility logic
-  if (driver1 === "flexible" && driver2 === "flexible") {
-    score += 0.8
-    reasons.push("Both flexible with driving")
-  } else if (driver1 === "driver" && driver2 === "passenger") {
-    score += 1.0
-    reasons.push("Perfect driver-passenger match")
-  } else if (driver1 === "passenger" && driver2 === "driver") {
-    score += 1.0
-    reasons.push("Perfect driver-passenger match")
-  } else if (driver1 === "driver" && driver2 === "driver") {
-    score += 0.6
-    reasons.push("Both prefer driving")
-  } else if (driver1 === "passenger" && driver2 === "passenger") {
-    score += 0.3
-    reasons.push("Both prefer being passengers")
-  } else if (driver1 === "flexible" || driver2 === "flexible") {
-    score += 0.7
-    reasons.push("One person is flexible")
+  if (driver1 === "flexible" || driver2 === "flexible") {
+    return { compatible: true, reason: "At least one user is flexible about driving" }
+  } else if (driver1 === "prefer_driving" && driver2 === "prefer_riding") {
+    return { compatible: true, reason: "Driver preference match" }
+  } else if (driver1 === "prefer_riding" && driver2 === "prefer_driving") {
+    return { compatible: true, reason: "Driver preference match" }
+  } else if (driver1 === "prefer_driving" && driver2 === "prefer_driving") {
+    return { compatible: false, reason: "Both prefer driving" }
+  } else if (driver1 === "prefer_riding" && driver2 === "prefer_riding") {
+    return { compatible: false, reason: "Both prefer riding" }
   } else {
-    dealbreakers.push("Role preference conflict")
+    return { compatible: true, reason: "Driver preferences compatible" }
   }
-
-  return { score: Math.min(score, 1.0), reasons, dealbreakers }
 }
 
-// Calculate total match score - matches backend exactly
-export const calculateTotalMatchScore = (
+// Main matching algorithm - matches backend exactly
+export const calculateMatchScore = (
   user1: UserProfile,
   user2: UserProfile
 ): MatchScore => {
-  const locationResult = calculateLocationScore(user1, user2)
-  const scheduleResult = calculateScheduleScore(user1, user2)
-  const demographicResult = calculateDemographicScore(user1, user2)
-  const routeResult = calculateRouteScore(user1, user2)
-  const groupSizeResult = calculateGroupSizeScore(user1, user2)
-  const roleResult = calculateRoleCompatibilityScore(user1, user2)
+  // Check group size compatibility first
+  const groupSizeCheck = checkGroupSizeCompatibility(user1, user2)
+  if (!groupSizeCheck.compatible) {
+    return {
+      user_id: user2.id,
+      compatibility_score: 0,
+      route_overlap: 0,
+      estimated_detour_minutes: 0,
+      match_reasons: [groupSizeCheck.reason],
+      totalScore: 0
+    }
+  }
 
-  // Weighted total score
-  const totalScore = 
-    locationResult.score * 0.25 +
-    scheduleResult.score * 0.25 +
-    demographicResult.score * 0.20 +
-    routeResult.score * 0.15 +
-    groupSizeResult.score * 0.10 +
-    roleResult.score * 0.05
+  // Check driver preference compatibility
+  const driverCheck = checkDriverPreference(user1, user2)
+  if (!driverCheck.compatible) {
+    return {
+      user_id: user2.id,
+      compatibility_score: 0,
+      route_overlap: 0,
+      estimated_detour_minutes: 0,
+      match_reasons: [driverCheck.reason],
+      totalScore: 0
+    }
+  }
+
+  // Calculate individual scores
+  const locationScore = calculateLocationScore(user1, user2)
+  const scheduleScore = calculateScheduleScore(user1, user2)
+  const demographicScore = calculateDemographicScore(user1, user2)
+  const routeScore = calculateRouteScore(user1, user2)
+
+  // Check for dealbreakers
+  const allDealbreakers = [
+    ...locationScore.dealbreakers,
+    ...scheduleScore.dealbreakers,
+    ...demographicScore.dealbreakers,
+    ...routeScore.dealbreakers
+  ]
+
+  if (allDealbreakers.length > 0) {
+    return {
+      user_id: user2.id,
+      compatibility_score: 0,
+      route_overlap: 0,
+      estimated_detour_minutes: 0,
+      match_reasons: allDealbreakers,
+      totalScore: 0
+    }
+  }
+
+  // Calculate weighted total score
+  const totalScore = (
+    locationScore.score * 0.25 +
+    scheduleScore.score * 0.30 +
+    demographicScore.score * 0.20 +
+    routeScore.score * 0.25
+  )
 
   // Combine all reasons
   const allReasons = [
-    ...locationResult.reasons,
-    ...scheduleResult.reasons,
-    ...demographicResult.reasons,
-    ...routeResult.reasons,
-    ...groupSizeResult.reasons,
-    ...roleResult.reasons
+    ...locationScore.reasons,
+    ...scheduleScore.reasons,
+    ...demographicScore.reasons,
+    ...routeScore.reasons
   ]
 
-  // Identify dealbreakers
-  const allDealbreakers = [
-    ...locationResult.dealbreakers,
-    ...scheduleResult.dealbreakers,
-    ...demographicResult.dealbreakers,
-    ...routeResult.dealbreakers,
-    ...groupSizeResult.dealbreakers,
-    ...roleResult.dealbreakers
-  ]
+  // Calculate route overlap and detour
+  const distance = calculateDistance(
+    user1.homeLocation.latitude, user1.homeLocation.longitude,
+    user2.homeLocation.latitude, user2.homeLocation.longitude
+  )
+  const routeOverlap = Math.max(0, 1 - (distance / 20))
+  const estimatedDetour = distance * 2
 
   return {
-    totalScore: Math.round(totalScore * 100) / 100,
-    locationScore: Math.round(locationResult.score * 100) / 100,
-    scheduleScore: Math.round(scheduleResult.score * 100) / 100,
-    demographicScore: Math.round(demographicResult.score * 100) / 100,
-    routeScore: Math.round(routeResult.score * 100) / 100,
-    groupSizeScore: Math.round(groupSizeResult.score * 100) / 100,
-    roleCompatibilityScore: Math.round(roleResult.score * 100) / 100,
-    reasons: allReasons,
-    dealbreakers: allDealbreakers
+    user_id: user2.id,
+    compatibility_score: Math.round(totalScore * 100) / 100,
+    route_overlap: Math.round(routeOverlap * 100) / 100,
+    estimated_detour_minutes: Math.round(estimatedDetour),
+    match_reasons: allReasons,
+    totalScore: Math.round(totalScore * 100) / 100
   }
-} 
+}
+
+// Helper function to calculate day overlap
+const calculateDayOverlap = (days1: string[], days2: string[]): number => {
+  const set1 = new Set(days1)
+  const set2 = new Set(days2)
+  const intersection = new Set([...set1].filter(x => set2.has(x)))
+  return intersection.size / Math.max(set1.size, set2.size)
+}
+*/
+
+// DEMO MODE: Pure mock data for demo video
+export const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  console.log("🎬 DEMO MODE: Mock distance calculation")
+  return Math.random() * 10 + 2 // Random distance between 2-12 miles
+}
+
+export const calculateLocationScore = (user1: UserProfile, user2: UserProfile) => {
+  console.log("🎬 DEMO MODE: Mock location score")
+  return {
+    score: Math.random() * 0.4 + 0.6, // 0.6-1.0
+    reasons: ["Close pickup location", "Good route overlap"],
+    dealbreakers: []
+  }
+}
+
+export const calculateScheduleScore = (user1: UserProfile, user2: UserProfile) => {
+  console.log("🎬 DEMO MODE: Mock schedule score")
+  return {
+    score: Math.random() * 0.4 + 0.6, // 0.6-1.0
+    reasons: ["Similar departure times", "Good day overlap"],
+    dealbreakers: []
+  }
+}
+
+export const calculateDemographicScore = (user1: UserProfile, user2: UserProfile) => {
+  console.log("🎬 DEMO MODE: Mock demographic score")
+  return {
+    score: Math.random() * 0.4 + 0.6, // 0.6-1.0
+    reasons: ["Age preferences match", "Compatible demographics"],
+    dealbreakers: []
+  }
+}
+
+export const calculateRouteScore = (user1: UserProfile, user2: UserProfile) => {
+  console.log("🎬 DEMO MODE: Mock route score")
+  return {
+    score: Math.random() * 0.4 + 0.6, // 0.6-1.0
+    reasons: ["Efficient route", "Minimal detour"],
+    dealbreakers: []
+  }
+}
+
+export const checkGroupSizeCompatibility = (user1: UserProfile, user2: UserProfile) => {
+  console.log("🎬 DEMO MODE: Mock group size check")
+  return { compatible: true, reason: "Group size within preferences" }
+}
+
+export const checkDriverPreference = (user1: UserProfile, user2: UserProfile) => {
+  console.log("🎬 DEMO MODE: Mock driver preference check")
+  return { compatible: true, reason: "Driver preferences compatible" }
+}
+
+export const calculateMatchScore = (user1: UserProfile, user2: UserProfile): MatchScore => {
+  console.log("🎬 DEMO MODE: Mock match score calculation")
+  const totalScore = Math.random() * 0.4 + 0.6 // 0.6-1.0
+  return {
+    user_id: user2.id,
+    compatibility_score: Math.round(totalScore * 100) / 100,
+    route_overlap: Math.round((Math.random() * 0.4 + 0.6) * 100) / 100,
+    estimated_detour_minutes: Math.floor(Math.random() * 10) + 5,
+    match_reasons: ["Similar route", "Close pickup location", "Compatible schedule"],
+    totalScore: Math.round(totalScore * 100) / 100
+  }
+}

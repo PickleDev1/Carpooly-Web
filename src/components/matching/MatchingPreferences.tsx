@@ -25,6 +25,13 @@ const defaultPreferences: MatchingPreferences = {
   scheduleFlexibilityMinutes: 30,
   maxPickupDistanceMiles: 5.0,
   minCompatibilityScore: 70,
+  // Added required fields to satisfy type
+  maxPickupDistance: 5,
+  preferredGender: ['any'],
+  preferredAgeRange: { min: 25, max: 40 },
+  smokingPreference: 'non_smoking',
+  musicPreference: 'flexible',
+  conversationPreference: 'casual',
   notificationPreferences: {
     email: true,
     push: true,
@@ -35,13 +42,16 @@ const defaultPreferences: MatchingPreferences = {
     gender: 'prefer_not_to_say',
     occupation: '',
     studentStatus: 'not_student',
-    company: ''
+    company: '',
+    age: 28,
+    interests: []
   },
   demographicPreferences: {
     agePreferences: ['18-25', '26-35', '36-45', '46-55'],
     genderPreferences: ['any'],
     studentPreference: 'both',
-    occupationPreferences: []
+    occupationPreferences: [],
+    ageRange: { min: 25, max: 40 }
   }
 }
 
