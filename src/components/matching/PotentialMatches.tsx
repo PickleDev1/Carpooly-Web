@@ -49,13 +49,7 @@ export function PotentialMatches({ onStatsUpdate, onTabChange }: PotentialMatche
         })
       }
     } catch (error) {
-      console.error('Failed to load matches:', error)
-      // Use fallback data for development
-      setMatches({
-        pending: [],
-        accepted: [],
-        expired: []
-      })
+      setMatches({ pending: [], accepted: [], expired: [] })
     } finally {
       setLoading(false)
     }

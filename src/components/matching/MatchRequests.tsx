@@ -71,7 +71,7 @@ const mockRequests: RequestsState = {
 
 export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps) {
   const [requests, setRequests] = useState(mockRequests)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [processingRequest, setProcessingRequest] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   
@@ -81,27 +81,16 @@ export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps
     setLoading(true)
     setError(null)
     try {
-      console.log('🔄 MatchRequests: Starting to load requests...')
       const data = await matchingService.getRequests()
-      console.log('✅ MatchRequests: Successfully loaded requests:', data)
       setRequests(data)
-      console.log('🔄 MatchRequests: Setting loading to false (success)')
     } catch (error) {
-      console.error('❌ MatchRequests: Failed to load requests:', error)
       if (error instanceof Error) {
-        console.error('❌ MatchRequests: Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        })
         setError(error.message)
       }
       // Use mock data for development
       setRequests(mockRequests)
-      console.log('🔄 MatchRequests: Setting loading to false (error)')
     } finally {
       setLoading(false)
-      console.log('🔄 MatchRequests: Loading state set to false')
     }
   }, [])
 
@@ -112,21 +101,16 @@ export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps
   const handleAcceptRequest = async (requestId: string) => {
     setProcessingRequest(requestId)
     try {
-      await matchingService.respondToRequest(requestId, 'accept', 'Great! Let&apos;s carpool together.')
-      
-      // Update local state
+      await matchingService.respondToRequest(requestId, 'accept', 'Great! Let\'s carpool together.')
       setRequests(prev => ({
         ...prev,
         incoming: prev.incoming.map(req => 
           req.id === requestId ? { ...req, status: 'accepted' as const } : req
         )
       }))
-      
-      // Update stats in parent component
       onStatsUpdate?.()
-      
     } catch (error) {
-      console.error('Failed to accept request:', error)
+      // swallow for demo
     } finally {
       setProcessingRequest(null)
     }
@@ -135,21 +119,16 @@ export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps
   const handleRejectRequest = async (requestId: string) => {
     setProcessingRequest(requestId)
     try {
-      await matchingService.respondToRequest(requestId, 'reject', 'Thanks for the offer, but I&apos;ll pass for now.')
-      
-      // Update local state
+      await matchingService.respondToRequest(requestId, 'reject', 'Thanks for the offer, but I\'ll pass for now.')
       setRequests(prev => ({
         ...prev,
         incoming: prev.incoming.map(req => 
           req.id === requestId ? { ...req, status: 'rejected' as const } : req
         )
       }))
-      
-      // Update stats in parent component
       onStatsUpdate?.()
-      
     } catch (error) {
-      console.error('Failed to reject request:', error)
+      // swallow for demo
     } finally {
       setProcessingRequest(null)
     }
@@ -189,15 +168,12 @@ export function MatchRequests({ onStatsUpdate, onTabChange }: MatchRequestsProps
     return 'Expires soon'
   }
 
-  console.log('🔄 MatchRequests: Current loading state:', loading)
-  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading requests...</p>
-          <p className="text-sm text-gray-500 mt-2">Debug: loading = {loading.toString()}</p>
         </div>
       </div>
     )
