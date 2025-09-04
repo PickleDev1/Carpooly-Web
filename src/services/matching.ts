@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/nextjs'
 import { mockPotentialMatches, mockMatchingPreferences, mockMatchRequests, mockMatchingStats } from '@/mocks/data/matching'
-
+import { useMatchingServiceDemo } from "./matchingDemo"
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 console.log('🔐 Matching Service: API_URL:', API_URL)
@@ -128,6 +128,11 @@ export interface MatchRequest {
 }
 
 export const useMatchingService = () => {
+  // DEMO MODE: Return demo service immediately if flag is set
+  if (useMockMatching) {
+    console.log("🎬 DEMO MODE: Using fast demo service")
+    return useMatchingServiceDemo()
+  }
   const { getToken } = useAuth()
 
   const getHeaders = async () => {
