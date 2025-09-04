@@ -367,9 +367,7 @@ const mockMatchingStatsData: MatchingStats = {
 
 // Async mock service – signatures preserved to match components
 export const useMatchingService = () => {
-  console.log('🎬 DEMO MODE: Using pure mock data - no API calls')
-
-  return {
+  const service = {
     async getPreferences(): Promise<MatchingPreferences> {
       return mockMatchingPreferencesData
     },
@@ -503,4 +501,6 @@ export const useMatchingService = () => {
       }
     }
   }
+
+  return service
 }
