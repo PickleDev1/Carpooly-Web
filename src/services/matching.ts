@@ -4,6 +4,9 @@ import { mockPotentialMatches, mockMatchingPreferences, mockMatchRequests, mockM
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 console.log('🔐 Matching Service: API_URL:', API_URL)
+
+// DEMO MODE: Set to true to force mock data usage for demo purposes
+const useMockMatching = true
 console.log('🔐 Matching Service: API_URL exists:', !!API_URL)
 
 // Enhanced Matching Preferences - matches backend exactly
@@ -230,6 +233,18 @@ export const useMatchingService = () => {
       filtersApplied: MatchFilters
     }> {
       const headers = await getHeaders()
+      // DEMO MODE: Return mock data immediately if flag is set
+      if (useMockMatching) {
+        console.log("🎬 DEMO MODE: Using mock data for potential matches")
+        return {
+          success: true,
+          pendingMatches: mockPotentialMatches,
+          acceptedMatches: [],
+          expiredMatches: [],
+          totalAvailable: mockPotentialMatches.length,
+          filtersApplied: filters || {}
+        }
+      }
       
       // Add timeout to prevent hanging
       const controller = new AbortController()
@@ -313,6 +328,14 @@ export const useMatchingService = () => {
       
       // Add timeout to prevent hanging
       const controller = new AbortController()
+      // DEMO MODE: Return mock data immediately if flag is set
+      if (useMockMatching) {
+        console.log("🎬 DEMO MODE: Using mock data for match requests")
+        return {
+          incoming: mockMatchRequests,
+          outgoing: []
+        }
+      }
       const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
       
       try {
@@ -400,6 +423,11 @@ export const useMatchingService = () => {
       }[]
     }> {
       const headers = await getHeaders()
+      // DEMO MODE: Return mock data immediately if flag is set
+      if (useMockMatching) {
+        console.log("🎬 DEMO MODE: Using mock data for matching stats")
+        return mockMatchingStats
+      }
       
       // Add timeout to prevent hanging
       const controller = new AbortController()

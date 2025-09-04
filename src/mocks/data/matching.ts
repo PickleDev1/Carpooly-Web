@@ -608,6 +608,27 @@ export const mockMatchRequests: MatchRequest[] = [
 
 // Mock stats for demo
 export const mockMatchingStats = {
+  total_matches_generated: 6,
+  match_acceptance_rate: 78,
+  average_compatibility_score: 85,
+  total_carpools_formed: 3,
+  total_savings: 798,
+  average_route_overlap: 75,
+  most_common_match_reasons: ["Same route", "Similar schedule", "Close location"],
+  geographic_distribution: {
+    nearby: 4,
+    medium_distance: 2,
+    far: 0
+  },
+  time_to_acceptance: 2.5,
+  monthly_trends: [
+    { month: "Jan", matches: 2, acceptances: 1 },
+    { month: "Feb", matches: 4, acceptances: 2 }
+  ]
+}
+
+// Legacy mock stats for backward compatibility
+export const legacyMockMatchingStats = {
   potentialMatches: 6,
   activeRequests: 2,
   carpoolsFormed: 3,
