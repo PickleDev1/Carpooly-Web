@@ -15,7 +15,8 @@ import {
   Route,
   Save
 } from 'lucide-react'
-import { useMatchingService, type MatchingPreferences } from '@/services/matching'
+import { useMatchingService } from '@/services/matchingWrapper'
+import { type MatchingPreferences } from '@/services/matching'
 
 const defaultPreferences: MatchingPreferences = {
   maxDetourMinutes: 15,

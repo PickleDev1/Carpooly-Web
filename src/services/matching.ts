@@ -129,12 +129,7 @@ export interface MatchRequest {
 
 export const useMatchingService = () => {
   // DEMO MODE: Return demo service immediately if flag is set
-  if (useMockMatching) {
-    console.log("🎬 DEMO MODE: Using fast demo service")
-    return useMatchingServiceDemo()
-  }
   const { getToken } = useAuth()
-
   const getHeaders = async () => {
     const token = await getToken()
     console.log('🔐 Matching Service: Token received:', token ? 'Token exists' : 'No token')

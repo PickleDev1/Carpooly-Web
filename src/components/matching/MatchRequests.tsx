@@ -14,7 +14,8 @@ import {
   Calendar,
   Users
 } from 'lucide-react'
-import { useMatchingService, MatchRequest } from '@/services/matching'
+import { useMatchingService } from '@/services/matchingWrapper'
+import { MatchRequest } from '@/services/matching'
 
 interface MatchRequestsProps {
   onStatsUpdate?: () => void

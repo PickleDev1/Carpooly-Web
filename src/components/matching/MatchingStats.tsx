@@ -13,7 +13,7 @@ import {
   MapPin,
   Clock
 } from 'lucide-react'
-import { useMatchingService } from '@/services/matching'
+import { useMatchingService } from '@/services/matchingWrapper'
 
 interface MatchingStats {
   total_matches_generated: number

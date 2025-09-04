@@ -8,7 +8,8 @@ import {
   Filter,
   RefreshCw
 } from 'lucide-react'
-import { useMatchingService, PotentialMatch, MatchFilters } from '@/services/matching'
+import { useMatchingService } from '@/services/matchingWrapper'
+import { PotentialMatch, MatchFilters } from '@/services/matching'
 import { MatchCard } from './MatchCard'
 import { MatchFilter } from './MatchFilter'
 

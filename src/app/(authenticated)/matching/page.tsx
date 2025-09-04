@@ -23,7 +23,7 @@ import { MatchingPreferences } from '@/components/matching/MatchingPreferences'
 import { PotentialMatches } from '@/components/matching/PotentialMatches'
 import { MatchRequests } from '@/components/matching/MatchRequests'
 import { MatchingStats } from '@/components/matching/MatchingStats'
-import { useMatchingService } from '@/services/matching'
+import { useMatchingService } from '@/services/matchingWrapper'
 
 export default function MatchingPage() {
   const { user } = useUser()
