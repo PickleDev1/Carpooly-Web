@@ -86,3 +86,164 @@ export interface LocationSettingsUpdateRequest {
   home_latitude?: number
   home_longitude?: number
 }
+
+// Matching API Response Types
+export interface MatchingPreferencesResponse {
+  success: boolean;
+  preferences: {
+    user_id: string;
+    max_detour_minutes: number;
+    preferred_group_size: number;
+    driver_preference: 'driver' | 'passenger' | 'flexible';
+    schedule_flexibility_minutes: number;
+    max_pickup_distance_miles: number;
+    min_compatibility_score: number;
+    notification_preferences: {
+      email: boolean;
+      push: boolean;
+      sms: boolean;
+    };
+    user_demographics: {
+      age_range: string;
+      gender: string;
+      occupation: string;
+      student_status: string;
+      company: string;
+    };
+    demographic_preferences: {
+      age_preferences: string[];
+      gender_preferences: string[];
+      student_preference: string;
+      occupation_preferences: string[];
+    };
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+export interface PotentialMatchesResponse {
+  pending_matches: Array<{
+    id: string;
+    user2: {
+      id: string;
+      name: string;
+      display_name: string;
+      home_location: {
+        lat: number;
+        lng: number;
+        address: string;
+      };
+      work_location: {
+        lat: number;
+        lng: number;
+        address: string;
+      };
+      preferences: any;
+      schedule: {
+        work_days: string[];
+        work_start_time: string;
+        work_end_time: string;
+      };
+    };
+    compatibility_score: number;
+    match_reasons: string[];
+    route_overlap_percentage: number;
+    estimated_detour_minutes: number;
+    estimated_pickup_distance_miles: number;
+    created_at: string;
+    expires_at: string;
+  }>;
+  accepted_matches: any[];
+  expired_matches: any[];
+}
+
+export interface MatchRequestsResponse {
+  incoming: Array<{
+    id: string;
+    from_user_id: string;
+    to_user_id: string;
+    potential_match_id: string;
+    message: string;
+    status: 'pending' | 'accepted' | 'rejected';
+    expires_at: string;
+    created_at: string;
+    from_user: {
+      id: string;
+      name: string;
+      display_name: string;
+    };
+  }>;
+  outgoing: Array<{
+    id: string;
+    from_user_id: string;
+    to_user_id: string;
+    potential_match_id: string;
+    message: string;
+    status: 'pending' | 'accepted' | 'rejected';
+    expires_at: string;
+    created_at: string;
+    to_user: {
+      id: string;
+      name: string;
+      display_name: string;
+    };
+  }>;
+}
+
+export interface FindMatchesResponse {
+  matches_found: number;
+  message: string;
+}
+
+export interface MatchRequestResponse {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  potential_match_id: string;
+  message: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  expires_at: string;
+  created_at: string;
+  from_user: {
+    id: string;
+    name: string;
+    display_name: string;
+  };
+}
+
+export interface UpdateRequestResponse {
+  message: string;
+  status: 'accepted' | 'rejected';
+}
+
+export interface MatchingSessionResponse {
+  id: string;
+  user_id: string;
+  status: 'active' | 'inactive' | 'expired';
+  last_match_generated_at: string | null;
+  expires_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MatchingStatsResponse {
+  total_matches_generated: number;
+  match_acceptance_rate: number;
+  average_compatibility_score: number;
+  total_carpools_formed: number;
+  total_savings: number;
+  average_route_overlap: number;
+  most_common_match_reasons: string[];
+  geographic_distribution: {
+    nearby: number;
+    medium_distance: number;
+    far: number;
+  };
+  time_to_acceptance: number;
+  monthly_trends: Array<{
+    month: string;
+    matches: number;
+    acceptances: number;
+  }>;
+}

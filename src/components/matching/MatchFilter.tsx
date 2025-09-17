@@ -19,8 +19,8 @@ export function MatchFilter({ filters, onFilterChange, onClearFilters }: Props) 
           <div className="text-xs text-muted-foreground mb-1">Min score (%)</div>
           <Input
             type="number"
-            value={filters.minScore ?? ''}
-            onChange={e => onFilterChange({ ...filters, minScore: e.target.value ? Number(e.target.value) : undefined })}
+            value={filters.min_score ?? ''}
+            onChange={e => onFilterChange({ ...filters, min_score: e.target.value ? Number(e.target.value) : undefined })}
             placeholder="e.g. 70"
             min={0}
             max={100}
@@ -30,8 +30,8 @@ export function MatchFilter({ filters, onFilterChange, onClearFilters }: Props) 
           <div className="text-xs text-muted-foreground mb-1">Max distance (mi)</div>
           <Input
             type="number"
-            value={filters.maxDistance ?? ''}
-            onChange={e => onFilterChange({ ...filters, maxDistance: e.target.value ? Number(e.target.value) : undefined })}
+            value={filters.max_distance ?? ''}
+            onChange={e => onFilterChange({ ...filters, max_distance: e.target.value ? Number(e.target.value) : undefined })}
             placeholder="e.g. 10"
             min={0}
           />

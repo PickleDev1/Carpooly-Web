@@ -13,14 +13,15 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
-import { useMatchingService, type MatchRequest } from '@/services/matching'
+import { useMatchingService } from '@/services/matching'
+import type { MatchRequestsResponse } from '@/types/api'
 
 interface Props { onStatsUpdate?: () => void }
 
 export function MatchRequests({ onStatsUpdate }: Props) {
   const matching = useMatchingService()
   const [loading, setLoading] = useState(false)
-  const [requests, setRequests] = useState<{ incoming: MatchRequest[]; outgoing: MatchRequest[] }>({ incoming: [], outgoing: [] })
+  const [requests, setRequests] = useState<MatchRequestsResponse>({ incoming: [], outgoing: [] })
   const [processing, setProcessing] = useState<string | null>(null)
   const [incomingIndex, setIncomingIndex] = useState(0)
 
@@ -40,7 +41,7 @@ export function MatchRequests({ onStatsUpdate }: Props) {
   const accept = async (id: string) => {
     setProcessing(id)
     try {
-      await matching.respondToRequest(id, 'accept')
+      await matching.respondToRequest(id, 'accepted')
       setRequests(prev => ({
         incoming: prev.incoming.map(r => (r.id === id ? { ...r, status: 'accepted' as const } : r)),
         outgoing: prev.outgoing
@@ -54,7 +55,7 @@ export function MatchRequests({ onStatsUpdate }: Props) {
   const reject = async (id: string) => {
     setProcessing(id)
     try {
-      await matching.respondToRequest(id, 'reject')
+      await matching.respondToRequest(id, 'rejected')
       setRequests(prev => ({
         incoming: prev.incoming.map(r => (r.id === id ? { ...r, status: 'rejected' as const } : r)),
         outgoing: prev.outgoing

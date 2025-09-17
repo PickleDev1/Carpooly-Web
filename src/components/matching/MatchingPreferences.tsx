@@ -17,15 +17,19 @@ import {
 import { useMatchingService, type MatchingPreferences as Prefs } from '@/services/matching'
 
 const defaults: Prefs = {
-  maxDetourMinutes: 15,
-  preferredGroupSize: 4,
-  driverPreference: 'flexible',
-  scheduleFlexibilityMinutes: 30,
-  maxPickupDistanceMiles: 5.0,
-  minCompatibilityScore: 0.7,
-  notificationPreferences: { email: true, push: true, sms: false },
-  userDemographics: { ageRange: '26-35', gender: 'prefer_not_to_say', occupation: '', studentStatus: 'not_student', company: '' },
-  demographicPreferences: { agePreferences: ['18-25','26-35','36-45','46-55','56-65','65+'], genderPreferences: ['any'], studentPreference: 'both', occupationPreferences: [] }
+  user_id: '',
+  max_detour_minutes: 15,
+  preferred_group_size: 4,
+  driver_preference: 'flexible',
+  schedule_flexibility_minutes: 30,
+  max_pickup_distance_miles: 5.0,
+  min_compatibility_score: 0.7,
+  notification_preferences: { email: true, push: true, sms: false },
+  user_demographics: { age_range: '26-35', gender: 'prefer_not_to_say', occupation: '', student_status: 'not_student', company: '' },
+  demographic_preferences: { age_preferences: ['18-25','26-35','36-45','46-55','56-65','65+'], gender_preferences: ['any'], student_preference: 'both', occupation_preferences: [] },
+  is_active: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
 }
 
 const AGE_RANGES = ['18-25','26-35','36-45','46-55','56-65','65+']
@@ -66,17 +70,17 @@ export function MatchingPreferences() {
     }
   }
 
-  const update = (key: keyof Prefs, value: any) => setPrefs(prev => ({ ...prev, [key]: value }))
-  const updateNotif = (key: keyof Prefs['notificationPreferences'], value: boolean) => setPrefs(prev => ({ ...prev, notificationPreferences: { ...prev.notificationPreferences, [key]: value } }))
+  const update = (key: keyof Prefs, value: any) => setPrefs((prev: Prefs) => ({ ...prev, [key]: value }))
+  const updateNotif = (key: keyof Prefs['notification_preferences'], value: boolean) => setPrefs((prev: Prefs) => ({ ...prev, notification_preferences: { ...prev.notification_preferences, [key]: value } }))
 
-  const updateUserDemo = (key: keyof Prefs['userDemographics'], value: any) => setPrefs(prev => ({ ...prev, userDemographics: { ...prev.userDemographics, [key]: value } }))
-  const toggleArrayPref = (key: keyof Prefs['demographicPreferences'], value: string) => setPrefs(prev => {
-    const current = prev.demographicPreferences[key] as string[]
+  const updateUserDemo = (key: keyof Prefs['user_demographics'], value: any) => setPrefs((prev: Prefs) => ({ ...prev, user_demographics: { ...prev.user_demographics, [key]: value } }))
+  const toggleArrayPref = (key: keyof Prefs['demographic_preferences'], value: string) => setPrefs((prev: Prefs) => {
+    const current = prev.demographic_preferences[key] as string[]
     const exists = current.includes(value)
     const next = exists ? current.filter(v => v !== value) : [...current, value]
-    return { ...prev, demographicPreferences: { ...prev.demographicPreferences, [key]: next } }
+    return { ...prev, demographic_preferences: { ...prev.demographic_preferences, [key]: next } }
   })
-  const updateDemoPref = (key: keyof Prefs['demographicPreferences'], value: any) => setPrefs(prev => ({ ...prev, demographicPreferences: { ...prev.demographicPreferences, [key]: value } }))
+  const updateDemoPref = (key: keyof Prefs['demographic_preferences'], value: any) => setPrefs((prev: Prefs) => ({ ...prev, demographic_preferences: { ...prev.demographic_preferences, [key]: value } }))
 
   return (
     <div className="space-y-6">
@@ -98,12 +102,12 @@ export function MatchingPreferences() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="max_detour">Maximum Detour (minutes)</Label>
-                <Input id="max_detour" type="number" value={prefs.maxDetourMinutes} onChange={(e) => update('maxDetourMinutes', parseInt(e.target.value))} min={0} max={60} />
+                <Input id="max_detour" type="number" value={prefs.max_detour_minutes} onChange={(e) => update('max_detour_minutes', parseInt(e.target.value))} min={0} max={60} />
                 <p className="text-xs text-gray-500 mt-1">How much extra time you&apos;re willing to spend picking up others</p>
               </div>
               <div>
                 <Label htmlFor="pickup_distance">Maximum Pickup Distance (miles)</Label>
-                <Input id="pickup_distance" type="number" step="0.5" value={prefs.maxPickupDistanceMiles} onChange={(e) => update('maxPickupDistanceMiles', parseFloat(e.target.value))} min={0} max={25} />
+                <Input id="pickup_distance" type="number" step="0.5" value={prefs.max_pickup_distance_miles} onChange={(e) => update('max_pickup_distance_miles', parseFloat(e.target.value))} min={0} max={25} />
                 <p className="text-xs text-gray-500 mt-1">Maximum distance to travel for pickup</p>
               </div>
             </div>
@@ -122,7 +126,7 @@ export function MatchingPreferences() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="group_size">Preferred Group Size</Label>
-                <MatchingSelect value={prefs.preferredGroupSize.toString()} onValueChange={(v) => update('preferredGroupSize', parseInt(v))}>
+                <MatchingSelect value={prefs.preferred_group_size.toString()} onValueChange={(v) => update('preferred_group_size', parseInt(v))}>
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
                   </MatchingSelectTrigger>
@@ -135,7 +139,7 @@ export function MatchingPreferences() {
               </div>
               <div>
                 <Label htmlFor="driver_preference">Driver Preference</Label>
-                <MatchingSelect value={prefs.driverPreference} onValueChange={(v) => update('driverPreference', v)}>
+                <MatchingSelect value={prefs.driver_preference} onValueChange={(v) => update('driver_preference', v)}>
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
                   </MatchingSelectTrigger>
@@ -162,12 +166,12 @@ export function MatchingPreferences() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="flexibility">Schedule Flexibility (minutes)</Label>
-                <Input id="flexibility" type="number" value={prefs.scheduleFlexibilityMinutes} onChange={(e) => update('scheduleFlexibilityMinutes', parseInt(e.target.value))} min={0} max={120} />
+                <Input id="flexibility" type="number" value={prefs.schedule_flexibility_minutes} onChange={(e) => update('schedule_flexibility_minutes', parseInt(e.target.value))} min={0} max={120} />
                 <p className="text-xs text-gray-500 mt-1">How much your departure time can vary</p>
               </div>
               <div>
                 <Label htmlFor="compatibility">Minimum Compatibility Score</Label>
-                <Input id="compatibility" type="number" step="0.01" value={prefs.minCompatibilityScore} onChange={(e) => update('minCompatibilityScore', parseFloat(e.target.value))} min={0} max={1} />
+                <Input id="compatibility" type="number" step="0.01" value={prefs.min_compatibility_score} onChange={(e) => update('min_compatibility_score', parseFloat(e.target.value))} min={0} max={1} />
                 <p className="text-xs text-gray-500 mt-1">Value between 0.0 and 1.0</p>
               </div>
             </div>
@@ -183,7 +187,7 @@ export function MatchingPreferences() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Age Range</Label>
-                <MatchingSelect value={prefs.userDemographics.ageRange} onValueChange={(v) => updateUserDemo('ageRange', v)}>
+                <MatchingSelect value={prefs.user_demographics.age_range} onValueChange={(v) => updateUserDemo('age_range', v)}>
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
                   </MatchingSelectTrigger>
@@ -194,7 +198,7 @@ export function MatchingPreferences() {
               </div>
               <div>
                 <Label>Gender</Label>
-                <MatchingSelect value={prefs.userDemographics.gender} onValueChange={(v) => updateUserDemo('gender', v)}>
+                <MatchingSelect value={prefs.user_demographics.gender} onValueChange={(v) => updateUserDemo('gender', v)}>
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
                   </MatchingSelectTrigger>
@@ -205,11 +209,11 @@ export function MatchingPreferences() {
               </div>
               <div>
                 <Label>Occupation</Label>
-                <Input value={prefs.userDemographics.occupation} onChange={(e) => updateUserDemo('occupation', e.target.value)} placeholder="e.g., Software Engineer" />
+                <Input value={prefs.user_demographics.occupation} onChange={(e) => updateUserDemo('occupation', e.target.value)} placeholder="e.g., Software Engineer" />
               </div>
               <div>
                 <Label>Student Status</Label>
-                <MatchingSelect value={prefs.userDemographics.studentStatus} onValueChange={(v) => updateUserDemo('studentStatus', v)}>
+                <MatchingSelect value={prefs.user_demographics.student_status} onValueChange={(v) => updateUserDemo('student_status', v)}>
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
                   </MatchingSelectTrigger>
@@ -220,7 +224,7 @@ export function MatchingPreferences() {
               </div>
               <div className="md:col-span-2">
                 <Label>Company/School (optional)</Label>
-                <Input value={prefs.userDemographics.company} onChange={(e) => updateUserDemo('company', e.target.value)} placeholder="e.g., Acme Corp or State University" />
+                <Input value={prefs.user_demographics.company} onChange={(e) => updateUserDemo('company', e.target.value)} placeholder="e.g., Acme Corp or State University" />
               </div>
             </div>
           </CardContent>
@@ -237,9 +241,9 @@ export function MatchingPreferences() {
                 <Label>Preferred Age Ranges</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {AGE_RANGES.map(r => {
-                    const selected = prefs.demographicPreferences.agePreferences.includes(r)
+                    const selected = prefs.demographic_preferences.age_preferences.includes(r)
                     return (
-                      <Button key={r} type="button" variant={selected ? 'default' : 'outline'} size="sm" onClick={() => toggleArrayPref('agePreferences', r)}>
+                      <Button key={r} type="button" variant={selected ? 'default' : 'outline'} size="sm" onClick={() => toggleArrayPref('age_preferences', r)}>
                         {r}
                       </Button>
                     )
@@ -250,9 +254,9 @@ export function MatchingPreferences() {
                 <Label>Preferred Genders</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {PREF_GENDER_OPTIONS.map(g => {
-                    const selected = prefs.demographicPreferences.genderPreferences.includes(g)
+                    const selected = prefs.demographic_preferences.gender_preferences.includes(g)
                     return (
-                      <Button key={g} type="button" variant={selected ? 'default' : 'outline'} size="sm" onClick={() => toggleArrayPref('genderPreferences', g)}>
+                      <Button key={g} type="button" variant={selected ? 'default' : 'outline'} size="sm" onClick={() => toggleArrayPref('gender_preferences', g)}>
                         {g}
                       </Button>
                     )
@@ -261,7 +265,7 @@ export function MatchingPreferences() {
               </div>
               <div>
                 <Label>Student Preference</Label>
-                <MatchingSelect value={prefs.demographicPreferences.studentPreference} onValueChange={(v) => updateDemoPref('studentPreference', v)}>
+                <MatchingSelect value={prefs.demographic_preferences.student_preference} onValueChange={(v) => updateDemoPref('student_preference', v)}>
                   <MatchingSelectTrigger>
                     <MatchingSelectValue />
                   </MatchingSelectTrigger>
@@ -272,7 +276,7 @@ export function MatchingPreferences() {
               </div>
               <div>
                 <Label>Preferred Occupations (comma separated)</Label>
-                <Input value={prefs.demographicPreferences.occupationPreferences.join(', ')} onChange={(e) => updateDemoPref('occupationPreferences', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} placeholder="e.g., Engineer, Teacher" />
+                <Input value={prefs.demographic_preferences.occupation_preferences.join(', ')} onChange={(e) => updateDemoPref('occupation_preferences', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} placeholder="e.g., Engineer, Teacher" />
               </div>
             </div>
           </CardContent>
@@ -293,21 +297,21 @@ export function MatchingPreferences() {
                   <Label>Email Notifications</Label>
                   <p className="text-xs text-gray-500">Get notified via email</p>
                 </div>
-                <Switch checked={prefs.notificationPreferences.email} onCheckedChange={(c) => updateNotif('email', c)} />
+                <Switch checked={prefs.notification_preferences.email} onCheckedChange={(c) => updateNotif('email', c)} />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Push Notifications</Label>
                   <p className="text-xs text-gray-500">Get notified in the app</p>
                 </div>
-                <Switch checked={prefs.notificationPreferences.push} onCheckedChange={(c) => updateNotif('push', c)} />
+                <Switch checked={prefs.notification_preferences.push} onCheckedChange={(c) => updateNotif('push', c)} />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <Label>SMS Notifications</Label>
                   <p className="text-xs text-gray-500">Get notified via text message</p>
                 </div>
-                <Switch checked={prefs.notificationPreferences.sms} onCheckedChange={(c) => updateNotif('sms', c)} />
+                <Switch checked={prefs.notification_preferences.sms} onCheckedChange={(c) => updateNotif('sms', c)} />
               </div>
             </div>
           </CardContent>

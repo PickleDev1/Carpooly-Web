@@ -21,14 +21,14 @@ export default function MatchingPage() {
   useEffect(() => {
     let mounted = true
     ;(async () => {
-      const [{ success, pendingMatches }, reqs, st] = await Promise.all([
+      const [matches, reqs, st] = await Promise.all([
         matching.getPotentialMatches(),
         matching.getRequests(),
         matching.getStats()
       ])
       if (!mounted) return
       setHeaderCounts({
-        potential: success ? (pendingMatches?.length ?? 0) : 0,
+        potential: matches.pending_matches?.length ?? 0,
         incoming: reqs.incoming.length,
         formed: st.total_carpools_formed ?? 0,
         savings: st.total_savings ?? 0

@@ -35,7 +35,7 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
     setLoading(true)
     try {
       const data = await matchingService.getPotentialMatches()
-      setMatches(data.pendingMatches || [])
+      setMatches(data.pending_matches || [])
       setFocusedIndex(0)
     } catch {
       setMatches([])
@@ -49,7 +49,7 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
   }, [loadMatches])
 
   const sortedMatches = useMemo(() => {
-    return [...matches].sort((a, b) => b.compatibilityScore - a.compatibilityScore)
+    return [...matches].sort((a, b) => b.compatibility_score - a.compatibility_score)
   }, [matches])
 
   useEffect(() => {
@@ -133,7 +133,7 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
               <div className="flex items-center gap-4">
                 <Avatar className="w-12 h-12">
                   <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${current.user2.name}`} />
-                  <AvatarFallback>{current.user2.displayName}</AvatarFallback>
+                  <AvatarFallback>{current.user2.display_name}</AvatarFallback>
                 </Avatar>
                 <div>
                   <CardTitle className="text-lg">{current.user2.name}</CardTitle>
@@ -144,8 +144,8 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
                 </div>
               </div>
               <div className="text-right">
-                <Badge className={getCompatibilityColor(current.compatibilityScore)}>
-                  {Math.round(current.compatibilityScore * 100)}% Match
+                <Badge className={getCompatibilityColor(current.compatibility_score)}>
+                  {Math.round(current.compatibility_score * 100)}% Match
                 </Badge>
               </div>
             </div>
@@ -156,24 +156,24 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
               <div className="flex items-center gap-2">
                 <Route className="w-4 h-4 text-blue-500" />
                 <div>
-                  <p className="text-sm font-medium">{Math.round(current.routeOverlapPercentage * 100)}% Route Overlap</p>
-                  <p className="text-xs text-gray-600">{current.totalDistanceMiles} miles total</p>
+                  <p className="text-sm font-medium">{Math.round(current.route_overlap_percentage * 100)}% Route Overlap</p>
+                  <p className="text-xs text-gray-600">{current.estimated_pickup_distance_miles} miles pickup</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-green-500" />
                 <div>
-                  <p className="text-sm font-medium">{current.user2.schedule.departureTime}</p>
-                  <p className="text-xs text-gray-600">{current.user2.schedule.frequency}</p>
+                  <p className="text-sm font-medium">{current.user2.schedule.work_start_time}</p>
+                  <p className="text-xs text-gray-600">{current.user2.schedule.work_days.join(', ')}</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-orange-500" />
                 <div>
-                  <p className="text-sm font-medium">${current.estimatedSavingsPerMonth}/month</p>
-                  <p className="text-xs text-gray-600">Potential savings</p>
+                  <p className="text-sm font-medium">Route Match</p>
+                  <p className="text-xs text-gray-600">Compatible route</p>
                 </div>
               </div>
             </div>
@@ -181,7 +181,7 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
             <div className="mb-4">
               <h4 className="text-sm font-medium mb-2">Why you match:</h4>
               <div className="flex flex-wrap gap-2">
-                {current.matchReasons.map((reason, idx) => (
+                {current.match_reasons.map((reason, idx) => (
                   <Badge key={idx} variant="secondary" className="text-xs">
                     {reason}
                   </Badge>
