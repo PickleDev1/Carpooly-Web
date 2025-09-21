@@ -66,7 +66,7 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
 
   useEffect(() => {
     loadMatches()
-  }, [loadMatches])
+  }, []) // Only run once on mount
 
   const sortedMatches = useMemo(() => {
     return [...matches].sort((a, b) => b.compatibility_score - a.compatibility_score)
