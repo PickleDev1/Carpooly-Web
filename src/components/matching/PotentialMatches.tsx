@@ -40,11 +40,14 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
   const loadMatches = useCallback(async (currentFilters: MatchFilters = {}) => {
     setLoading(true)
     try {
+      console.log('🔍 Loading matches with filters:', currentFilters)
       const data = await matchingService.getPotentialMatches(currentFilters)
+      console.log('📊 Received data:', data)
+      console.log('📋 Pending matches:', data.pending_matches)
       setMatches(data.pending_matches || [])
       setFocusedIndex(0)
     } catch (error) {
-      console.error('Failed to load matches:', error)
+      console.error('❌ Failed to load matches:', error)
       setMatches([])
     } finally {
       setLoading(false)
@@ -137,11 +140,11 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
         <Card>
           <CardContent className="p-8 text-center">
             <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No matches found</h3>
+            <h3 className="text-lg font-semibold mb-2">No potential matches at this time</h3>
             <p className="text-gray-600 mb-4">
               {Object.keys(filters).length > 0 
                 ? "No matches found with your current filters. Try adjusting your search criteria."
-                : "We couldn't find any compatible carpool partners in your area right now."
+                : "We are currently looking to find you more compatible carpool partners. Check back soon or try adjusting your preferences to expand your search."
               }
             </p>
             <div className="flex gap-2 justify-center">
