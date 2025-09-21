@@ -40,7 +40,7 @@ export function MatchRequests({ onStatsUpdate }: Props) {
 
   const accept = async (id: string) => {
     setProcessing(id)
-    try {
+        try {
       await matching.respondToRequest(id, 'accepted')
       setRequests(prev => ({
         incoming: prev.incoming.map(r => (r.id === id ? { ...r, status: 'accepted' as const } : r)),

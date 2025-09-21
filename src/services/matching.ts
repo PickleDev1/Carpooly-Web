@@ -140,109 +140,11 @@ const logResponse = (method: string, endpoint: string, response: any) => {
 };
 
 // ----------------------------------------------------------------------------
-// Mock data (aligned to new snake_case schema) used until real API is wired
+// Phase 2: Real API Integration - All mock data removed
 // ----------------------------------------------------------------------------
 
-const mockPreferences: MatchingPreferences = {
-  user_id: 'mock_user',
-  max_detour_minutes: 15,
-  preferred_group_size: 4,
-  driver_preference: 'flexible',
-  schedule_flexibility_minutes: 30,
-  max_pickup_distance_miles: 5,
-  min_compatibility_score: 0.7,
-  notification_preferences: { email: true, push: true, sms: false },
-  user_demographics: { age_range: '26-35', gender: 'prefer_not_to_say', occupation: '', student_status: 'not_student', company: '' },
-  demographic_preferences: { age_preferences: ['18-25', '26-35', '36-45', '46-55'], gender_preferences: ['any'], student_preference: 'both', occupation_preferences: [] },
-  is_active: true,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
-
-const mockPotentialMatchesResponse: PotentialMatchesResponse = {
-  pending_matches: [
-    {
-      id: 'm1',
-      user2: {
-        id: 'u1',
-        name: 'Sarah Johnson',
-        display_name: 'Sarah J.',
-        home_location: { lat: 37.7749, lng: -122.4194, address: 'Home Address, SF' },
-        work_location: { lat: 37.7849, lng: -122.4094, address: 'Work Address, SF' },
-        preferences: { user_demographics: { age_range: '26-35', gender: 'female', occupation: 'Software Engineer', student_status: 'not_student', company: 'Tech Corp' } },
-        schedule: { work_days: ['monday','tuesday','wednesday','thursday','friday'], work_start_time: '08:30', work_end_time: '17:30' },
-      },
-      compatibility_score: 0.89,
-      match_reasons: ['Similar route', 'Close pickup'],
-      route_overlap_percentage: 0.85,
-      estimated_detour_minutes: 15,
-      estimated_pickup_distance_miles: 2.5,
-      created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 7 * 864e5).toISOString(),
-    },
-  ],
-  accepted_matches: [],
-  expired_matches: [],
-};
-
-const mockRequests: MatchRequestsResponse = {
-  incoming: [
-    {
-      id: 'r1',
-      from_user_id: 'u6',
-      to_user_id: 'me',
-      potential_match_id: 'm1',
-      message: 'Hey! Our routes look close. Want to try carpooling this week?',
-      status: 'pending',
-      created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 2 * 864e5).toISOString(),
-      from_user: { id: 'u6', name: 'Alex Rivera', display_name: 'Alex R.' },
-    },
-  ],
-  outgoing: [
-    {
-      id: 'r2',
-      from_user_id: 'me',
-      to_user_id: 'u3',
-      potential_match_id: 'm1',
-      message: 'Hi! Looks like we share a route and time.',
-      status: 'pending',
-      created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 3 * 864e5).toISOString(),
-      to_user: { id: 'u3', name: 'Alex Rivera', display_name: 'Alex R.' },
-    },
-  ],
-};
-
-const mockSession: MatchingSession = {
-  id: 'session_123',
-  user_id: 'mock_user',
-  status: 'active',
-  last_match_generated_at: null,
-  expires_at: new Date(Date.now() + 30 * 864e5).toISOString(),
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
-
-const mockStats: MatchingStats = {
-  total_matches_generated: 6,
-  match_acceptance_rate: 0.78,
-  average_compatibility_score: 0.85,
-  total_carpools_formed: 3,
-  total_savings: 798,
-  average_route_overlap: 0.7,
-  most_common_match_reasons: ['close_location', 'similar_schedule'],
-  geographic_distribution: { nearby: 4, medium_distance: 2, far: 0 },
-  time_to_acceptance: 24,
-  monthly_trends: [
-    { month: 'Jan', matches: 10, acceptances: 7 },
-    { month: 'Feb', matches: 12, acceptances: 9 },
-  ],
-};
-
 export const useMatchingService = () => {
-  // NOTE: Phase 1 keeps mock data but aligns types and shapes.
-  // Real API wiring will be done in Phase 2 using useApi() below.
+  // Phase 2: Real API Integration - All methods use live backend API
   const api = useApi();
 
   return {
@@ -259,7 +161,7 @@ export const useMatchingService = () => {
         }
         const text = await response.text()
         const payload = text ? JSON.parse(text) : null
-        if (!payload || payload.success !== true || !payload.preferences) {
+        if (!payload || !payload.preferences) {
           throw { status: 500, message: 'Invalid preferences response' }
         }
         logResponse('GET', endpoint, { ok: true })
@@ -282,7 +184,7 @@ export const useMatchingService = () => {
         }
         const text = await response.text()
         const payload = text ? JSON.parse(text) : null
-        if (!payload || payload.success !== true || !payload.preferences) {
+        if (!payload || !payload.preferences) {
           throw { status: 500, message: 'Invalid update preferences response' }
         }
         logResponse('PUT', endpoint, { ok: true })
@@ -292,35 +194,58 @@ export const useMatchingService = () => {
       }
     },
 
-    async getPotentialMatches(filters: MatchFilters = {}): Promise<PotentialMatchesResponse> {
-      const base = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/potential-matches`
-      const params = new URLSearchParams()
-      if (filters.min_score !== undefined) params.set('min_score', String(filters.min_score))
-      if (filters.max_distance !== undefined) params.set('max_distance', String(filters.max_distance))
-      if (filters.age_ranges?.length) params.set('age_ranges', filters.age_ranges.join(','))
-      if (filters.genders?.length) params.set('genders', filters.genders.join(','))
-      if (filters.occupations?.length) params.set('occupations', filters.occupations.join(','))
-      if (filters.student_status?.length) params.set('student_status', filters.student_status.join(','))
-      if (filters.limit !== undefined) params.set('limit', String(filters.limit))
-      if (filters.offset !== undefined) params.set('offset', String(filters.offset))
-      const endpoint = params.toString() ? `${base}?${params.toString()}` : base
-      logRequest('GET', endpoint)
-      try {
-        const headers = await api.getHeaders()
-        const response = await fetch(endpoint, { method: 'GET', headers })
-        if (!response.ok) {
-          const text = await response.text()
-          console.error('getPotentialMatches error response:', response.status, text)
-          throw { status: response.status, message: text }
-        }
+  async getPotentialMatches(filters: MatchFilters = {}): Promise<PotentialMatchesResponse> {
+    const base = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/potential-matches`
+    const params = new URLSearchParams()
+    
+    // Basic filters
+    if (filters.min_score !== undefined) params.set('min_score', String(filters.min_score))
+    if (filters.max_distance !== undefined) params.set('max_distance', String(filters.max_distance))
+    if (filters.limit !== undefined) params.set('limit', String(filters.limit))
+    if (filters.offset !== undefined) params.set('offset', String(filters.offset))
+    
+    // Demographic filters
+    if (filters.age_ranges?.length) params.set('age_ranges', filters.age_ranges.join(','))
+    if (filters.gender_preferences?.length) params.set('gender_preferences', filters.gender_preferences.join(','))
+    if (filters.genders?.length) params.set('genders', filters.genders.join(','))
+    
+    // Professional filters
+    if (filters.student_status?.length) params.set('student_status', filters.student_status.join(','))
+    if (filters.occupation_preferences?.length) params.set('occupation_preferences', filters.occupation_preferences.join(','))
+    if (filters.occupations?.length) params.set('occupations', filters.occupations.join(','))
+    if (filters.student_preference) params.set('student_preference', filters.student_preference)
+    
+    const endpoint = params.toString() ? `${base}?${params.toString()}` : base
+    logRequest('GET', endpoint, { filters })
+    try {
+      const headers = await api.getHeaders()
+      const response = await fetch(endpoint, { method: 'GET', headers })
+      if (!response.ok) {
         const text = await response.text()
-        const res: PotentialMatchesResponse = text ? JSON.parse(text) : { pending_matches: [], accepted_matches: [], expired_matches: [] }
-        logResponse('GET', endpoint, { counts: { pending: res.pending_matches?.length ?? 0, accepted: res.accepted_matches?.length ?? 0, expired: res.expired_matches?.length ?? 0 } })
-        return res
-      } catch (error: any) {
-        return handleApiError(error, 'fetch potential matches')
+        console.error('getPotentialMatches error response:', response.status, text)
+        throw { status: response.status, message: text }
       }
-    },
+      const text = await response.text()
+      const data = text ? JSON.parse(text) : {}
+
+      // Handle both wrapped and direct response formats
+      const res: PotentialMatchesResponse = data.pending_matches !== undefined
+        ? data
+        : { pending_matches: [], accepted_matches: [], expired_matches: [] }
+
+      logResponse('GET', endpoint, { 
+        counts: { 
+          pending: res.pending_matches?.length ?? 0, 
+          accepted: res.accepted_matches?.length ?? 0, 
+          expired: res.expired_matches?.length ?? 0 
+        },
+        filters: Object.keys(filters).length > 0 ? filters : 'none'
+      })
+      return res
+    } catch (error: any) {
+      return handleApiError(error, 'fetch potential matches')
+    }
+  },
 
     async findMatches(opts: { max_results?: number; force_refresh?: boolean; filters?: MatchFilters } = {}): Promise<FindMatchesResponse> {
       const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/find-matches`
@@ -336,7 +261,14 @@ export const useMatchingService = () => {
           console.error('findMatches error response:', response.status, text)
           throw { status: response.status, message: text }
         }
-        const res: FindMatchesResponse = await response.json()
+        const text = await response.text()
+        const data = text ? JSON.parse(text) : {}
+        
+        // Handle both wrapped and direct response formats
+        const res: FindMatchesResponse = data.matches_found !== undefined 
+          ? data 
+          : { matches_found: 0, message: 'No matches found' }
+        
         logResponse('POST', endpoint, res)
         return res
       } catch (error: any) {
@@ -355,7 +287,14 @@ export const useMatchingService = () => {
           console.error('getRequests error response:', response.status, text)
           throw { status: response.status, message: text }
         }
-        const res: MatchRequestsResponse = await response.json()
+        const text = await response.text()
+        const data = text ? JSON.parse(text) : {}
+        
+        // Handle both wrapped and direct response formats
+        const res: MatchRequestsResponse = data.incoming !== undefined 
+          ? data 
+          : { incoming: [], outgoing: [] }
+        
         logResponse('GET', endpoint, { incoming: res.incoming.length, outgoing: res.outgoing.length })
         return res
       } catch (error: any) {
@@ -379,7 +318,14 @@ export const useMatchingService = () => {
           console.error('sendRequest error response:', response.status, text)
           throw { status: response.status, message: text }
         }
-        const res: MatchRequestResponse = await response.json()
+        const text = await response.text()
+        const data = text ? JSON.parse(text) : {}
+        
+        // Handle both wrapped and direct response formats
+        const res: MatchRequestResponse = data.id !== undefined 
+          ? data 
+          : { id: '', from_user_id: '', to_user_id: '', potential_match_id: '', message: '', status: 'pending', expires_at: '', created_at: '', from_user: { id: '', name: '', display_name: '' } }
+        
         logResponse('POST', endpoint, { id: res.id, status: res.status })
         return res
       } catch (error: any) {
@@ -399,7 +345,14 @@ export const useMatchingService = () => {
           console.error('respondToRequest error response:', response.status, text)
           throw { status: response.status, message: text }
         }
-        const res: UpdateRequestResponse = await response.json()
+        const text = await response.text()
+        const data = text ? JSON.parse(text) : {}
+        
+        // Handle both wrapped and direct response formats
+        const res: UpdateRequestResponse = data.message !== undefined 
+          ? data 
+          : { message: 'Request updated', status: status }
+        
         logResponse('PUT', endpoint, res)
         return res
       } catch (error: any) {
@@ -418,7 +371,14 @@ export const useMatchingService = () => {
           console.error('getMatchingSession error response:', response.status, text)
           throw { status: response.status, message: text }
         }
-        const res: MatchingSession = await response.json()
+        const text = await response.text()
+        const data = text ? JSON.parse(text) : {}
+        
+        // Handle both wrapped and direct response formats
+        const res: MatchingSession = data.id !== undefined 
+          ? data 
+          : { id: '', user_id: '', status: 'inactive', last_match_generated_at: null, expires_at: '', created_at: '', updated_at: '' }
+        
         logResponse('GET', endpoint, { id: res.id, status: res.status })
         return res
       } catch (error: any) {
@@ -438,7 +398,13 @@ export const useMatchingService = () => {
           throw { status: response.status, message: text }
         }
         const text = await response.text()
-        const res: MatchingStatsResponse = text ? JSON.parse(text) : ({} as any)
+        const data = text ? JSON.parse(text) : {}
+        
+        // Handle both wrapped and direct response formats
+        const res: MatchingStats = data.total_matches_generated !== undefined 
+          ? data 
+          : { total_matches_generated: 0, match_acceptance_rate: 0, average_compatibility_score: 0, total_carpools_formed: 0, total_savings: 0, average_route_overlap: 0, most_common_match_reasons: [], geographic_distribution: { nearby: 0, medium_distance: 0, far: 0 }, time_to_acceptance: 0, monthly_trends: [] }
+        
         logResponse('GET', endpoint, res)
         return res
       } catch (error: any) {

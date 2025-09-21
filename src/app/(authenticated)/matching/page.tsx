@@ -4,11 +4,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMatchingService } from '@/services/matching'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Users, MessageSquare, Star, Settings } from 'lucide-react'
+import { Users, MessageSquare, Star, Settings, Brain, Zap } from 'lucide-react'
 import { PotentialMatches } from '@/components/matching/PotentialMatches'
 import { MatchRequests } from '@/components/matching/MatchRequests'
 import { MatchingStats } from '@/components/matching/MatchingStats'
 import { MatchingPreferences as MatchingPreferencesComponent } from '@/components/matching/MatchingPreferences'
+import { AdvancedMatching } from '@/components/matching/AdvancedMatching'
+import { RealTimeUpdates } from '@/components/matching/RealTimeUpdates'
 
 export default function MatchingPage() {
   const matching = useMatchingService()
@@ -62,9 +64,11 @@ export default function MatchingPage() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="matches" className="flex items-center gap-2"><Users className="w-4 h-4" />Potential</TabsTrigger>
           <TabsTrigger value="requests" className="flex items-center gap-2"><MessageSquare className="w-4 h-4" />Requests</TabsTrigger>
+          <TabsTrigger value="algorithm" className="flex items-center gap-2"><Brain className="w-4 h-4" />Algorithm</TabsTrigger>
+          <TabsTrigger value="realtime" className="flex items-center gap-2"><Zap className="w-4 h-4" />Real-time</TabsTrigger>
           <TabsTrigger value="stats" className="flex items-center gap-2"><Star className="w-4 h-4" />Statistics</TabsTrigger>
           <TabsTrigger value="preferences" className="flex items-center gap-2"><Settings className="w-4 h-4" />Preferences</TabsTrigger>
         </TabsList>
@@ -79,6 +83,60 @@ export default function MatchingPage() {
           <MatchRequests onStatsUpdate={async () => {
             const st = await matching.getStats(); setStats(st)
           }} />
+        </TabsContent>
+
+        <TabsContent value="algorithm" className="space-y-6">
+          <AdvancedMatching onMatchesGenerated={async (count) => {
+            // Refresh header counts when new matches are generated
+            const [matches, reqs, st] = await Promise.all([
+              matching.getPotentialMatches(),
+              matching.getRequests(),
+              matching.getStats()
+            ])
+            setHeaderCounts({
+              potential: matches.pending_matches?.length ?? 0,
+              incoming: reqs.incoming.length,
+              formed: st.total_carpools_formed ?? 0,
+              savings: st.total_savings ?? 0
+            })
+          }} />
+        </TabsContent>
+
+        <TabsContent value="realtime" className="space-y-6">
+          <RealTimeUpdates 
+            onNewMatches={async (count) => {
+              // Update header counts when new matches are found
+              const [matches, reqs, st] = await Promise.all([
+                matching.getPotentialMatches(),
+                matching.getRequests(),
+                matching.getStats()
+              ])
+              setHeaderCounts({
+                potential: matches.pending_matches?.length ?? 0,
+                incoming: reqs.incoming.length,
+                formed: st.total_carpools_formed ?? 0,
+                savings: st.total_savings ?? 0
+              })
+            }}
+            onNewRequests={async (count) => {
+              // Update header counts when new requests are found
+              const [matches, reqs, st] = await Promise.all([
+                matching.getPotentialMatches(),
+                matching.getRequests(),
+                matching.getStats()
+              ])
+              setHeaderCounts({
+                potential: matches.pending_matches?.length ?? 0,
+                incoming: reqs.incoming.length,
+                formed: st.total_carpools_formed ?? 0,
+                savings: st.total_savings ?? 0
+              })
+            }}
+            onStatsUpdate={async () => {
+              const st = await matching.getStats()
+              setStats(st)
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="stats" className="space-y-6">
