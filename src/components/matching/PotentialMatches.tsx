@@ -15,12 +15,10 @@ import {
   Navigation,
   ChevronLeft,
   ChevronRight,
-  Sliders,
-  X,
   Users
 } from 'lucide-react'
 import { useMatchingService, type PotentialMatch, type MatchFilters } from '@/services/matching'
-import { MatchFilter } from './MatchFilter'
+// Advanced filters removed from Potential Matches; filters are managed via Preferences
 
 interface PotentialMatchesProps {
   onStatsUpdate?: () => void
@@ -31,8 +29,7 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
   const [loading, setLoading] = useState(true)
   const [sendingRequest, setSendingRequest] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
-  const [filters, setFilters] = useState<MatchFilters>({})
-  const [showFilters, setShowFilters] = useState(false)
+  // Filters UI removed; backend should use saved Preferences
   const listRefs = useRef<HTMLDivElement[]>([])
   
   const matchingService = useMatchingService()
@@ -53,16 +50,6 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
       setLoading(false)
     }
   }, [matchingService])
-
-  const handleFilterChange = useCallback((newFilters: MatchFilters) => {
-    setFilters(newFilters)
-    loadMatches(newFilters)
-  }, [loadMatches])
-
-  const handleClearFilters = useCallback(() => {
-    setFilters({})
-    loadMatches({})
-  }, [loadMatches])
 
   useEffect(() => {
     loadMatches()
@@ -111,53 +98,27 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
   if (matches.length === 0) {
     return (
       <div className="space-y-6">
-        {/* Filter Controls */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold">Potential Matches</h2>
-            <Badge variant="secondary">0 matches</Badge>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
-          >
-            <Sliders className="w-4 h-4" />
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold">Potential Matches</h2>
+          <Badge variant="secondary">0 matches</Badge>
         </div>
-
-        {/* Advanced Filter Component */}
-        {showFilters && (
-          <MatchFilter
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onClearFilters={handleClearFilters}
-            onApplyFilters={() => loadMatches(filters)}
-          />
-        )}
 
         <Card>
           <CardContent className="p-8 text-center">
             <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No potential matches at this time</h3>
             <p className="text-gray-600 mb-4">
-              {Object.keys(filters).length > 0 
-                ? "No matches found with your current filters. Try adjusting your search criteria."
-                : "We are currently looking to find you more compatible carpool partners. Check back soon or try adjusting your preferences to expand your search."
-              }
+              We are currently looking to find you more compatible carpool partners. Check back soon or update your matching preferences to expand your search.
             </p>
             <div className="flex gap-2 justify-center">
-              <Button onClick={() => loadMatches(filters)} variant="outline">
+              <Button onClick={() => loadMatches({})} variant="outline">
                 <Navigation className="w-4 h-4 mr-2" />
                 Refresh Matches
               </Button>
-              {Object.keys(filters).length > 0 && (
-                <Button onClick={handleClearFilters} variant="outline">
-                  <X className="w-4 h-4 mr-2" />
-                  Clear Filters
-                </Button>
-              )}
+              <Button variant="outline" asChild>
+                <a href="#preferences">Go to Preferences</a>
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -169,7 +130,7 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
 
   return (
     <div className="space-y-6">
-      {/* Filter Controls */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">Potential Matches</h2>
@@ -177,25 +138,12 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
             {matches.length} {matches.length === 1 ? 'match' : 'matches'}
           </Badge>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2"
-        >
-          <Sliders className="w-4 h-4" />
-          {showFilters ? 'Hide Filters' : 'Show Filters'}
+        <Button variant="outline" onClick={() => loadMatches({})} className="flex items-center gap-2">
+          Refresh
         </Button>
       </div>
 
-      {/* Advanced Filter Component */}
-      {showFilters && (
-        <MatchFilter
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onClearFilters={handleClearFilters}
-          onApplyFilters={() => loadMatches(filters)}
-        />
-      )}
+      {/* Filters removed from this view; manage in Preferences tab */}
 
       {/* Match Navigation */}
       <div className="flex items-start justify-between">
@@ -204,7 +152,7 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
           <p className="text-xs text-muted-foreground mt-1">Use Back/Next to browse matches</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => loadMatches(filters)}>Refresh</Button>
+          <Button variant="outline" size="sm" onClick={() => loadMatches({})}>Refresh</Button>
           <Button variant="outline" size="sm" onClick={() => setFocusedIndex(i => Math.max(0, i - 1))} disabled={focusedIndex <= 0}>
             <ChevronLeft className="w-4 h-4 mr-1" />
             Back
