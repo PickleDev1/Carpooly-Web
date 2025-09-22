@@ -49,11 +49,16 @@ export function MatchFilter({ filters, onFilterChange, onClearFilters, onApplyFi
     onFilterChange(localFilters)
   }, [localFilters, onFilterChange])
 
-  // Auto-apply filters after 500ms delay
+  // Auto-apply filters after 500ms delay, but only if user-changed values differ from props
   useEffect(() => {
+    // Prevent feedback loop: if nothing actually changed, do nothing
+    const propsJson = JSON.stringify(filters)
+    const localJson = JSON.stringify(localFilters)
+    if (propsJson === localJson) return
+
     const timer = setTimeout(applyFilters, 500)
     return () => clearTimeout(timer)
-  }, [localFilters, applyFilters])
+  }, [localFilters, filters, applyFilters])
 
   const updateFilter = (key: keyof MatchFilters, value: any) => {
     setLocalFilters(prev => ({ ...prev, [key]: value }))
