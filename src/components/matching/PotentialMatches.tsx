@@ -15,16 +15,18 @@ import {
   Navigation,
   ChevronLeft,
   ChevronRight,
-  Users
+  Users,
+  Settings
 } from 'lucide-react'
 import { useMatchingService, type PotentialMatch, type MatchFilters } from '@/services/matching'
 // Advanced filters removed from Potential Matches; filters are managed via Preferences
 
 interface PotentialMatchesProps {
   onStatsUpdate?: () => void
+  onNavigateToPreferences?: () => void
 }
 
-export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
+export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: PotentialMatchesProps) {
   const [matches, setMatches] = useState<PotentialMatch[]>([])
   const [loading, setLoading] = useState(true)
   const [sendingRequest, setSendingRequest] = useState<string | null>(null)
@@ -111,13 +113,21 @@ export function PotentialMatches({ onStatsUpdate }: PotentialMatchesProps) {
             <p className="text-gray-600 mb-4">
               We are currently looking to find you more compatible carpool partners. Check back soon or update your matching preferences to expand your search.
             </p>
-            <div className="flex gap-2 justify-center">
-              <Button onClick={() => loadMatches({})} variant="outline">
-                <Navigation className="w-4 h-4 mr-2" />
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button 
+                onClick={() => loadMatches({})} 
+                variant="outline"
+                className="flex items-center gap-2 px-6 py-2"
+              >
+                <Navigation className="w-4 h-4" />
                 Refresh Matches
               </Button>
-              <Button variant="outline" asChild>
-                <a href="#preferences">Go to Preferences</a>
+              <Button 
+                onClick={onNavigateToPreferences}
+                className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Settings className="w-4 h-4" />
+                Go to Preferences
               </Button>
             </div>
           </CardContent>

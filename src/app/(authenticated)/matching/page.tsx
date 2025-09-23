@@ -74,9 +74,12 @@ export default function MatchingPage() {
         </TabsList>
 
         <TabsContent value="matches" className="space-y-6">
-          <PotentialMatches onStatsUpdate={async () => {
-            const st = await matching.getStats(); setStats(st)
-          }} />
+          <PotentialMatches 
+            onStatsUpdate={async () => {
+              const st = await matching.getStats(); setStats(st)
+            }}
+            onNavigateToPreferences={() => setActiveTab('preferences')}
+          />
         </TabsContent>
 
         <TabsContent value="requests" className="space-y-6">
