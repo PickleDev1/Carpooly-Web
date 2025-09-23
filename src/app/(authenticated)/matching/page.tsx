@@ -23,6 +23,8 @@ export default function MatchingPage() {
   useEffect(() => {
     let mounted = true
     ;(async () => {
+      // Proactively trigger match generation before initial fetch
+      try { await matching.findMatches({ filters: {} }) } catch (_) {}
       const [matches, reqs, st] = await Promise.all([
         matching.getPotentialMatches(),
         matching.getRequests(),
