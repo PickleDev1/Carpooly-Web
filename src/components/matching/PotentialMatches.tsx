@@ -40,12 +40,28 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: Pot
     setLoading(true)
     try {
       console.log('🔍 Loading matches with filters:', currentFilters)
+      
+      // First, let's check the user's preferences to see if they're properly set
+      try {
+        const prefs = await matchingService.getPreferences()
+        console.log('👤 User preferences:', prefs)
+        if (!prefs.is_active) {
+          console.warn('⚠️ User preferences are not active!')
+        }
+      } catch (prefErr) {
+        console.warn('⚠️ Could not fetch user preferences:', prefErr)
+      }
+      
       // Ensure server has up-to-date generated matches for this user
       try {
+        console.log('🔄 Triggering match generation...')
         await matchingService.findMatches({ filters: currentFilters })
+        console.log('✅ Match generation completed')
       } catch (genErr) {
-        console.warn('⚠️ Match generation skipped or failed (continuing):', genErr)
+        console.warn('⚠️ Match generation failed:', genErr)
+        console.warn('⚠️ This might be why no matches are found')
       }
+      
       const data = await matchingService.getPotentialMatches(currentFilters)
       console.log('📊 Received data:', data)
       console.log('📋 Pending matches:', data.pending_matches)

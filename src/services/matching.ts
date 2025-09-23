@@ -258,7 +258,9 @@ export const useMatchingService = () => {
         const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) })
         if (!response.ok) {
           const text = await response.text()
-          console.error('findMatches error response:', response.status, text)
+          console.error('❌ findMatches error response:', response.status, text)
+          console.error('❌ Response headers:', Object.fromEntries(response.headers.entries()))
+          console.error('❌ Request body sent:', body)
           throw { status: response.status, message: text }
         }
         const text = await response.text()
