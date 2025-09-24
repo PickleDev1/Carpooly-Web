@@ -7,24 +7,46 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL
 const useMockApi = false // Use real backend endpoints
 
 export const useApi = () => {
-  const { getToken } = useAuth()
+  const { getToken, isSignedIn, isLoaded } = useAuth()
   
   return useMemo(() => {
     const getHeaders = async () => {
+      const baseHeaders = {
+        'Content-Type': 'application/json',
+        'X-User-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }
+      
+      // Wait for Clerk to load
+      if (!isLoaded) {
+        console.log('⏳ Waiting for Clerk to load...')
+        // Return base headers without auth for now
+        return baseHeaders
+      }
+      
+      // Check if user is signed in
+      if (!isSignedIn) {
+        console.log('❌ User is not signed in')
+        throw new Error('User is not signed in')
+      }
+      
       const token = await getToken()
       console.log('🔐 API Service: Token retrieved:', token ? 'Token exists' : 'No token')
       console.log('🔐 API Service: Token length:', token ? token.length : 0)
       console.log('🔐 API Service: Token preview:', token ? `${token.substring(0, 20)}...` : 'No token')
       
+      if (!token) {
+        console.log('❌ No authentication token available')
+        throw new Error('No authentication token available')
+      }
+      
       const headers = {
-        'Content-Type': 'application/json',
+        ...baseHeaders,
         'Authorization': `Bearer ${token}`,
-        'X-User-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
       }
       
       console.log('🔐 API Service: Headers being sent:', {
         'Content-Type': headers['Content-Type'],
-        'Authorization': headers['Authorization'] ? 'Bearer [TOKEN]' : 'No Authorization',
+        'Authorization': 'Authorization' in headers ? 'Bearer [TOKEN]' : 'No Authorization',
         'X-User-Timezone': headers['X-User-Timezone']
       })
       
@@ -149,7 +171,7 @@ export const useApi = () => {
         console.log('🔐 getCarpools: Making request to:', url)
         console.log('🔐 getCarpools: Request headers:', {
           'Content-Type': headers['Content-Type'],
-          'Authorization': headers['Authorization'] ? 'Bearer [TOKEN]' : 'No Authorization',
+          'Authorization': 'Authorization' in headers ? 'Bearer [TOKEN]' : 'No Authorization',
           'X-User-Timezone': headers['X-User-Timezone']
         })
         
