@@ -226,12 +226,20 @@ export const useMatchingService = () => {
         throw { status: response.status, message: text }
       }
       const text = await response.text()
+      console.log('🔍 Raw response text:', text)
       const data = text ? JSON.parse(text) : {}
+      console.log('🔍 Parsed response data:', data)
+      console.log('🔍 pending_matches in response:', data.pending_matches)
+      console.log('🔍 pending_matches type:', typeof data.pending_matches)
+      console.log('🔍 pending_matches length:', data.pending_matches?.length)
 
       // Handle both wrapped and direct response formats
       const res: PotentialMatchesResponse = data.pending_matches !== undefined
         ? data
         : { pending_matches: [], accepted_matches: [], expired_matches: [] }
+      
+      console.log('🔍 Final res object:', res)
+      console.log('🔍 Final pending_matches:', res.pending_matches)
 
       logResponse('GET', endpoint, { 
         counts: { 
