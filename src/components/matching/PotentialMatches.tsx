@@ -160,6 +160,44 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: Pot
 
   const current = sortedMatches[focusedIndex]
 
+  // Safety check - if no current match, show empty state
+  if (!current) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold">Potential Matches</h2>
+          <Badge variant="secondary">0 matches</Badge>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No potential matches at this time</h3>
+            <p className="text-gray-600 mb-4">
+              We are currently looking to find you more compatible carpool partners. Check back soon or update your matching preferences to expand your search.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button 
+                onClick={() => loadMatches({})} 
+                variant="outline"
+                className="flex items-center gap-2 px-6 py-2"
+              >
+                <Navigation className="w-4 h-4" />
+                Refresh Matches
+              </Button>
+              <Button 
+                onClick={onNavigateToPreferences}
+                className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Settings className="w-4 h-4" />
+                Go to Preferences
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -202,11 +240,11 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: Pot
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
                 <Avatar className="w-12 h-12">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${current.user2.name}`} />
-                  <AvatarFallback>{current.user2.display_name}</AvatarFallback>
+                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${current.user2?.name || 'User'}`} />
+                  <AvatarFallback>{current.user2?.display_name || 'User'}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <CardTitle className="text-lg">{current.user2.name}</CardTitle>
+                  <CardTitle className="text-lg">{current.user2?.name || 'Unknown User'}</CardTitle>
                   <CardDescription className="flex items-center gap-2 mt-1">
                     <MapPin className="w-4 h-4" />
                     <span>Near you</span>
@@ -234,8 +272,8 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: Pot
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-green-500" />
                 <div>
-                  <p className="text-sm font-medium">{current.user2.schedule.work_start_time}</p>
-                  <p className="text-xs text-gray-600">{current.user2.schedule.work_days.join(', ')}</p>
+                  <p className="text-sm font-medium">{current.user2?.schedule?.work_start_time || 'Not specified'}</p>
+                  <p className="text-xs text-gray-600">{current.user2?.schedule?.work_days?.join(', ') || 'Not specified'}</p>
                 </div>
               </div>
               
@@ -251,11 +289,11 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: Pot
             <div className="mb-4">
               <h4 className="text-sm font-medium mb-2">Why you match:</h4>
               <div className="flex flex-wrap gap-2">
-                {current.match_reasons.map((reason, idx) => (
+                {current.match_reasons?.map((reason, idx) => (
                   <Badge key={idx} variant="secondary" className="text-xs">
                     {reason}
                   </Badge>
-                ))}
+                )) || <Badge variant="secondary" className="text-xs">Compatible preferences</Badge>}
               </div>
             </div>
 
