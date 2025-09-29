@@ -18,8 +18,29 @@ import {
   Users,
   Settings
 } from 'lucide-react'
-import { useMatchingService, type PotentialMatch, type MatchFilters } from '@/services/matching'
+import { useMatchingService } from '@/services/matching'
+import { type PotentialMatch, type MatchFilters } from '@/types/matching'
 // Advanced filters removed from Potential Matches; filters are managed via Preferences
+
+// Transform backend response to match our interface
+const transformBackendMatch = (backendMatch: any): PotentialMatch => {
+  return {
+    id: backendMatch.id,
+    compatibility_score: backendMatch.compatibility_score,
+    estimated_savings_per_month: backendMatch.estimated_savings_per_month,
+    match_reasons: backendMatch.match_reasons,
+    route_overlap_percentage: backendMatch.route_overlap_percentage,
+    schedule_compatibility: backendMatch.schedule_compatibility,
+    total_distance_miles: backendMatch.total_distance_miles,
+    user2: {
+      id: backendMatch.user2.id,
+      name: backendMatch.user2.name,
+      display_name: backendMatch.user2.display_name,
+      home_location: backendMatch.user2.home_location,
+      destination_location: backendMatch.user2.destination_location
+    }
+  };
+};
 
 interface PotentialMatchesProps {
   onStatsUpdate?: () => void
@@ -65,7 +86,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: Pot
       const data = await matchingService.getPotentialMatches(currentFilters)
       console.log('📊 Received data:', data)
       console.log('📋 Pending matches:', data.pending_matches)
-      setMatches(data.pending_matches || [])
+      setMatches((data.pending_matches || []).map(transformBackendMatch))
       setFocusedIndex(0)
     } catch (error) {
       console.error('❌ Failed to load matches:', error)
@@ -266,24 +287,24 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: Pot
               <div className="flex items-center gap-2">
                 <Route className="w-4 h-4 text-blue-500" />
                 <div>
-                  <p className="text-sm font-medium">{Math.round(current.route_overlap_percentage * 100)}% Route Overlap</p>
-                  <p className="text-xs text-gray-600">{current.estimated_pickup_distance_miles} miles pickup</p>
+                  <p className="text-sm font-medium">{current.route_overlap_percentage}% Route Overlap</p>
+                  <p className="text-xs text-gray-600">{current.total_distance_miles} miles total</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-green-500" />
                 <div>
-                  <p className="text-sm font-medium">{current.user2?.schedule?.work_start_time || 'Not specified'}</p>
-                  <p className="text-xs text-gray-600">{current.user2?.schedule?.work_days?.join(', ') || 'Not specified'}</p>
+                  <p className="text-sm font-medium">{current.schedule_compatibility?.departure_time || 'Not specified'}</p>
+                  <p className="text-xs text-gray-600">{current.schedule_compatibility?.frequency || 'Not specified'}</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-orange-500" />
                 <div>
-                  <p className="text-sm font-medium">Route Match</p>
-                  <p className="text-xs text-gray-600">Compatible route</p>
+                  <p className="text-sm font-medium">${current.estimated_savings_per_month}/month</p>
+                  <p className="text-xs text-gray-600">Estimated savings</p>
                 </div>
               </div>
             </div>

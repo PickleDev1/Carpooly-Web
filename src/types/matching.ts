@@ -32,6 +32,16 @@ export interface MatchingPreferences {
 
 export interface PotentialMatch {
   id: string;
+  compatibility_score: number;
+  estimated_savings_per_month: number;
+  match_reasons: string[];
+  route_overlap_percentage: number;
+  schedule_compatibility: {
+    departure_time: string;
+    flexibility_minutes: number;
+    frequency: string;
+  };
+  total_distance_miles: number;
   user2: {
     id: string;
     name: string;
@@ -42,27 +52,12 @@ export interface PotentialMatch {
     home_location: {
       lat: number;
       lng: number;
-      address: string;
     };
-    work_location: {
+    destination_location: {
       lat: number;
       lng: number;
-      address: string;
-    };
-    preferences: MatchingPreferences;
-    schedule: {
-      work_days: string[];
-      work_start_time: string;
-      work_end_time: string;
     };
   };
-  compatibility_score: number;
-  match_reasons: string[];
-  route_overlap_percentage: number;
-  estimated_detour_minutes: number;
-  estimated_pickup_distance_miles: number;
-  created_at: string;
-  expires_at: string;
 }
 
 export interface MatchRequest {
