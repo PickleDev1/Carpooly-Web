@@ -18,6 +18,9 @@ import {
 } from 'lucide-react'
 import { useMatchingService } from '@/services/matching'
 
+// Global flag to prevent multiple instances from running simultaneously
+let globalUpdateCheckInProgress = false
+
 interface RealTimeUpdatesProps {
   onNewMatches?: (count: number) => void
   onNewRequests?: (count: number) => void
@@ -56,13 +59,17 @@ export function RealTimeUpdates({
   const checkForUpdates = useCallback(async () => {
     if (!isEnabled || authError) return
     
-    // Prevent multiple simultaneous calls
-    if (isCheckingRef.current) {
-      console.log('⏸️ Update check already in progress, skipping...')
+    // Prevent multiple simultaneous calls (both local and global)
+    if (isCheckingRef.current || globalUpdateCheckInProgress) {
+      console.log('⏸️ Update check already in progress, skipping...', { 
+        local: isCheckingRef.current, 
+        global: globalUpdateCheckInProgress 
+      })
       return
     }
     
     isCheckingRef.current = true
+    globalUpdateCheckInProgress = true
     console.log('🔄 Starting update check...')
 
     try {
@@ -154,21 +161,34 @@ export function RealTimeUpdates({
       }
     } finally {
       isCheckingRef.current = false
+      globalUpdateCheckInProgress = false
       console.log('✅ Update check completed')
     }
   }, [isEnabled, matchingService, onNewMatches, onNewRequests, onStatsUpdate])
 
   // Set up polling interval
   useEffect(() => {
+    console.log('🔧 RealTimeUpdates useEffect triggered:', { isEnabled, authError, updateInterval })
+    
     if (isEnabled && !authError) {
+      // Clear any existing interval first
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      
       // Reset counters on first load to prevent initial spam
       lastMatchesCount.current = 0
       lastRequestsCount.current = 0
       
+      console.log('⏰ Setting up interval for', updateInterval / 1000, 'seconds')
       intervalRef.current = setInterval(checkForUpdates, updateInterval)
+      
       // Initial check (but don't create events on first load)
+      console.log('🚀 Running initial check...')
       checkForUpdates()
     } else {
+      console.log('⏹️ Disabling updates:', { isEnabled, authError })
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null
@@ -176,8 +196,10 @@ export function RealTimeUpdates({
     }
 
     return () => {
+      console.log('🧹 Cleaning up interval')
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
   }, [isEnabled, authError, updateInterval, checkForUpdates])
