@@ -109,10 +109,24 @@ export function RealTimeUpdates({
 
     } catch (error) {
       console.error('Failed to check for updates:', error)
+      console.log('Error type:', typeof error)
+      console.log('Error constructor:', error?.constructor?.name)
+      console.log('Error status:', (error as any)?.status)
+      console.log('Error message:', (error as any)?.message)
       setIsConnected(false)
       
-      // Check if it's an authentication error
-      if (error instanceof Error && error.message.includes('Authentication failed')) {
+      // Check if it's an authentication error - handle MatchingServiceError
+      if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+        setAuthError(true)
+        setIsEnabled(false) // Disable updates on auth error
+        console.warn('Authentication failed (401), disabling real-time updates')
+      }
+      // Also check error message for authentication failures
+      else if (error instanceof Error && (
+        error.message.includes('Authentication failed') || 
+        error.message.includes('Unauthorized') ||
+        error.message.includes('401')
+      )) {
         setAuthError(true)
         setIsEnabled(false) // Disable updates on auth error
         console.warn('Authentication failed, disabling real-time updates')
