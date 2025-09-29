@@ -40,10 +40,11 @@ export function RealTimeUpdates({
   const [isEnabled, setIsEnabled] = useState(true)
   const [isConnected, setIsConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
-  const [updateInterval, setUpdateInterval] = useState(30000) // 30 seconds
+  const [updateInterval, setUpdateInterval] = useState(300000) // 5 minutes
   const [events, setEvents] = useState<UpdateEvent[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [authError, setAuthError] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const lastMatchesCount = useRef(0)
@@ -167,8 +168,14 @@ export function RealTimeUpdates({
     }
   }, [isEnabled, authError, updateInterval, checkForUpdates])
 
-  const handleRefresh = useCallback(() => {
-    checkForUpdates()
+  const handleRefresh = useCallback(async () => {
+    console.log('🔄 Manual refresh triggered')
+    setIsRefreshing(true)
+    try {
+      await checkForUpdates()
+    } finally {
+      setIsRefreshing(false)
+    }
   }, [checkForUpdates])
 
   const markAsRead = useCallback((eventId: string) => {
@@ -265,33 +272,33 @@ export function RealTimeUpdates({
             <div className="space-y-1">
               <p className="text-sm font-medium">Update frequency</p>
               <p className="text-xs text-muted-foreground">
-                Check for updates every {updateInterval / 1000} seconds
+                Check for updates every {updateInterval / 60000} minutes
               </p>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setUpdateInterval(15000)}
-                className={updateInterval === 15000 ? 'bg-blue-50' : ''}
+                onClick={() => setUpdateInterval(300000)}
+                className={updateInterval === 300000 ? 'bg-blue-50' : ''}
               >
-                15s
+                5m
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setUpdateInterval(30000)}
-                className={updateInterval === 30000 ? 'bg-blue-50' : ''}
+                onClick={() => setUpdateInterval(600000)}
+                className={updateInterval === 600000 ? 'bg-blue-50' : ''}
               >
-                30s
+                10m
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setUpdateInterval(60000)}
-                className={updateInterval === 60000 ? 'bg-blue-50' : ''}
+                onClick={() => setUpdateInterval(900000)}
+                className={updateInterval === 900000 ? 'bg-blue-50' : ''}
               >
-                1m
+                15m
               </Button>
             </div>
           </div>
@@ -304,13 +311,14 @@ export function RealTimeUpdates({
             </div>
             <div className="flex gap-2">
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={handleRefresh}
-                disabled={!isEnabled || authError}
+                disabled={!isEnabled || authError || isRefreshing}
+                className="bg-blue-600 hover:bg-blue-700"
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh Now
+                <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Refreshing...' : 'Refresh Now'}
               </Button>
               {authError && (
                 <Button
