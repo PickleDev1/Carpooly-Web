@@ -35,7 +35,10 @@ export interface PotentialMatch {
   user2: {
     id: string;
     name: string;
-    display_name: string;
+    display_name: string | {
+      String: string;
+      Valid: boolean;
+    };
     home_location: {
       lat: number;
       lng: number;

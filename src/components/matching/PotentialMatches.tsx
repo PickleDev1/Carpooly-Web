@@ -241,7 +241,9 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: Pot
               <div className="flex items-center gap-4">
                 <Avatar className="w-12 h-12">
                   <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${current.user2?.name || 'User'}`} />
-                  <AvatarFallback>{current.user2?.display_name || 'User'}</AvatarFallback>
+                  <AvatarFallback>
+                    {typeof current.user2?.display_name === 'string' ? current.user2.display_name : current.user2?.display_name?.String || current.user2?.name || 'User'}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
                   <CardTitle className="text-lg">{current.user2?.name || 'Unknown User'}</CardTitle>

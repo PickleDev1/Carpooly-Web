@@ -17,15 +17,15 @@ export function MatchCard({ match, onAccept, onReject, onViewDetails }: Props) {
     <Card className="w-full max-w-2xl shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>{match.user2.display_name}</span>
+          <span>{typeof match.user2.display_name === 'string' ? match.user2.display_name : match.user2.display_name?.String || match.user2.name}</span>
           <span className="text-sm px-2 py-1 rounded bg-muted">{Math.round(match.compatibility_score * 100)}%</span>
         </CardTitle>
         <CardDescription>{match.match_reasons?.join(' • ')}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="text-muted-foreground">{match.user2.preferences.user_demographics.occupation}</div>
-          <div className="text-right">{match.user2.schedule.work_start_time}</div>
+          <div className="text-muted-foreground">{match.user2.name}</div>
+          <div className="text-right">{match.user2.schedule?.work_start_time || 'Not specified'}</div>
         </div>
         <div className="mt-4 flex gap-3 justify-center">
           <Button onClick={() => onAccept(match.id)}>Accept</Button>
