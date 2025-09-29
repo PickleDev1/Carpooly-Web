@@ -49,11 +49,21 @@ export function RealTimeUpdates({
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const lastMatchesCount = useRef(0)
   const lastRequestsCount = useRef(0)
+  const isCheckingRef = useRef(false)
   const matchingService = useMatchingService()
 
   // Simulate real-time updates (in production, this would use WebSocket or Server-Sent Events)
   const checkForUpdates = useCallback(async () => {
     if (!isEnabled || authError) return
+    
+    // Prevent multiple simultaneous calls
+    if (isCheckingRef.current) {
+      console.log('⏸️ Update check already in progress, skipping...')
+      return
+    }
+    
+    isCheckingRef.current = true
+    console.log('🔄 Starting update check...')
 
     try {
       const [matches, requests, stats] = await Promise.all([
@@ -68,8 +78,14 @@ export function RealTimeUpdates({
       // Only create events if there are actual changes
       const newEvents: UpdateEvent[] = []
 
-      // Check if matches count increased (only create events for actual increases)
-      if (currentMatchesCount > lastMatchesCount.current) {
+      // Only create events if there are actual increases in counts
+      const matchesIncreased = currentMatchesCount > lastMatchesCount.current
+      const requestsIncreased = currentRequestsCount > lastRequestsCount.current
+      
+      console.log(`🔍 Change detection: matches ${lastMatchesCount.current} -> ${currentMatchesCount} (${matchesIncreased ? 'INCREASED' : 'SAME'})`)
+      console.log(`🔍 Change detection: requests ${lastRequestsCount.current} -> ${currentRequestsCount} (${requestsIncreased ? 'INCREASED' : 'SAME'})`)
+
+      if (matchesIncreased) {
         console.log(`🆕 New matches detected: ${lastMatchesCount.current} -> ${currentMatchesCount}`)
         newEvents.push({
           id: `match-${Date.now()}`,
@@ -78,12 +94,9 @@ export function RealTimeUpdates({
           data: { count: currentMatchesCount },
           read: false
         })
-      } else {
-        console.log(`📊 Matches unchanged: ${currentMatchesCount} (was ${lastMatchesCount.current})`)
       }
 
-      // Check if requests count increased (only create events for actual increases)
-      if (currentRequestsCount > lastRequestsCount.current) {
+      if (requestsIncreased) {
         console.log(`🆕 New requests detected: ${lastRequestsCount.current} -> ${currentRequestsCount}`)
         newEvents.push({
           id: `request-${Date.now()}`,
@@ -92,8 +105,6 @@ export function RealTimeUpdates({
           data: { count: currentRequestsCount },
           read: false
         })
-      } else {
-        console.log(`📊 Requests unchanged: ${currentRequestsCount} (was ${lastRequestsCount.current})`)
       }
 
       // Update the refs to track changes
@@ -141,6 +152,9 @@ export function RealTimeUpdates({
         setIsEnabled(false) // Disable updates on auth error
         console.warn('Authentication failed, disabling real-time updates')
       }
+    } finally {
+      isCheckingRef.current = false
+      console.log('✅ Update check completed')
     }
   }, [isEnabled, matchingService, onNewMatches, onNewRequests, onStatsUpdate])
 
