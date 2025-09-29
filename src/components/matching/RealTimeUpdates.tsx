@@ -67,8 +67,9 @@ export function RealTimeUpdates({
       // Only create events if there are actual changes
       const newEvents: UpdateEvent[] = []
 
-      // Check if matches count increased
-      if (currentMatchesCount > lastMatchesCount.current && currentMatchesCount > 0) {
+      // Check if matches count increased (only create events for actual increases)
+      if (currentMatchesCount > lastMatchesCount.current) {
+        console.log(`🆕 New matches detected: ${lastMatchesCount.current} -> ${currentMatchesCount}`)
         newEvents.push({
           id: `match-${Date.now()}`,
           type: 'new_match',
@@ -76,10 +77,13 @@ export function RealTimeUpdates({
           data: { count: currentMatchesCount },
           read: false
         })
+      } else {
+        console.log(`📊 Matches unchanged: ${currentMatchesCount} (was ${lastMatchesCount.current})`)
       }
 
-      // Check if requests count increased
-      if (currentRequestsCount > lastRequestsCount.current && currentRequestsCount > 0) {
+      // Check if requests count increased (only create events for actual increases)
+      if (currentRequestsCount > lastRequestsCount.current) {
+        console.log(`🆕 New requests detected: ${lastRequestsCount.current} -> ${currentRequestsCount}`)
         newEvents.push({
           id: `request-${Date.now()}`,
           type: 'new_request',
@@ -87,6 +91,8 @@ export function RealTimeUpdates({
           data: { count: currentRequestsCount },
           read: false
         })
+      } else {
+        console.log(`📊 Requests unchanged: ${currentRequestsCount} (was ${lastRequestsCount.current})`)
       }
 
       // Update the refs to track changes
@@ -94,6 +100,7 @@ export function RealTimeUpdates({
       lastRequestsCount.current = currentRequestsCount
 
       if (newEvents.length > 0) {
+        console.log(`🔔 Creating ${newEvents.length} new events`)
         setEvents(prev => [...newEvents, ...prev].slice(0, 50)) // Keep last 50 events
         setUnreadCount(prev => prev + newEvents.length)
         
@@ -101,6 +108,8 @@ export function RealTimeUpdates({
         onNewMatches?.(currentMatchesCount)
         onNewRequests?.(currentRequestsCount)
         onStatsUpdate?.()
+      } else {
+        console.log(`✅ No changes detected, no new events created`)
       }
 
       setLastUpdate(new Date())
