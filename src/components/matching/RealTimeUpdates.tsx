@@ -43,6 +43,7 @@ export function RealTimeUpdates({
   const [updateInterval, setUpdateInterval] = useState(30000) // 30 seconds
   const [events, setEvents] = useState<UpdateEvent[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [authError, setAuthError] = useState(false)
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const lastMatchesCount = useRef(0)
@@ -51,7 +52,7 @@ export function RealTimeUpdates({
 
   // Simulate real-time updates (in production, this would use WebSocket or Server-Sent Events)
   const checkForUpdates = useCallback(async () => {
-    if (!isEnabled) return
+    if (!isEnabled || authError) return
 
     try {
       const [matches, requests, stats] = await Promise.all([
@@ -104,16 +105,24 @@ export function RealTimeUpdates({
 
       setLastUpdate(new Date())
       setIsConnected(true)
+      setAuthError(false) // Reset auth error on successful request
 
     } catch (error) {
       console.error('Failed to check for updates:', error)
       setIsConnected(false)
+      
+      // Check if it's an authentication error
+      if (error instanceof Error && error.message.includes('Authentication failed')) {
+        setAuthError(true)
+        setIsEnabled(false) // Disable updates on auth error
+        console.warn('Authentication failed, disabling real-time updates')
+      }
     }
   }, [isEnabled, matchingService, onNewMatches, onNewRequests, onStatsUpdate])
 
   // Set up polling interval
   useEffect(() => {
-    if (isEnabled) {
+    if (isEnabled && !authError) {
       // Reset counters on first load to prevent initial spam
       lastMatchesCount.current = 0
       lastRequestsCount.current = 0
@@ -133,7 +142,7 @@ export function RealTimeUpdates({
         clearInterval(intervalRef.current)
       }
     }
-  }, [isEnabled, updateInterval, checkForUpdates])
+  }, [isEnabled, authError, updateInterval, checkForUpdates])
 
   const handleRefresh = useCallback(() => {
     checkForUpdates()
@@ -211,12 +220,21 @@ export function RealTimeUpdates({
             <div className="space-y-1">
               <p className="text-sm font-medium">Enable real-time updates</p>
               <p className="text-xs text-muted-foreground">
-                Get notified when new matches or requests are available
+                {authError 
+                  ? "Authentication failed. Please sign in again to enable updates."
+                  : "Get notified when new matches or requests are available"
+                }
               </p>
             </div>
             <Switch
               checked={isEnabled}
-              onCheckedChange={setIsEnabled}
+              onCheckedChange={(checked) => {
+                if (authError) {
+                  setAuthError(false)
+                }
+                setIsEnabled(checked)
+              }}
+              disabled={authError}
             />
           </div>
 
@@ -261,15 +279,29 @@ export function RealTimeUpdates({
                 {lastUpdate ? `Last update: ${lastUpdate.toLocaleTimeString()}` : 'No updates yet'}
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={!isEnabled}
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh Now
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={!isEnabled || authError}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh Now
+              </Button>
+              {authError && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setAuthError(false)
+                    setIsEnabled(true)
+                  }}
+                >
+                  Reset
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
