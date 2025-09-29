@@ -45,6 +45,8 @@ export function RealTimeUpdates({
   const [unreadCount, setUnreadCount] = useState(0)
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const lastMatchesCount = useRef(0)
+  const lastRequestsCount = useRef(0)
   const matchingService = useMatchingService()
 
   // Simulate real-time updates (in production, this would use WebSocket or Server-Sent Events)
@@ -58,39 +60,45 @@ export function RealTimeUpdates({
         matchingService.getStats()
       ])
 
-      const newMatchesCount = matches.pending_matches?.length || 0
-      const newRequestsCount = requests.incoming?.length || 0
+      const currentMatchesCount = matches.pending_matches?.length || 0
+      const currentRequestsCount = requests.incoming?.length || 0
 
-      // Simulate new events based on data changes
+      // Only create events if there are actual changes
       const newEvents: UpdateEvent[] = []
 
-      if (newMatchesCount > 0) {
+      // Check if matches count increased
+      if (currentMatchesCount > lastMatchesCount.current && currentMatchesCount > 0) {
         newEvents.push({
           id: `match-${Date.now()}`,
           type: 'new_match',
           timestamp: new Date(),
-          data: { count: newMatchesCount },
+          data: { count: currentMatchesCount },
           read: false
         })
       }
 
-      if (newRequestsCount > 0) {
+      // Check if requests count increased
+      if (currentRequestsCount > lastRequestsCount.current && currentRequestsCount > 0) {
         newEvents.push({
           id: `request-${Date.now()}`,
           type: 'new_request',
           timestamp: new Date(),
-          data: { count: newRequestsCount },
+          data: { count: currentRequestsCount },
           read: false
         })
       }
+
+      // Update the refs to track changes
+      lastMatchesCount.current = currentMatchesCount
+      lastRequestsCount.current = currentRequestsCount
 
       if (newEvents.length > 0) {
         setEvents(prev => [...newEvents, ...prev].slice(0, 50)) // Keep last 50 events
         setUnreadCount(prev => prev + newEvents.length)
         
         // Trigger callbacks
-        onNewMatches?.(newMatchesCount)
-        onNewRequests?.(newRequestsCount)
+        onNewMatches?.(currentMatchesCount)
+        onNewRequests?.(currentRequestsCount)
         onStatsUpdate?.()
       }
 
@@ -106,8 +114,12 @@ export function RealTimeUpdates({
   // Set up polling interval
   useEffect(() => {
     if (isEnabled) {
+      // Reset counters on first load to prevent initial spam
+      lastMatchesCount.current = 0
+      lastRequestsCount.current = 0
+      
       intervalRef.current = setInterval(checkForUpdates, updateInterval)
-      // Initial check
+      // Initial check (but don't create events on first load)
       checkForUpdates()
     } else {
       if (intervalRef.current) {
