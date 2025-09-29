@@ -18,8 +18,10 @@ import {
 } from 'lucide-react'
 import { useMatchingService } from '@/services/matching'
 
-// Global flag to prevent multiple instances from running simultaneously
+// Global state to prevent multiple instances and persist across component remounts
 let globalUpdateCheckInProgress = false
+let globalLastMatchesCount = 0
+let globalLastRequestsCount = 0
 
 interface RealTimeUpdatesProps {
   onNewMatches?: (count: number) => void
@@ -50,8 +52,6 @@ export function RealTimeUpdates({
   const [isRefreshing, setIsRefreshing] = useState(false)
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const lastMatchesCount = useRef(0)
-  const lastRequestsCount = useRef(0)
   const isCheckingRef = useRef(false)
   const matchingService = useMatchingService()
 
@@ -86,14 +86,19 @@ export function RealTimeUpdates({
       const newEvents: UpdateEvent[] = []
 
       // Only create events if there are actual increases in counts
-      const matchesIncreased = currentMatchesCount > lastMatchesCount.current
-      const requestsIncreased = currentRequestsCount > lastRequestsCount.current
+      // Skip if this is the very first load (global counters are 0)
+      const isFirstLoad = globalLastMatchesCount === 0 && globalLastRequestsCount === 0
+      const matchesIncreased = !isFirstLoad && currentMatchesCount > globalLastMatchesCount
+      const requestsIncreased = !isFirstLoad && currentRequestsCount > globalLastRequestsCount
       
-      console.log(`🔍 Change detection: matches ${lastMatchesCount.current} -> ${currentMatchesCount} (${matchesIncreased ? 'INCREASED' : 'SAME'})`)
-      console.log(`🔍 Change detection: requests ${lastRequestsCount.current} -> ${currentRequestsCount} (${requestsIncreased ? 'INCREASED' : 'SAME'})`)
+      console.log(`🔍 Change detection: matches ${globalLastMatchesCount} -> ${currentMatchesCount} (${matchesIncreased ? 'INCREASED' : 'SAME'})`)
+      console.log(`🔍 Change detection: requests ${globalLastRequestsCount} -> ${currentRequestsCount} (${requestsIncreased ? 'INCREASED' : 'SAME'})`)
+      if (isFirstLoad) {
+        console.log('🚀 First load detected - skipping event creation')
+      }
 
       if (matchesIncreased) {
-        console.log(`🆕 New matches detected: ${lastMatchesCount.current} -> ${currentMatchesCount}`)
+        console.log(`🆕 New matches detected: ${globalLastMatchesCount} -> ${currentMatchesCount}`)
         newEvents.push({
           id: `match-${Date.now()}`,
           type: 'new_match',
@@ -104,7 +109,7 @@ export function RealTimeUpdates({
       }
 
       if (requestsIncreased) {
-        console.log(`🆕 New requests detected: ${lastRequestsCount.current} -> ${currentRequestsCount}`)
+        console.log(`🆕 New requests detected: ${globalLastRequestsCount} -> ${currentRequestsCount}`)
         newEvents.push({
           id: `request-${Date.now()}`,
           type: 'new_request',
@@ -114,9 +119,9 @@ export function RealTimeUpdates({
         })
       }
 
-      // Update the refs to track changes
-      lastMatchesCount.current = currentMatchesCount
-      lastRequestsCount.current = currentRequestsCount
+      // Update the global refs to track changes
+      globalLastMatchesCount = currentMatchesCount
+      globalLastRequestsCount = currentRequestsCount
 
       if (newEvents.length > 0) {
         console.log(`🔔 Creating ${newEvents.length} new events`)
@@ -177,9 +182,7 @@ export function RealTimeUpdates({
         intervalRef.current = null
       }
       
-      // Reset counters on first load to prevent initial spam
-      lastMatchesCount.current = 0
-      lastRequestsCount.current = 0
+      // Global counters are already initialized, no need to reset
       
       console.log('⏰ Setting up interval for', updateInterval / 1000, 'seconds')
       intervalRef.current = setInterval(checkForUpdates, updateInterval)
