@@ -150,7 +150,21 @@ export default function MatchingPage() {
         </TabsContent>
 
         <TabsContent value="preferences" className="space-y-6">
-          <MatchingPreferencesComponent />
+          <MatchingPreferencesComponent onSaved={async () => {
+            setActiveTab('matches')
+            // Refresh counts after save
+            const [matches, reqs, st] = await Promise.all([
+              matching.getPotentialMatches(),
+              matching.getRequests(),
+              matching.getStats()
+            ])
+            setHeaderCounts({
+              potential: matches.pending_matches?.length ?? 0,
+              incoming: reqs.incoming.length,
+              formed: st.total_carpools_formed ?? 0,
+              savings: st.total_savings ?? 0
+            })
+          }} />
         </TabsContent>
       </Tabs>
     </div>

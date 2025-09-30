@@ -15,6 +15,7 @@ import {
   Save
 } from 'lucide-react'
 import { useMatchingService, type MatchingPreferences as Prefs } from '@/services/matching'
+import { useToast } from '@/components/ui/toast'
 
 const defaults: Prefs = {
   user_id: '',
@@ -42,8 +43,9 @@ const PREF_STUDENT_OPTIONS = [
   { value: 'professionals_only', label: 'Professionals only' }
 ]
 
-export function MatchingPreferences() {
+export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
   const matching = useMatchingService()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [prefs, setPrefs] = useState<Prefs>(defaults)
@@ -64,7 +66,12 @@ export function MatchingPreferences() {
     try {
       await matching.updatePreferences(prefs)
       setSaved(true)
+      showToast('Preferences saved successfully')
+      onSaved?.()
       setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      showToast('Failed to save preferences. Please try again.')
+      throw err
     } finally {
       setLoading(false)
     }
