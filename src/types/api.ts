@@ -158,64 +158,14 @@ export interface PotentialMatchesResponse {
   expired_matches: any[];
 }
 
-export interface MatchRequestsResponse {
-  incoming: Array<{
-    id: string;
-    from_user_id: string;
-    to_user_id: string;
-    potential_match_id: string;
-    message: string;
-    status: 'pending' | 'accepted' | 'rejected';
-    expires_at: string;
-    created_at: string;
-    from_user: {
-      id: string;
-      name: string;
-      display_name: string;
-    };
-  }>;
-  outgoing: Array<{
-    id: string;
-    from_user_id: string;
-    to_user_id: string;
-    potential_match_id: string;
-    message: string;
-    status: 'pending' | 'accepted' | 'rejected';
-    expires_at: string;
-    created_at: string;
-    to_user: {
-      id: string;
-      name: string;
-      display_name: string;
-    };
-  }>;
-}
+// MatchRequestsResponse moved to src/types/matching.ts
 
 export interface FindMatchesResponse {
   matches_found: number;
   message: string;
 }
 
-export interface MatchRequestResponse {
-  id: string;
-  from_user_id: string;
-  to_user_id: string;
-  potential_match_id: string;
-  message: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  expires_at: string;
-  created_at: string;
-  from_user: {
-    id: string;
-    name: string;
-    display_name: string;
-  };
-}
-
-export interface UpdateRequestResponse {
-  message: string;
-  status: 'accepted' | 'rejected';
-}
+// MatchRequestResponse and UpdateRequestResponse moved to src/types/matching.ts
 
 export interface MatchingSessionResponse {
   id: string;

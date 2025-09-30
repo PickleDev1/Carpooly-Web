@@ -14,7 +14,7 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { useMatchingService } from '@/services/matching'
-import type { MatchRequestsResponse } from '@/types/api'
+import type { MatchRequestsResponse } from '@/types/matching'
 
 interface Props { onStatsUpdate?: () => void }
 
@@ -40,13 +40,16 @@ export function MatchRequests({ onStatsUpdate }: Props) {
 
   const accept = async (id: string) => {
     setProcessing(id)
-        try {
-      await matching.respondToRequest(id, 'accepted')
+    try {
+      await matching.updateRequestStatus(id, 'accepted')
       setRequests(prev => ({
         incoming: prev.incoming.map(r => (r.id === id ? { ...r, status: 'accepted' as const } : r)),
         outgoing: prev.outgoing
       }))
       onStatsUpdate?.()
+    } catch (error: any) {
+      console.error('❌ Failed to accept request:', error)
+      alert('Failed to accept request. Please try again.')
     } finally {
       setProcessing(null)
     }
@@ -55,12 +58,15 @@ export function MatchRequests({ onStatsUpdate }: Props) {
   const reject = async (id: string) => {
     setProcessing(id)
     try {
-      await matching.respondToRequest(id, 'rejected')
+      await matching.updateRequestStatus(id, 'rejected')
       setRequests(prev => ({
         incoming: prev.incoming.map(r => (r.id === id ? { ...r, status: 'rejected' as const } : r)),
         outgoing: prev.outgoing
       }))
       onStatsUpdate?.()
+    } catch (error: any) {
+      console.error('❌ Failed to reject request:', error)
+      alert('Failed to reject request. Please try again.')
     } finally {
       setProcessing(null)
     }
@@ -151,28 +157,28 @@ export function MatchRequests({ onStatsUpdate }: Props) {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
                     <Avatar className="w-12 h-12">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${currentIncoming!.from_user.name}`} />
-                      <AvatarFallback>{currentIncoming!.from_user.display_name}</AvatarFallback>
+                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${currentIncoming?.from_user?.name || 'User'}`} />
+                      <AvatarFallback>{currentIncoming?.from_user?.display_name || 'User'}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-lg">{currentIncoming!.from_user.name}</CardTitle>
+                      <CardTitle className="text-lg">{currentIncoming?.from_user?.name || 'User'}</CardTitle>
                       <CardDescription className="flex items-center gap-2 mt-1">
                         <Clock className="w-4 h-4" />
-                        <span>{formatDate(currentIncoming!.created_at)}</span>
+                        <span>{formatDate(currentIncoming?.created_at || '')}</span>
                         <span>•</span>
-                        <span>{timeUntil(currentIncoming!.expires_at)}</span>
+                        <span>{timeUntil(currentIncoming?.expires_at || '')}</span>
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge className={getStatusColor(currentIncoming!.status)}>{currentIncoming!.status}</Badge>
+                  <Badge className={getStatusColor(currentIncoming?.status || 'pending')}>{currentIncoming?.status || 'pending'}</Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                {currentIncoming!.message && <p className="text-gray-700 mb-4">{currentIncoming!.message}</p>}
-                {currentIncoming!.status === 'pending' && (
+                {currentIncoming?.message && <p className="text-gray-700 mb-4">{currentIncoming.message}</p>}
+                {currentIncoming?.status === 'pending' && (
                   <div className="flex gap-2">
-                    <Button onClick={() => accept(currentIncoming!.id)} disabled={processing === currentIncoming!.id} className="flex-1">
-                      {processing === currentIncoming!.id ? (
+                    <Button onClick={() => accept(currentIncoming?.id || '')} disabled={processing === currentIncoming?.id} className="flex-1">
+                      {processing === currentIncoming?.id ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                           Accepting...
@@ -225,11 +231,11 @@ export function MatchRequests({ onStatsUpdate }: Props) {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
                       <Avatar className="w-12 h-12">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${r.to_user.name}`} />
-                        <AvatarFallback>{r.to_user.display_name}</AvatarFallback>
+                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${r.to_user?.name || 'User'}`} />
+                        <AvatarFallback>{r.to_user?.display_name || 'User'}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-lg">{r.to_user.name}</CardTitle>
+                        <CardTitle className="text-lg">{r.to_user?.name || 'User'}</CardTitle>
                         <CardDescription className="flex items-center gap-2 mt-1">
                           <Clock className="w-4 h-4" />
                           <span>{formatDate(r.created_at)}</span>

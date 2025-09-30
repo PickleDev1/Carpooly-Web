@@ -20,14 +20,14 @@ import type {
   MatchingSession,
   MatchingStats,
   MatchFilters,
+  MatchRequestsResponse,
+  MatchRequestResponse,
+  UpdateRequestResponse,
 } from '../types/matching';
 import type {
   MatchingPreferencesResponse,
   PotentialMatchesResponse,
-  MatchRequestsResponse,
   FindMatchesResponse,
-  MatchRequestResponse,
-  UpdateRequestResponse,
   MatchingSessionResponse,
   MatchingStatsResponse
 } from '@/types/api';
@@ -421,5 +421,67 @@ export const useMatchingService = () => {
         return handleApiError(error, 'fetch matching stats')
       }
     },
+
+    async sendMatchRequest(request: {
+      potential_match_id: string;
+      to_user_id: string;
+      message: string;
+    }): Promise<MatchRequestResponse> {
+      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/requests`
+      
+      logRequest('POST', endpoint, { request })
+      try {
+        const headers = await api.getHeaders()
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(request)
+        })
+        
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('sendMatchRequest error response:', response.status, text)
+          throw { status: response.status, message: text }
+        }
+        
+        const data = await response.json()
+        logResponse('POST', endpoint, { success: true, requestId: data.id })
+        return data
+      } catch (error: any) {
+        return handleApiError(error, 'send match request')
+      }
+    },
+
+    async updateRequestStatus(requestId: string, status: 'accepted' | 'rejected'): Promise<UpdateRequestResponse> {
+      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/requests/${requestId}`
+      
+      logRequest('PUT', endpoint, { requestId, status })
+      try {
+        const headers = await api.getHeaders()
+        const response = await fetch(endpoint, {
+          method: 'PUT',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status })
+        })
+        
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('updateRequestStatus error response:', response.status, text)
+          throw { status: response.status, message: text }
+        }
+        
+        const data = await response.json()
+        logResponse('PUT', endpoint, { success: true, status })
+        return data
+      } catch (error: any) {
+        return handleApiError(error, 'update request status')
+      }
+    }
   };
 };

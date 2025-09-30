@@ -80,7 +80,7 @@ export function RealTimeUpdates({
       ])
 
       const currentMatchesCount = matches.pending_matches?.length || 0
-      const currentRequestsCount = requests.incoming?.length || 0
+      const currentRequestsCount = (requests.incoming?.length || 0) + (requests.outgoing?.length || 0)
 
       // Only create events if there are actual changes
       const newEvents: UpdateEvent[] = []

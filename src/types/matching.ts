@@ -66,14 +66,42 @@ export interface MatchRequest {
   to_user_id: string;
   potential_match_id: string;
   message: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'accepted' | 'rejected' | 'expired';
   expires_at: string;
   created_at: string;
-  from_user: {
+  from_user?: {
     id: string;
     name: string;
     display_name: string;
   };
+  to_user?: {
+    id: string;
+    name: string;
+    display_name: string;
+  };
+}
+
+export interface MatchRequestsResponse {
+  incoming: MatchRequest[];
+  outgoing: MatchRequest[];
+}
+
+export interface MatchRequestResponse {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  potential_match_id: string;
+  message: string;
+  status: string;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface UpdateRequestResponse {
+  id: string;
+  status: string;
+  updated_at: string;
+  message: string;
 }
 
 export interface MatchingSession {

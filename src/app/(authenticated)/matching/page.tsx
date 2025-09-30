@@ -81,6 +81,7 @@ export default function MatchingPage() {
               const st = await matching.getStats(); setStats(st)
             }}
             onNavigateToPreferences={() => setActiveTab('preferences')}
+            onNavigateToRequests={() => setActiveTab('requests')}
           />
         </TabsContent>
 

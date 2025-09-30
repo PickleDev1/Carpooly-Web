@@ -45,9 +45,10 @@ const transformBackendMatch = (backendMatch: any): PotentialMatch => {
 interface PotentialMatchesProps {
   onStatsUpdate?: () => void
   onNavigateToPreferences?: () => void
+  onNavigateToRequests?: () => void
 }
 
-export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: PotentialMatchesProps) {
+export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNavigateToRequests }: PotentialMatchesProps) {
   const [matches, setMatches] = useState<PotentialMatch[]>([])
   const [loading, setLoading] = useState(true)
   const [sendingRequest, setSendingRequest] = useState<string | null>(null)
@@ -114,9 +115,31 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences }: Pot
   const handleSendRequest = async (matchId: string) => {
     setSendingRequest(matchId)
     try {
-      await matchingService.sendRequest(matchId, "I would like to carpool with you.")
-      setMatches(prev => prev.map(m => m.id === matchId ? ({ ...m }) : m))
+      const currentMatch = matches.find(m => m.id === matchId)
+      if (!currentMatch) {
+        throw new Error('Match not found')
+      }
+
+      const request = {
+        potential_match_id: matchId,
+        to_user_id: currentMatch.user2.id,
+        message: "I would like to carpool with you."
+      }
+
+      const response = await matchingService.sendMatchRequest(request)
+      
+      // Show success feedback
+      console.log('✅ Carpool request sent successfully:', response)
+      
+      // Navigate to requests tab to see the sent request
+      onNavigateToRequests?.()
+      
+      // Update stats
       onStatsUpdate?.()
+    } catch (error: any) {
+      console.error('❌ Failed to send carpool request:', error)
+      // You could add toast notification here
+      alert('Failed to send carpool request. Please try again.')
     } finally {
       setSendingRequest(null)
     }
