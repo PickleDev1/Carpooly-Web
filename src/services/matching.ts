@@ -176,19 +176,43 @@ export const useMatchingService = () => {
       logRequest('PUT', endpoint, update)
       try {
         const headers = await api.getHeaders()
-        const response = await fetch(endpoint, { method: 'PUT', headers, body: JSON.stringify(update) })
+
+        // Send all user-editable fields including new destination and schedule fields
+        const payload = {
+          max_detour_minutes: update.max_detour_minutes,
+          preferred_group_size: update.preferred_group_size,
+          driver_preference: update.driver_preference === 'flexible' ? 'either' : update.driver_preference,
+          schedule_flexibility_minutes: update.schedule_flexibility_minutes,
+          max_pickup_distance_miles: update.max_pickup_distance_miles,
+          min_compatibility_score: update.min_compatibility_score,
+          // New required destination fields
+          destination_latitude: update.destination_latitude,
+          destination_longitude: update.destination_longitude,
+          // New optional schedule fields
+          arrival_time: update.arrival_time,
+          commute_days: update.commute_days,
+          // Keep existing fields
+          notification_preferences: update.notification_preferences,
+          user_demographics: update.user_demographics,
+          demographic_preferences: update.demographic_preferences,
+          is_active: update.is_active,
+        }
+
+        const response = await fetch(endpoint, { method: 'PUT', headers, body: JSON.stringify(payload) })
         if (!response.ok) {
           const text = await response.text()
           console.error('updatePreferences error response:', response.status, text)
           throw { status: response.status, message: text }
         }
         const text = await response.text()
-        const payload = text ? JSON.parse(text) : null
-        if (!payload || !payload.preferences) {
+        const responseData = text ? JSON.parse(text) : null
+        // Accept either { preferences: ... } or direct object
+        const prefs = responseData?.preferences ?? responseData ?? null
+        if (!prefs) {
           throw { status: 500, message: 'Invalid update preferences response' }
         }
         logResponse('PUT', endpoint, { ok: true })
-        return payload.preferences as MatchingPreferences
+        return prefs as MatchingPreferences
       } catch (error: any) {
         return handleApiError(error, 'update matching preferences')
       }

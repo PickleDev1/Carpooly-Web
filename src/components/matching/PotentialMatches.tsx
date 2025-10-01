@@ -30,7 +30,7 @@ const transformBackendMatch = (backendMatch: any): PotentialMatch => {
     estimated_savings_per_month: backendMatch.estimated_savings_per_month,
     match_reasons: backendMatch.match_reasons,
     route_overlap_percentage: backendMatch.route_overlap_percentage,
-    schedule_compatibility: backendMatch.schedule_compatibility,
+    schedule: backendMatch.schedule || backendMatch.schedule_compatibility,
     total_distance_miles: backendMatch.total_distance_miles,
     user2: {
       id: backendMatch.user2.id,
@@ -53,6 +53,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   const [loading, setLoading] = useState(true)
   const [sendingRequest, setSendingRequest] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
+  const [missingDestination, setMissingDestination] = useState(false)
   // Filters UI removed; backend should use saved Preferences
   const listRefs = useRef<HTMLDivElement[]>([])
   
@@ -60,6 +61,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
 
   const loadMatches = useCallback(async (currentFilters: MatchFilters = {}) => {
     setLoading(true)
+    setMissingDestination(false)
     try {
       console.log('🔍 Loading matches with filters:', currentFilters)
       
@@ -67,6 +69,12 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       try {
         const prefs = await matchingService.getPreferences()
         console.log('👤 User preferences:', prefs)
+        if (!prefs.destination_latitude || !prefs.destination_longitude) {
+          console.warn('⚠️ Destination missing in preferences')
+          setMissingDestination(true)
+          setMatches([])
+          return
+        }
         if (!prefs.is_active) {
           console.warn('⚠️ User preferences are not active!')
         }
@@ -89,8 +97,11 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       console.log('📋 Pending matches:', data.pending_matches)
       setMatches((data.pending_matches || []).map(transformBackendMatch))
       setFocusedIndex(0)
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to load matches:', error)
+      if (error?.status === 400) {
+        setMissingDestination(true)
+      }
       setMatches([])
     } finally {
       setLoading(false)
@@ -160,6 +171,28 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
           <p className="text-gray-600">Finding potential matches...</p>
         </div>
       </div>
+    )
+  }
+
+  if (missingDestination) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Set Destination to See Matches</CardTitle>
+          <CardDescription>
+            Your work destination is required to compute route overlap, distance, and savings.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Button onClick={onNavigateToPreferences}>
+              <MapPin className="w-4 h-4 mr-2" /> Go to Preferences
+            </Button>
+            <Button variant="outline" onClick={() => loadMatches()}>Refresh</Button>
+          </div>
+          <p className="text-xs text-gray-500 mt-3">Tip: Enter destination latitude and longitude in Preferences. You can copy them from Google Maps.</p>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -318,8 +351,8 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-green-500" />
                 <div>
-                  <p className="text-sm font-medium">{current.schedule_compatibility?.departure_time || 'Not specified'}</p>
-                  <p className="text-xs text-gray-600">{current.schedule_compatibility?.frequency || 'Not specified'}</p>
+                  <p className="text-sm font-medium">{current.schedule?.departure_time || 'Not specified'}</p>
+                  <p className="text-xs text-gray-600">{current.schedule?.frequency || 'Not specified'}</p>
                 </div>
               </div>
               

@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import type { PotentialMatch } from '@/services/matching'
+import type { PotentialMatch } from '@/types/matching'
 
 interface Props {
   match: PotentialMatch
@@ -25,7 +25,7 @@ export function MatchCard({ match, onAccept, onReject, onViewDetails }: Props) {
       <CardContent>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="text-muted-foreground">{match.user2.name}</div>
-          <div className="text-right">{match.schedule_compatibility?.departure_time || 'Not specified'}</div>
+          <div className="text-right">{match.schedule?.departure_time || 'Not specified'}</div>
         </div>
         <div className="mt-4 flex gap-3 justify-center">
           <Button onClick={() => onAccept(match.id)}>Accept</Button>

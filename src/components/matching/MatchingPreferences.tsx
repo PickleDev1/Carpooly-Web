@@ -12,7 +12,8 @@ import {
   Clock, 
   Users,
   Route,
-  Save
+  Save,
+  MapPin
 } from 'lucide-react'
 import { useMatchingService, type MatchingPreferences as Prefs } from '@/services/matching'
 import { useToast } from '@/components/ui/toast'
@@ -25,6 +26,12 @@ const defaults: Prefs = {
   schedule_flexibility_minutes: 30,
   max_pickup_distance_miles: 5.0,
   min_compatibility_score: 0.7,
+  // New required destination fields
+  destination_latitude: 0,
+  destination_longitude: 0,
+  // New optional schedule fields
+  arrival_time: undefined,
+  commute_days: undefined,
   notification_preferences: { email: true, push: true, sms: false },
   user_demographics: { age_range: '26-35', gender: 'prefer_not_to_say', occupation: '', student_status: 'not_student', company: '' },
   demographic_preferences: { age_preferences: ['18-25','26-35','36-45','46-55','56-65','65+'], gender_preferences: ['any'], student_preference: 'both', occupation_preferences: [] },
@@ -116,6 +123,97 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
                 <Label htmlFor="pickup_distance">Maximum Pickup Distance (miles)</Label>
                 <Input id="pickup_distance" type="number" step="0.5" value={prefs.max_pickup_distance_miles} onChange={(e) => update('max_pickup_distance_miles', parseFloat(e.target.value))} min={0} max={25} />
                 <p className="text-xs text-gray-500 mt-1">Maximum distance to travel for pickup</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Destination (Required)
+            </CardTitle>
+            <CardDescription>Set your work destination to find compatible carpool partners</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="destination_lat">Destination Latitude</Label>
+                <Input 
+                  id="destination_lat" 
+                  type="number" 
+                  step="0.000001"
+                  value={prefs.destination_latitude} 
+                  onChange={(e) => update('destination_latitude', parseFloat(e.target.value))} 
+                  placeholder="37.7749"
+                />
+                <p className="text-xs text-gray-500 mt-1">Your work destination latitude</p>
+              </div>
+              <div>
+                <Label htmlFor="destination_lng">Destination Longitude</Label>
+                <Input 
+                  id="destination_lng" 
+                  type="number" 
+                  step="0.000001"
+                  value={prefs.destination_longitude} 
+                  onChange={(e) => update('destination_longitude', parseFloat(e.target.value))} 
+                  placeholder="-122.4194"
+                />
+                <p className="text-xs text-gray-500 mt-1">Your work destination longitude</p>
+              </div>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-md">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> Destination is required to find carpool matches. 
+                You can get coordinates from Google Maps by right-clicking on your destination.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Schedule (Optional)
+            </CardTitle>
+            <CardDescription>Set your commute schedule for better matching</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="arrival_time">Arrival Time</Label>
+                <Input 
+                  id="arrival_time" 
+                  type="time" 
+                  value={prefs.arrival_time || ''} 
+                  onChange={(e) => update('arrival_time', e.target.value || undefined)} 
+                />
+                <p className="text-xs text-gray-500 mt-1">When you typically arrive at work</p>
+              </div>
+              <div>
+                <Label htmlFor="commute_days">Commute Days</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {['mon','tue','wed','thu','fri','sat','sun'].map(day => (
+                    <label key={day} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={prefs.commute_days?.includes(day) || false}
+                        onChange={(e) => {
+                          const current = prefs.commute_days || []
+                          const updated = e.target.checked 
+                            ? [...current, day]
+                            : current.filter(d => d !== day)
+                          update('commute_days', updated.length > 0 ? updated : undefined)
+                        }}
+                        className="rounded"
+                      />
+                      <span className="text-sm capitalize">{day}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Select your regular commute days</p>
               </div>
             </div>
           </CardContent>

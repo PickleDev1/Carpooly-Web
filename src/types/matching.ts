@@ -7,6 +7,12 @@ export interface MatchingPreferences {
   schedule_flexibility_minutes: number;
   max_pickup_distance_miles: number;
   min_compatibility_score: number;
+  // New required fields for destination-based matching
+  destination_latitude: number;
+  destination_longitude: number;
+  // New optional schedule fields
+  arrival_time?: string; // HH:MM:SS format
+  commute_days?: string[]; // ["mon","tue","wed","thu","fri"] etc.
   notification_preferences: {
     email: boolean;
     push: boolean;
@@ -36,10 +42,11 @@ export interface PotentialMatch {
   estimated_savings_per_month: number;
   match_reasons: string[];
   route_overlap_percentage: number;
-  schedule_compatibility: {
+  schedule?: {
     departure_time: string;
     flexibility_minutes: number;
     frequency: string;
+    compatibility_score?: number;
   };
   total_distance_miles: number;
   user2: {
