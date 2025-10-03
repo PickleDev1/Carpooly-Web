@@ -244,7 +244,7 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
                   <strong>Selected:</strong> {destinationAddress}
                 </p>
                 <p className="text-xs text-green-600 mt-1">
-                  Coordinates: {prefs.destination_latitude.toFixed(6)}, {prefs.destination_longitude.toFixed(6)}
+                  Coordinates: {prefs.destination_latitude?.toFixed(6) || 'N/A'}, {prefs.destination_longitude?.toFixed(6) || 'N/A'}
                 </p>
               </div>
             )}
@@ -254,7 +254,7 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
                   <strong>Saved Destination:</strong> Coordinates are set but address not available
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
-                  Coordinates: {prefs.destination_latitude.toFixed(6)}, {prefs.destination_longitude.toFixed(6)}
+                  Coordinates: {prefs.destination_latitude?.toFixed(6) || 'N/A'}, {prefs.destination_longitude?.toFixed(6) || 'N/A'}
                 </p>
               </div>
             )}
