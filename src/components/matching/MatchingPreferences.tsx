@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useMatchingService, type MatchingPreferences as Prefs } from '@/services/matching'
 import { useToast } from '@/components/ui/toast'
+import { AddressAutocomplete } from '@/components/AddressAutocomplete'
 
 const defaults: Prefs = {
   user_id: '',
@@ -56,11 +57,28 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [prefs, setPrefs] = useState<Prefs>(defaults)
+  const [destinationAddress, setDestinationAddress] = useState<string>('')
 
   const load = useCallback(async () => {
     try {
       const p = await matching.getPreferences()
       setPrefs(p)
+      
+      // If we have coordinates but no address, try to reverse geocode
+      if (p.destination_latitude && p.destination_latitude !== 0 && 
+          p.destination_longitude && p.destination_longitude !== 0) {
+        try {
+          const geocoder = new window.google.maps.Geocoder()
+          const result = await geocoder.geocode({
+            location: { lat: p.destination_latitude, lng: p.destination_longitude }
+          })
+          if (result.results && result.results[0]) {
+            setDestinationAddress(result.results[0].formatted_address)
+          }
+        } catch (err) {
+          console.warn('Failed to reverse geocode destination:', err)
+        }
+      }
     } catch {
       setPrefs(defaults)
     }
@@ -95,6 +113,15 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
     return { ...prev, demographic_preferences: { ...prev.demographic_preferences, [key]: next } }
   })
   const updateDemoPref = (key: keyof Prefs['demographic_preferences'], value: any) => setPrefs((prev: Prefs) => ({ ...prev, demographic_preferences: { ...prev.demographic_preferences, [key]: value } }))
+
+  const handleDestinationSelect = (location: { address: string; lat: number; lng: number }) => {
+    setDestinationAddress(location.address)
+    setPrefs((prev: Prefs) => ({
+      ...prev,
+      destination_latitude: location.lat,
+      destination_longitude: location.lng
+    }))
+  }
 
   return (
     <div className="space-y-6">
@@ -137,36 +164,29 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
             <CardDescription>Set your work destination to find compatible carpool partners</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="destination_lat">Destination Latitude</Label>
-                <Input 
-                  id="destination_lat" 
-                  type="number" 
-                  step="0.000001"
-                  value={prefs.destination_latitude} 
-                  onChange={(e) => update('destination_latitude', parseFloat(e.target.value))} 
-                  placeholder="37.7749"
-                />
-                <p className="text-xs text-gray-500 mt-1">Your work destination latitude</p>
-              </div>
-              <div>
-                <Label htmlFor="destination_lng">Destination Longitude</Label>
-                <Input 
-                  id="destination_lng" 
-                  type="number" 
-                  step="0.000001"
-                  value={prefs.destination_longitude} 
-                  onChange={(e) => update('destination_longitude', parseFloat(e.target.value))} 
-                  placeholder="-122.4194"
-                />
-                <p className="text-xs text-gray-500 mt-1">Your work destination longitude</p>
-              </div>
+            <div>
+              <Label htmlFor="destination_address">Work Destination Address</Label>
+              <AddressAutocomplete
+                onSelect={handleDestinationSelect}
+                placeholder="Enter your work address (e.g., 123 Main St, San Francisco, CA)"
+                className="mt-1"
+              />
+              <p className="text-xs text-gray-500 mt-1">Start typing to search for your work address</p>
             </div>
+            {destinationAddress && (
+              <div className="p-3 bg-green-50 rounded-md">
+                <p className="text-sm text-green-800">
+                  <strong>Selected:</strong> {destinationAddress}
+                </p>
+                <p className="text-xs text-green-600 mt-1">
+                  Coordinates: {prefs.destination_latitude.toFixed(6)}, {prefs.destination_longitude.toFixed(6)}
+                </p>
+              </div>
+            )}
             <div className="p-3 bg-blue-50 rounded-md">
               <p className="text-sm text-blue-800">
                 <strong>Note:</strong> Destination is required to find carpool matches. 
-                You can get coordinates from Google Maps by right-clicking on your destination.
+                The address will be automatically converted to coordinates for matching.
               </p>
             </div>
           </CardContent>
@@ -259,34 +279,11 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Schedule & Match Quality
-            </CardTitle>
-            <CardDescription>Set your schedule flexibility and minimum compatibility</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="flexibility">Schedule Flexibility (minutes)</Label>
-                <Input id="flexibility" type="number" value={prefs.schedule_flexibility_minutes} onChange={(e) => update('schedule_flexibility_minutes', parseInt(e.target.value))} min={0} max={120} />
-                <p className="text-xs text-gray-500 mt-1">How much your departure time can vary</p>
-              </div>
-              <div>
-                <Label htmlFor="compatibility">Minimum Compatibility Score</Label>
-                <Input id="compatibility" type="number" step="0.01" value={prefs.min_compatibility_score} onChange={(e) => update('min_compatibility_score', parseFloat(e.target.value))} min={0} max={1} />
-                <p className="text-xs text-gray-500 mt-1">Value between 0.0 and 1.0</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">Your Demographics</CardTitle>
-            <CardDescription>Tell us about yourself to improve matching</CardDescription>
+            <CardTitle className="flex items-center gap-2">About You</CardTitle>
+            <CardDescription>Basic information to help us find compatible matches</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -313,79 +310,17 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
                 </MatchingSelect>
               </div>
               <div>
-                <Label>Occupation</Label>
+                <Label>Occupation (optional)</Label>
                 <Input value={prefs.user_demographics.occupation} onChange={(e) => updateUserDemo('occupation', e.target.value)} placeholder="e.g., Software Engineer" />
               </div>
-              <div>
-                <Label>Student Status</Label>
-                <MatchingSelect value={prefs.user_demographics.student_status} onValueChange={(v) => updateUserDemo('student_status', v)}>
-                  <MatchingSelectTrigger>
-                    <MatchingSelectValue />
-                  </MatchingSelectTrigger>
-                  <MatchingSelectContent>
-                    {USER_STUDENT_STATUS.map(s => (<MatchingSelectItem key={s} value={s}>{s}</MatchingSelectItem>))}
-                  </MatchingSelectContent>
-                </MatchingSelect>
-              </div>
               <div className="md:col-span-2">
-                <Label>Company/School (optional)</Label>
-                <Input value={prefs.user_demographics.company} onChange={(e) => updateUserDemo('company', e.target.value)} placeholder="e.g., Acme Corp or State University" />
+                <Label>Company (optional)</Label>
+                <Input value={prefs.user_demographics.company} onChange={(e) => updateUserDemo('company', e.target.value)} placeholder="e.g., Acme Corp" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">Who you prefer to ride with</CardTitle>
-            <CardDescription>Choose demographics you&apos;re comfortable carpooling with</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Preferred Age Ranges</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {AGE_RANGES.map(r => {
-                    const selected = prefs.demographic_preferences.age_preferences.includes(r)
-                    return (
-                      <Button key={r} type="button" variant={selected ? 'default' : 'outline'} size="sm" onClick={() => toggleArrayPref('age_preferences', r)}>
-                        {r}
-                      </Button>
-                    )
-                  })}
-                </div>
-              </div>
-              <div>
-                <Label>Preferred Genders</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {PREF_GENDER_OPTIONS.map(g => {
-                    const selected = prefs.demographic_preferences.gender_preferences.includes(g)
-                    return (
-                      <Button key={g} type="button" variant={selected ? 'default' : 'outline'} size="sm" onClick={() => toggleArrayPref('gender_preferences', g)}>
-                        {g}
-                      </Button>
-                    )
-                  })}
-                </div>
-              </div>
-              <div>
-                <Label>Student Preference</Label>
-                <MatchingSelect value={prefs.demographic_preferences.student_preference} onValueChange={(v) => updateDemoPref('student_preference', v)}>
-                  <MatchingSelectTrigger>
-                    <MatchingSelectValue />
-                  </MatchingSelectTrigger>
-                  <MatchingSelectContent>
-                    {PREF_STUDENT_OPTIONS.map(o => (<MatchingSelectItem key={o.value} value={o.value}>{o.label}</MatchingSelectItem>))}
-                  </MatchingSelectContent>
-                </MatchingSelect>
-              </div>
-              <div>
-                <Label>Preferred Occupations (comma separated)</Label>
-                <Input value={prefs.demographic_preferences.occupation_preferences.join(', ')} onChange={(e) => updateDemoPref('occupation_preferences', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} placeholder="e.g., Engineer, Teacher" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>
