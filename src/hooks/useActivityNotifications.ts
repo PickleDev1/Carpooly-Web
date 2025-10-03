@@ -34,7 +34,7 @@ export function useActivityNotifications() {
         
         const activities = await res.json();
         // Filter for new invite_accepted/invite_rejected activities
-        const newActivities = activities
+        const newActivities = (activities || [])
           .filter((a: any) =>
             (a.type === "invite_accepted" || a.type === "invite_rejected") &&
             (!lastSeenId.current || a.id > lastSeenId.current)

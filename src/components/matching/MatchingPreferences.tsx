@@ -89,13 +89,16 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
   const save = async () => {
     setLoading(true)
     try {
+      console.log('💾 Saving preferences:', prefs)
       await matching.updatePreferences(prefs)
       setSaved(true)
       showToast('Preferences saved successfully')
       onSaved?.()
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
-      showToast('Failed to save preferences. Please try again.')
+      console.error('❌ Error saving preferences:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
+      showToast(`Failed to save preferences: ${errorMessage}`)
       throw err
     } finally {
       setLoading(false)
@@ -107,7 +110,7 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
 
   const updateUserDemo = (key: keyof Prefs['user_demographics'], value: any) => setPrefs((prev: Prefs) => ({ ...prev, user_demographics: { ...prev.user_demographics, [key]: value } }))
   const toggleArrayPref = (key: keyof Prefs['demographic_preferences'], value: string) => setPrefs((prev: Prefs) => {
-    const current = prev.demographic_preferences[key] as string[]
+    const current = (prev.demographic_preferences?.[key] as string[]) || []
     const exists = current.includes(value)
     const next = exists ? current.filter(v => v !== value) : [...current, value]
     return { ...prev, demographic_preferences: { ...prev.demographic_preferences, [key]: next } }
