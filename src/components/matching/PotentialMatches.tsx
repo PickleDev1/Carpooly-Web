@@ -69,12 +69,26 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       try {
         const prefs = await matchingService.getPreferences()
         console.log('👤 User preferences:', prefs)
-        if (!prefs.destination_latitude || !prefs.destination_longitude) {
-          console.warn('⚠️ Destination missing in preferences')
+        console.log('📍 Destination coordinates:', { lat: prefs.destination_latitude, lng: prefs.destination_longitude })
+        
+        // Check if destination is set (not 0,0 and not null/undefined)
+        const hasValidDestination = prefs.destination_latitude !== 0 && 
+                                   prefs.destination_longitude !== 0 && 
+                                   prefs.destination_latitude !== null && 
+                                   prefs.destination_longitude !== null &&
+                                   prefs.destination_latitude !== undefined && 
+                                   prefs.destination_longitude !== undefined
+        
+        if (!hasValidDestination) {
+          console.warn('⚠️ Destination missing or invalid in preferences:', { 
+            lat: prefs.destination_latitude, 
+            lng: prefs.destination_longitude 
+          })
           setMissingDestination(true)
           setMatches([])
           return
         }
+        
         if (!prefs.is_active) {
           console.warn('⚠️ User preferences are not active!')
         }

@@ -58,11 +58,32 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
   const [saved, setSaved] = useState(false)
   const [prefs, setPrefs] = useState<Prefs>(defaults)
   const [destinationAddress, setDestinationAddress] = useState<string>('')
+  const [savedScheduleInfo, setSavedScheduleInfo] = useState<{
+    arrivalTime?: string
+    commuteDays?: string[]
+  }>({})
 
   const load = useCallback(async () => {
     try {
       const p = await matching.getPreferences()
       setPrefs(p)
+      
+      // Load saved destination address from localStorage
+      const savedAddress = localStorage.getItem('carpooly-saved-destination-address')
+      if (savedAddress) {
+        setDestinationAddress(savedAddress)
+      }
+      
+      // Load saved schedule info from localStorage
+      const savedSchedule = localStorage.getItem('carpooly-saved-schedule')
+      if (savedSchedule) {
+        try {
+          const scheduleData = JSON.parse(savedSchedule)
+          setSavedScheduleInfo(scheduleData)
+        } catch (err) {
+          console.warn('Failed to parse saved schedule data:', err)
+        }
+      }
       
       // If we have coordinates but no address, try to reverse geocode
       if (p.destination_latitude && p.destination_latitude !== 0 && 
@@ -90,7 +111,25 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
     setLoading(true)
     try {
       console.log('💾 Saving preferences:', prefs)
+      console.log('📍 Destination coordinates being saved:', { 
+        lat: prefs.destination_latitude, 
+        lng: prefs.destination_longitude 
+      })
       await matching.updatePreferences(prefs)
+      
+      // Save destination address to localStorage
+      if (destinationAddress) {
+        localStorage.setItem('carpooly-saved-destination-address', destinationAddress)
+      }
+      
+      // Save schedule info to localStorage
+      const scheduleData = {
+        arrivalTime: prefs.arrival_time,
+        commuteDays: prefs.commute_days
+      }
+      localStorage.setItem('carpooly-saved-schedule', JSON.stringify(scheduleData))
+      setSavedScheduleInfo(scheduleData)
+      
       setSaved(true)
       showToast('Preferences saved successfully')
       onSaved?.()
@@ -124,6 +163,29 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
       destination_latitude: location.lat,
       destination_longitude: location.lng
     }))
+  }
+
+  const formatCommuteDays = (days: string[]) => {
+    if (!days || days.length === 0) return 'None selected'
+    const dayNames = {
+      'mon': 'Monday',
+      'tue': 'Tuesday', 
+      'wed': 'Wednesday',
+      'thu': 'Thursday',
+      'fri': 'Friday',
+      'sat': 'Saturday',
+      'sun': 'Sunday'
+    }
+    return days.map(day => dayNames[day as keyof typeof dayNames] || day).join(', ')
+  }
+
+  const formatArrivalTime = (time: string) => {
+    if (!time) return 'Not set'
+    const [hours, minutes] = time.split(':')
+    const hour = parseInt(hours)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    return `${displayHour}:${minutes} ${ampm}`
   }
 
   return (
@@ -186,6 +248,16 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
                 </p>
               </div>
             )}
+            {!destinationAddress && (prefs.destination_latitude !== 0 || prefs.destination_longitude !== 0) && (
+              <div className="p-3 bg-blue-50 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <strong>Saved Destination:</strong> Coordinates are set but address not available
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Coordinates: {prefs.destination_latitude.toFixed(6)}, {prefs.destination_longitude.toFixed(6)}
+                </p>
+              </div>
+            )}
             <div className="p-3 bg-blue-50 rounded-md">
               <p className="text-sm text-blue-800">
                 <strong>Note:</strong> Destination is required to find carpool matches. 
@@ -204,6 +276,18 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
             <CardDescription>Set your commute schedule for better matching</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Show saved schedule info if available */}
+            {(savedScheduleInfo.arrivalTime || savedScheduleInfo.commuteDays?.length) && (
+              <div className="p-3 bg-gray-50 rounded-md mb-4">
+                <p className="text-sm font-medium text-gray-800 mb-2">Your Saved Schedule:</p>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p><strong>Arrival Time:</strong> {formatArrivalTime(savedScheduleInfo.arrivalTime || '')}</p>
+                  <p><strong>Commute Days:</strong> {formatCommuteDays(savedScheduleInfo.commuteDays || [])}</p>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">You can edit these settings below</p>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="arrival_time">Arrival Time</Label>
