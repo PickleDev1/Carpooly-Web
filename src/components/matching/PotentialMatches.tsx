@@ -114,6 +114,20 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         console.warn('⚠️ Could not fetch user preferences:', prefErr)
       }
       
+      // If we recovered destination locally, upsert it to backend so matching works server-side
+      if (recoveredFromLocal && typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('carpooly-saved-destination-coords')
+          if (raw) {
+            const { lat, lng } = JSON.parse(raw) as { lat: number; lng: number }
+            console.log('⬆️ Persisting recovered destination to backend:', { lat, lng })
+            await matchingService.updatePreferences({ destination_latitude: lat, destination_longitude: lng })
+          }
+        } catch (e) {
+          console.warn('Failed to persist recovered destination to backend:', e)
+        }
+      }
+
       // Ensure server has up-to-date generated matches for this user
       try {
         console.log('🔄 Triggering match generation...')
