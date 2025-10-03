@@ -58,6 +58,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   const listRefs = useRef<HTMLDivElement[]>([])
   
   const matchingService = useMatchingService()
+  const [recoveredFromLocal, setRecoveredFromLocal] = useState(false)
 
   const loadMatches = useCallback(async (currentFilters: MatchFilters = {}) => {
     setLoading(true)
@@ -72,13 +73,30 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         console.log('📍 Destination coordinates:', { lat: prefs.destination_latitude, lng: prefs.destination_longitude })
         
         // Check if destination is set (not 0,0 and not null/undefined)
-        const hasValidDestination = prefs.destination_latitude !== 0 && 
+        let hasValidDestination = prefs.destination_latitude !== 0 && 
                                    prefs.destination_longitude !== 0 && 
                                    prefs.destination_latitude !== null && 
                                    prefs.destination_longitude !== null &&
                                    prefs.destination_latitude !== undefined && 
                                    prefs.destination_longitude !== undefined
         
+        // Attempt localStorage recovery to prevent false missing banner
+        if (!hasValidDestination && typeof window !== 'undefined') {
+          try {
+            const savedCoordsRaw = localStorage.getItem('carpooly-saved-destination-coords')
+            if (savedCoordsRaw) {
+              const { lat, lng } = JSON.parse(savedCoordsRaw) as { lat: number; lng: number }
+              if (lat && lng) {
+                console.log('🩹 Recovered destination from localStorage:', { lat, lng })
+                hasValidDestination = true
+                setRecoveredFromLocal(true)
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to recover destination from localStorage:', e)
+          }
+        }
+
         if (!hasValidDestination) {
           console.warn('⚠️ Destination missing or invalid in preferences:', { 
             lat: prefs.destination_latitude, 

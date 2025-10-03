@@ -58,6 +58,7 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
   const [saved, setSaved] = useState(false)
   const [prefs, setPrefs] = useState<Prefs>(defaults)
   const [destinationAddress, setDestinationAddress] = useState<string>('')
+  const [localCoords, setLocalCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [savedScheduleInfo, setSavedScheduleInfo] = useState<{
     arrivalTime?: string
     commuteDays?: string[]
@@ -85,6 +86,24 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
         }
       }
       
+      // If backend is missing coordinates, try localStorage recovery first
+      if ((!p.destination_latitude || !p.destination_longitude) && typeof window !== 'undefined') {
+        try {
+          const savedCoordsRaw = localStorage.getItem('carpooly-saved-destination-coords')
+          if (savedCoordsRaw) {
+            const savedCoords = JSON.parse(savedCoordsRaw) as { lat: number; lng: number }
+            setLocalCoords(savedCoords)
+            setPrefs(prev => ({
+              ...prev,
+              destination_latitude: savedCoords.lat,
+              destination_longitude: savedCoords.lng
+            }))
+          }
+        } catch (e) {
+          console.warn('Failed to parse saved destination coords:', e)
+        }
+      }
+
       // If we have coordinates but no address, try to reverse geocode
       if (p.destination_latitude && p.destination_latitude !== 0 && 
           p.destination_longitude && p.destination_longitude !== 0) {
@@ -158,6 +177,13 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
 
   const handleDestinationSelect = (location: { address: string; lat: number; lng: number }) => {
     setDestinationAddress(location.address)
+    try {
+      localStorage.setItem('carpooly-saved-destination-address', location.address)
+      localStorage.setItem('carpooly-saved-destination-coords', JSON.stringify({ lat: location.lat, lng: location.lng }))
+      setLocalCoords({ lat: location.lat, lng: location.lng })
+    } catch (e) {
+      console.warn('Failed to persist destination to localStorage:', e)
+    }
     setPrefs((prev: Prefs) => ({
       ...prev,
       destination_latitude: location.lat,
