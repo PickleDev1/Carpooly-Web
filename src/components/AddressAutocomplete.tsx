@@ -1,9 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useLoadScript } from '@react-google-maps/api'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
+
+// Define libraries array outside component to keep it static
+const libraries: ("places")[] = ["places"]
 
 interface AddressAutocompleteProps {
   onSelect: (location: { address: string; lat: number; lng: number }) => void
@@ -15,9 +18,12 @@ export function AddressAutocomplete({ onSelect, placeholder, className }: Addres
   const inputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Stabilize the onSelect callback to prevent re-initialization
+  const stableOnSelect = useCallback(onSelect, [onSelect])
+
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places']
+    libraries
   })
 
   useEffect(() => {
@@ -44,19 +50,25 @@ export function AddressAutocomplete({ onSelect, placeholder, className }: Addres
         console.log('AddressAutocomplete: Place changed event fired')
         const place = autocomplete.getPlace()
         console.log('AddressAutocomplete: Selected place:', place)
+        console.log('AddressAutocomplete: Place geometry:', place.geometry)
+        console.log('AddressAutocomplete: Place location:', place.geometry?.location)
         
         if (place.geometry?.location) {
+          const lat = place.geometry.location.lat()
+          const lng = place.geometry.location.lng()
           const locationData = {
             address: place.formatted_address || '',
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng()
+            lat: lat,
+            lng: lng
           }
+          console.log('AddressAutocomplete: Extracted coordinates:', { lat, lng })
           console.log('AddressAutocomplete: Calling onSelect with:', locationData)
-          onSelect(locationData)
+          stableOnSelect(locationData)
           setError(null)
         } else {
           const errorMsg = 'Please select a valid address from the suggestions'
           console.error('AddressAutocomplete:', errorMsg)
+          console.error('AddressAutocomplete: Place data:', place)
           setError(errorMsg)
         }
       })
@@ -71,7 +83,7 @@ export function AddressAutocomplete({ onSelect, placeholder, className }: Addres
       console.error('AddressAutocomplete: Error initializing autocomplete:', err)
       setError('Failed to initialize address autocomplete')
     }
-  }, [isLoaded, onSelect])
+  }, [isLoaded, stableOnSelect])
 
   if (loadError) {
     return (
