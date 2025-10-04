@@ -260,6 +260,7 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
             <div>
               <Label htmlFor="destination_address">Work Destination Address</Label>
               <AddressAutocomplete
+                key="destination-autocomplete"
                 onSelect={handleDestinationSelect}
                 placeholder="Enter your work address (e.g., 123 Main St, San Francisco, CA)"
                 className="mt-1"

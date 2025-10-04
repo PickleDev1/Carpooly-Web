@@ -57,6 +57,21 @@ export function AddressAutocomplete({ onSelect, placeholder, className }: Addres
 
       console.log('✅ AddressAutocomplete: Autocomplete instance created successfully')
 
+      // Add input event listener to track when user types
+      input.addEventListener('input', (e) => {
+        console.log('⌨️ AddressAutocomplete: User typing:', (e.target as HTMLInputElement).value)
+      })
+
+      // Add focus event listener to track when input is focused
+      input.addEventListener('focus', () => {
+        console.log('🎯 AddressAutocomplete: Input focused')
+      })
+
+      // Add blur event listener to track when input loses focus
+      input.addEventListener('blur', () => {
+        console.log('🎯 AddressAutocomplete: Input blurred')
+      })
+
       autocomplete.addListener('place_changed', () => {
         console.log('🎯 AddressAutocomplete: Place changed event fired')
         const place = autocomplete.getPlace()
