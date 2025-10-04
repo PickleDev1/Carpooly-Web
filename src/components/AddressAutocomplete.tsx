@@ -151,10 +151,31 @@ export function AddressAutocomplete({ onSelect, placeholder, className }: Addres
         type="text"
         placeholder={placeholder || "Enter address"}
         className={`w-full ${className || ''}`}
+        onClick={() => console.log('🖱️ AddressAutocomplete: Input clicked')}
+        onFocus={() => console.log('🎯 AddressAutocomplete: Input focused via React')}
+        onBlur={() => console.log('🎯 AddressAutocomplete: Input blurred via React')}
+        onChange={(e) => console.log('⌨️ AddressAutocomplete: Input changed via React:', e.target.value)}
       />
       {error && (
         <p className="text-sm text-red-600 mt-1">{error}</p>
       )}
+      {/* Debug button to test coordinate extraction */}
+      <button 
+        type="button"
+        onClick={() => {
+          console.log('🧪 Debug: Testing coordinate extraction with hardcoded values')
+          const testLocation = {
+            address: '1999 Mowry Ave, Fremont, CA 94538, USA',
+            lat: 37.5444,
+            lng: -121.9882
+          }
+          console.log('🧪 Debug: Calling stableOnSelect with test data:', testLocation)
+          stableOnSelect(testLocation)
+        }}
+        className="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+      >
+        Test Coordinate Extraction
+      </button>
     </div>
   )
 } 

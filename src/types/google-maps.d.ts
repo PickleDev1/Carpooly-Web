@@ -8,6 +8,7 @@ declare global {
             opts?: google.maps.places.AutocompleteOptions
           ) => google.maps.places.Autocomplete;
         };
+        Geocoder: new () => google.maps.Geocoder;
         event: {
           clearInstanceListeners: (instance: any) => void;
         };
