@@ -56,7 +56,6 @@ export function AddressAutocomplete({ onSelect, placeholder, className }: Addres
       })
 
       console.log('✅ AddressAutocomplete: Autocomplete instance created successfully')
-
       // Add input event listener to track when user types
       input.addEventListener('input', (e) => {
         console.log('⌨️ AddressAutocomplete: User typing:', (e.target as HTMLInputElement).value)

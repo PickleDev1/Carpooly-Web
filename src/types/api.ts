@@ -98,6 +98,12 @@ export interface MatchingPreferencesResponse {
     schedule_flexibility_minutes: number;
     max_pickup_distance_miles: number;
     min_compatibility_score: number;
+    // New required fields for destination-based matching
+    destination_latitude: number;
+    destination_longitude: number;
+    // New optional schedule fields
+    arrival_time?: string;
+    commute_days?: string[];
     notification_preferences: {
       email: boolean;
       push: boolean;
