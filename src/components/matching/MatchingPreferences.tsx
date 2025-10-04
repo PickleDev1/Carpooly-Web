@@ -64,6 +64,7 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
     arrivalTime?: string
     commuteDays?: string[]
   }>({})
+  const [isGeocoding, setIsGeocoding] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -73,7 +74,70 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
       // Load saved destination address from localStorage
       const savedAddress = localStorage.getItem('carpooly-saved-destination-address')
       if (savedAddress) {
+        console.log('📍 Found saved address:', savedAddress)
         setDestinationAddress(savedAddress)
+        
+        // If we have a saved address but no coordinates, try to geocode it automatically
+        if ((!p.destination_latitude || p.destination_latitude === 0) && 
+            (!p.destination_longitude || p.destination_longitude === 0) && 
+            !isGeocoding) {
+          console.log('🔄 No coordinates found, automatically geocoding saved address...')
+          setIsGeocoding(true)
+          
+          if (typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.Geocoder) {
+            // Add a small delay to ensure Google Maps is fully initialized
+            setTimeout(() => {
+              const geocoder = new window.google.maps.Geocoder()
+              geocoder.geocode({ address: savedAddress }, (results, status) => {
+              if (status === 'OK' && results && results[0]) {
+                const location = results[0].geometry.location
+                const lat = location.lat()
+                const lng = location.lng()
+                console.log('✅ Auto-geocoded coordinates:', { lat, lng })
+                
+                // Validate coordinates are reasonable (not 0,0 and within valid ranges)
+                if (lat === 0 && lng === 0) {
+                  console.warn('❌ Geocoding returned 0,0 coordinates - invalid')
+                  return
+                }
+                if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+                  console.warn('❌ Geocoding returned invalid coordinates:', { lat, lng })
+                  return
+                }
+                
+                // Update local state immediately
+                setLocalCoords({ lat, lng })
+                setPrefs(prev => ({
+                  ...prev,
+                  destination_latitude: lat,
+                  destination_longitude: lng
+                }))
+                
+                // Save to localStorage
+                localStorage.setItem('carpooly-saved-destination-coords', JSON.stringify({ lat, lng }))
+                
+                // Update backend with the coordinates
+                const updatedPrefs = {
+                  ...p, // Use fresh preferences from API call
+                  destination_latitude: lat,
+                  destination_longitude: lng
+                }
+                matching.updatePreferences(updatedPrefs).then(() => {
+                  console.log('✅ Coordinates automatically saved to backend')
+                  showToast('Destination coordinates automatically fixed!')
+                }).catch(err => {
+                  console.error('❌ Failed to save coordinates to backend:', err)
+                }).finally(() => {
+                  setIsGeocoding(false)
+                })
+              } else {
+                console.warn('❌ Auto-geocoding failed:', status)
+                setIsGeocoding(false)
+              }
+            })
+            }, 100) // 100ms delay to ensure Google Maps is ready
+          }
+        }
       }
       
       // Load saved schedule info from localStorage
@@ -275,6 +339,72 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
                 <p className="text-xs text-green-600 mt-1">
                   Coordinates: {prefs.destination_latitude?.toFixed(6) || 'N/A'}, {prefs.destination_longitude?.toFixed(6) || 'N/A'}
                 </p>
+                {(prefs.destination_latitude === 0 || prefs.destination_longitude === 0) && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      console.log('🔧 Fixing coordinates for address:', destinationAddress)
+                      if (typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.Geocoder) {
+                        // Add a small delay to ensure Google Maps is fully initialized
+                        setTimeout(() => {
+                          const geocoder = new window.google.maps.Geocoder()
+                          geocoder.geocode({ address: destinationAddress }, (results, status) => {
+                          if (status === 'OK' && results && results[0]) {
+                            const location = results[0].geometry.location
+                            const lat = location.lat()
+                            const lng = location.lng()
+                            console.log('✅ Fixed coordinates:', { lat, lng })
+                            
+                            // Validate coordinates are reasonable (not 0,0 and within valid ranges)
+                            if (lat === 0 && lng === 0) {
+                              console.warn('❌ Geocoding returned 0,0 coordinates - invalid')
+                              showToast('Invalid coordinates received - please try again')
+                              return
+                            }
+                            if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+                              console.warn('❌ Geocoding returned invalid coordinates:', { lat, lng })
+                              showToast('Invalid coordinates received - please try again')
+                              return
+                            }
+                            
+                            // Update state
+                            setLocalCoords({ lat, lng })
+                            setPrefs(prev => ({
+                              ...prev,
+                              destination_latitude: lat,
+                              destination_longitude: lng
+                            }))
+                            
+                            // Save to localStorage
+                            localStorage.setItem('carpooly-saved-destination-coords', JSON.stringify({ lat, lng }))
+                            
+                            // Save to backend - get fresh preferences first
+                            matching.getPreferences().then(freshPrefs => {
+                              return matching.updatePreferences({
+                                ...freshPrefs,
+                                destination_latitude: lat,
+                                destination_longitude: lng
+                              })
+                            }).then(() => {
+                              console.log('✅ Coordinates saved to backend')
+                              showToast('Coordinates fixed and saved!')
+                            }).catch(err => {
+                              console.error('❌ Failed to save coordinates:', err)
+                              showToast('Failed to save coordinates')
+                            })
+                          } else {
+                            console.error('❌ Geocoding failed:', status)
+                            showToast('Failed to get coordinates for this address')
+                          }
+                        })
+                        }, 100) // 100ms delay to ensure Google Maps is ready
+                      }
+                    }}
+                    className="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                  >
+                    Fix Coordinates
+                  </button>
+                )}
               </div>
             )}
             {!destinationAddress && (prefs.destination_latitude !== 0 || prefs.destination_longitude !== 0) && (
