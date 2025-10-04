@@ -175,7 +175,8 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
   })
   const updateDemoPref = (key: keyof Prefs['demographic_preferences'], value: any) => setPrefs((prev: Prefs) => ({ ...prev, demographic_preferences: { ...prev.demographic_preferences, [key]: value } }))
 
-  const handleDestinationSelect = (location: { address: string; lat: number; lng: number }) => {
+  const handleDestinationSelect = useCallback((location: { address: string; lat: number; lng: number }) => {
+    console.log('🎯 handleDestinationSelect called with:', location)
     setDestinationAddress(location.address)
     try {
       localStorage.setItem('carpooly-saved-destination-address', location.address)
@@ -189,7 +190,7 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
       destination_latitude: location.lat,
       destination_longitude: location.lng
     }))
-  }
+  }, [])
 
   const formatCommuteDays = (days: string[]) => {
     if (!days || days.length === 0) return 'None selected'
