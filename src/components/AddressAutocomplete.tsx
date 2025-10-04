@@ -15,11 +15,15 @@ interface AddressAutocompleteProps {
 }
 
 export function AddressAutocomplete({ onSelect, placeholder, className }: AddressAutocompleteProps) {
+  console.log('🔄 AddressAutocomplete: Component render')
   const inputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Stabilize the onSelect callback to prevent re-initialization
-  const stableOnSelect = useCallback(onSelect, [onSelect])
+  const stableOnSelect = useCallback((location: { address: string; lat: number; lng: number }) => {
+    console.log('🎯 AddressAutocomplete: stableOnSelect called with:', location)
+    onSelect(location)
+  }, [onSelect])
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
@@ -27,15 +31,22 @@ export function AddressAutocomplete({ onSelect, placeholder, className }: Addres
   })
 
   useEffect(() => {
-    if (!isLoaded) return
-
-    const input = inputRef.current
-    if (!input) {
-      console.log('AddressAutocomplete: Input ref not available')
+    console.log('🔄 AddressAutocomplete: useEffect triggered, isLoaded:', isLoaded)
+    if (!isLoaded) {
+      console.log('⏳ AddressAutocomplete: Google Maps not loaded yet, waiting...')
       return
     }
 
-    console.log('AddressAutocomplete: Initializing with @react-google-maps/api...')
+    const input = inputRef.current
+    if (!input) {
+      console.log('❌ AddressAutocomplete: Input ref not available')
+      return
+    }
+
+    console.log('🚀 AddressAutocomplete: Initializing with @react-google-maps/api...')
+    console.log('🔍 AddressAutocomplete: window.google exists:', !!window.google)
+    console.log('🔍 AddressAutocomplete: window.google.maps exists:', !!(window.google && window.google.maps))
+    console.log('🔍 AddressAutocomplete: window.google.maps.places exists:', !!(window.google && window.google.maps && window.google.maps.places))
 
     try {
       const autocomplete = new window.google.maps.places.Autocomplete(input, {
@@ -44,14 +55,14 @@ export function AddressAutocomplete({ onSelect, placeholder, className }: Addres
         types: ['address']
       })
 
-      console.log('AddressAutocomplete: Autocomplete instance created successfully')
+      console.log('✅ AddressAutocomplete: Autocomplete instance created successfully')
 
       autocomplete.addListener('place_changed', () => {
-        console.log('AddressAutocomplete: Place changed event fired')
+        console.log('🎯 AddressAutocomplete: Place changed event fired')
         const place = autocomplete.getPlace()
-        console.log('AddressAutocomplete: Selected place:', place)
-        console.log('AddressAutocomplete: Place geometry:', place.geometry)
-        console.log('AddressAutocomplete: Place location:', place.geometry?.location)
+        console.log('📍 AddressAutocomplete: Selected place:', place)
+        console.log('📍 AddressAutocomplete: Place geometry:', place.geometry)
+        console.log('📍 AddressAutocomplete: Place location:', place.geometry?.location)
         
         if (place.geometry?.location) {
           const lat = place.geometry.location.lat()
@@ -61,26 +72,26 @@ export function AddressAutocomplete({ onSelect, placeholder, className }: Addres
             lat: lat,
             lng: lng
           }
-          console.log('AddressAutocomplete: Extracted coordinates:', { lat, lng })
-          console.log('AddressAutocomplete: Calling onSelect with:', locationData)
+          console.log('🎯 AddressAutocomplete: Extracted coordinates:', { lat, lng })
+          console.log('🎯 AddressAutocomplete: Calling stableOnSelect with:', locationData)
           stableOnSelect(locationData)
           setError(null)
         } else {
           const errorMsg = 'Please select a valid address from the suggestions'
-          console.error('AddressAutocomplete:', errorMsg)
-          console.error('AddressAutocomplete: Place data:', place)
+          console.error('❌ AddressAutocomplete:', errorMsg)
+          console.error('❌ AddressAutocomplete: Place data:', place)
           setError(errorMsg)
         }
       })
 
       return () => {
-        console.log('AddressAutocomplete: Cleaning up...')
+        console.log('🧹 AddressAutocomplete: Cleaning up...')
         if (window.google && window.google.maps && window.google.maps.event) {
           window.google.maps.event.clearInstanceListeners(autocomplete)
         }
       }
     } catch (err) {
-      console.error('AddressAutocomplete: Error initializing autocomplete:', err)
+      console.error('❌ AddressAutocomplete: Error initializing autocomplete:', err)
       setError('Failed to initialize address autocomplete')
     }
   }, [isLoaded, stableOnSelect])

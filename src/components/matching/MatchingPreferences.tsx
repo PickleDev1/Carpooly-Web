@@ -52,6 +52,7 @@ const PREF_STUDENT_OPTIONS = [
 ]
 
 export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
+  console.log('🔄 MatchingPreferences: Component render')
   const matching = useMatchingService()
   const { showToast } = useToast()
   const [loading, setLoading] = useState(false)
