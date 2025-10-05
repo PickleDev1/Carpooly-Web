@@ -360,7 +360,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
                 <Route className="w-4 h-4 text-blue-500" />
                 <div>
                   <p className="text-sm font-medium">{current.route_overlap_percentage}% Route Overlap</p>
-                  <p className="text-xs text-gray-600">{current.total_distance_miles} miles total</p>
+                  <p className="text-xs text-gray-600">{Number(current.total_distance_miles).toFixed(2)} miles total</p>
                 </div>
               </div>
               
@@ -375,7 +375,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-orange-500" />
                 <div>
-                  <p className="text-sm font-medium">${current.estimated_savings_per_month}/month</p>
+                  <p className="text-sm font-medium">${Number(current.estimated_savings_per_month).toFixed(2)}/month</p>
                   <p className="text-xs text-gray-600">Estimated savings</p>
                 </div>
               </div>
