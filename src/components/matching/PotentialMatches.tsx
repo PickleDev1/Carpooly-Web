@@ -58,7 +58,6 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   const listRefs = useRef<HTMLDivElement[]>([])
   
   const matchingService = useMatchingService()
-  const [recoveredFromLocal, setRecoveredFromLocal] = useState(false)
 
   const loadMatches = useCallback(async (currentFilters: MatchFilters = {}) => {
     setLoading(true)
@@ -80,22 +79,6 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
                                    prefs.destination_latitude !== undefined && 
                                    prefs.destination_longitude !== undefined
         
-        // Attempt localStorage recovery to prevent false missing banner
-        if (!hasValidDestination && typeof window !== 'undefined') {
-          try {
-            const savedCoordsRaw = localStorage.getItem('carpooly-saved-destination-coords')
-            if (savedCoordsRaw) {
-              const { lat, lng } = JSON.parse(savedCoordsRaw) as { lat: number; lng: number }
-              if (lat && lng) {
-                console.log('🩹 Recovered destination from localStorage:', { lat, lng })
-                hasValidDestination = true
-                setRecoveredFromLocal(true)
-              }
-            }
-          } catch (e) {
-            console.warn('Failed to recover destination from localStorage:', e)
-          }
-        }
 
         if (!hasValidDestination) {
           console.warn('⚠️ Destination missing or invalid in preferences:', { 
@@ -114,19 +97,6 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         console.warn('⚠️ Could not fetch user preferences:', prefErr)
       }
       
-      // If we recovered destination locally, upsert it to backend so matching works server-side
-      if (recoveredFromLocal && typeof window !== 'undefined') {
-        try {
-          const raw = localStorage.getItem('carpooly-saved-destination-coords')
-          if (raw) {
-            const { lat, lng } = JSON.parse(raw) as { lat: number; lng: number }
-            console.log('⬆️ Persisting recovered destination to backend:', { lat, lng })
-            await matchingService.updatePreferences({ destination_latitude: lat, destination_longitude: lng })
-          }
-        } catch (e) {
-          console.warn('Failed to persist recovered destination to backend:', e)
-        }
-      }
 
       // Ensure server has up-to-date generated matches for this user
       try {
