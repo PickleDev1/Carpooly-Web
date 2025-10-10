@@ -49,6 +49,8 @@ export interface PotentialMatch {
     compatibility_score?: number;
   };
   total_distance_miles: number;
+  // Clerk ID for efficient API calls (preferred over UUID)
+  user2_clerk_id?: string;
   user2: {
     id: string;
     name: string;

@@ -171,11 +171,15 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         ? raw.slice(0, 280)
         : 'Hi! We have compatible routes and schedules. Would you like to carpool?'
 
-      // Use Clerk ID provided by backend (preferred: top-level user2_clerk_id; fallback: embedded user2.clerk_id)
-      const toUserClerkId = (currentMatch as any).user2_clerk_id || (currentMatch as any)?.user2?.clerk_id
+      // Use Clerk ID provided by backend for efficient API calls
+      const toUserClerkId = currentMatch.user2_clerk_id
+      if (!toUserClerkId) {
+        throw new Error('Clerk ID not found in match data. Please refresh and try again.')
+      }
+      
       const request = {
         potential_match_id: matchId,
-        to_user_id: toUserClerkId ?? currentMatch.user2.id,
+        to_user_id: toUserClerkId,
         message
       }
 
