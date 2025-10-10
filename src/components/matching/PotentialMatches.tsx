@@ -54,6 +54,9 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   const [sendingRequest, setSendingRequest] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [missingDestination, setMissingDestination] = useState(false)
+  const [isComposingForMatchId, setIsComposingForMatchId] = useState<string | null>(null)
+  const [messageDraftByMatchId, setMessageDraftByMatchId] = useState<Record<string, string>>({})
+  const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set())
   // Filters UI removed; backend should use saved Preferences
   const listRefs = useRef<HTMLDivElement[]>([])
   
@@ -139,6 +142,22 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
     }
   }, [focusedIndex])
 
+  const handleOpenCompose = (matchId: string) => {
+    setIsComposingForMatchId(matchId)
+    setMessageDraftByMatchId(prev => ({
+      ...prev,
+      [matchId]: prev[matchId] ?? ''
+    }))
+  }
+
+  const handleChangeDraft = (matchId: string, value: string) => {
+    setMessageDraftByMatchId(prev => ({ ...prev, [matchId]: value }))
+  }
+
+  const handleCancelCompose = () => {
+    setIsComposingForMatchId(null)
+  }
+
   const handleSendRequest = async (matchId: string) => {
     setSendingRequest(matchId)
     try {
@@ -147,26 +166,32 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         throw new Error('Match not found')
       }
 
+      const raw = (messageDraftByMatchId[matchId] ?? '').trim()
+      const message = raw.length > 0
+        ? raw.slice(0, 280)
+        : 'Hi! We have compatible routes and schedules. Would you like to carpool?'
+
+      // Use Clerk ID provided by backend (preferred: top-level user2_clerk_id; fallback: embedded user2.clerk_id)
+      const toUserClerkId = (currentMatch as any).user2_clerk_id || (currentMatch as any)?.user2?.clerk_id
       const request = {
         potential_match_id: matchId,
-        to_user_id: currentMatch.user2.id,
-        message: "I would like to carpool with you."
+        to_user_id: toUserClerkId ?? currentMatch.user2.id,
+        message
       }
 
       const response = await matchingService.sendMatchRequest(request)
-      
-      // Show success feedback
       console.log('✅ Carpool request sent successfully:', response)
-      
-      // Navigate to requests tab to see the sent request
-      onNavigateToRequests?.()
-      
-      // Update stats
+
+      // Optimistically mark as sent for this session
+      setSentRequestIds(prev => new Set([...Array.from(prev), matchId]))
+      setIsComposingForMatchId(null)
+
+      // Update stats and optionally navigate
       onStatsUpdate?.()
+      // Optionally keep user on the page; provide a separate "View Requests" button
     } catch (error: any) {
       console.error('❌ Failed to send carpool request:', error)
-      // You could add toast notification here
-      alert('Failed to send carpool request. Please try again.')
+      alert(error?.message || 'Failed to send carpool request. Please try again.')
     } finally {
       setSendingRequest(null)
     }
@@ -392,16 +417,45 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
               </div>
             </div>
 
+            {/* Compose message */}
+            {isComposingForMatchId === current.id && (
+              <div className="mb-3">
+                <label className="block text-sm text-gray-700 mb-1">Add a short message (optional)</label>
+                <textarea
+                  value={messageDraftByMatchId[current.id] ?? ''}
+                  onChange={(e) => handleChangeDraft(current.id, e.target.value)}
+                  maxLength={280}
+                  rows={3}
+                  className="w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Hey, my name is ... I work at ... I’d love to carpool Mon–Fri around 8:00 AM since we both go to the same workplace!"
+                />
+                <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
+                  <span>{(messageDraftByMatchId[current.id] ?? '').length}/280</span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={handleCancelCompose}>Cancel</Button>
+                    <Button size="sm" onClick={() => handleSendRequest(current.id)} disabled={sendingRequest === current.id}>
+                      {sendingRequest === current.id ? 'Sending…' : 'Send Request'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-2">
               <Button 
-                onClick={() => handleSendRequest(current.id)}
-                disabled={sendingRequest === current.id}
+                onClick={() => (sentRequestIds.has(current.id) ? null : (isComposingForMatchId === current.id ? handleSendRequest(current.id) : handleOpenCompose(current.id)))}
+                disabled={sendingRequest === current.id || sentRequestIds.has(current.id)}
                 className="flex-1"
               >
-                {sendingRequest === current.id ? (
+                {sentRequestIds.has(current.id) ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Sending...
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Request Sent
+                  </>
+                ) : isComposingForMatchId === current.id ? (
+                  <>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Send Request
                   </>
                 ) : (
                   <>
