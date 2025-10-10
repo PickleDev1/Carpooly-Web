@@ -419,21 +419,35 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
 
             {/* Compose message */}
             {isComposingForMatchId === current.id && (
-              <div className="mb-3">
-                <label className="block text-sm text-gray-700 mb-1">Add a short message (optional)</label>
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <label className="block text-sm font-medium text-gray-900 mb-2">Add a short message (optional)</label>
                 <textarea
                   value={messageDraftByMatchId[current.id] ?? ''}
                   onChange={(e) => handleChangeDraft(current.id, e.target.value)}
                   maxLength={280}
-                  rows={3}
-                  className="w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Hey, my name is ... I work at ... I’d love to carpool Mon–Fri around 8:00 AM since we both go to the same workplace!"
+                  rows={4}
+                  className="w-full rounded-lg border-2 border-gray-200 bg-white p-3 text-sm text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors"
+                  placeholder="Hey, my name is ... I work at ... I'd love to carpool Mon–Fri around 8:00 AM since we both go to the same workplace!"
                 />
-                <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
-                  <span>{(messageDraftByMatchId[current.id] ?? '').length}/280</span>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-xs text-gray-600">
+                    {(messageDraftByMatchId[current.id] ?? '').length}/280 characters
+                  </span>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleCancelCompose}>Cancel</Button>
-                    <Button size="sm" onClick={() => handleSendRequest(current.id)} disabled={sendingRequest === current.id}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleCancelCompose}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSendRequest(current.id)} 
+                      disabled={sendingRequest === current.id}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
                       {sendingRequest === current.id ? 'Sending…' : 'Send Request'}
                     </Button>
                   </div>
