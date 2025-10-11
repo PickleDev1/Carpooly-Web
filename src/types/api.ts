@@ -137,6 +137,7 @@ export interface PotentialMatchesResponse {
       id: string;
       name: string;
       display_name: string;
+      clerk_id?: string; // Nested Clerk ID field
       home_location: {
         lat: number;
         lng: number;

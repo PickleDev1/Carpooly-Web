@@ -32,8 +32,8 @@ const transformBackendMatch = (backendMatch: any): PotentialMatch => {
     route_overlap_percentage: backendMatch.route_overlap_percentage,
     schedule: backendMatch.schedule || backendMatch.schedule_compatibility,
     total_distance_miles: backendMatch.total_distance_miles,
-    // Include the Clerk ID from backend response
-    user2_clerk_id: backendMatch.user2_clerk_id,
+    // Include the Clerk ID from backend response (try both possible locations)
+    user2_clerk_id: backendMatch.user2_clerk_id || backendMatch.user2?.clerk_id,
     user2: {
       id: backendMatch.user2.id,
       name: backendMatch.user2.name,
@@ -184,14 +184,21 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       // Debug: Log the full match data to see the structure
       console.log('🔍 Full match data for debugging:', currentMatch)
       console.log('🔍 user2_clerk_id field:', currentMatch.user2_clerk_id)
+      console.log('🔍 user2.clerk_id field:', (currentMatch as any).user2?.clerk_id)
       console.log('🔍 All match keys:', Object.keys(currentMatch))
+      console.log('🔍 user2 keys:', currentMatch.user2 ? Object.keys(currentMatch.user2) : 'user2 is null/undefined')
       
       // Use Clerk ID provided by backend for efficient API calls
-      const toUserClerkId = currentMatch.user2_clerk_id
+      // Try both possible locations: top-level user2_clerk_id or nested user2.clerk_id
+      const toUserClerkId = currentMatch.user2_clerk_id || (currentMatch as any).user2?.clerk_id
       if (!toUserClerkId) {
-        console.error('❌ Clerk ID not found. Available fields:', Object.keys(currentMatch))
+        console.error('❌ Clerk ID not found in either location.')
+        console.error('❌ Available top-level fields:', Object.keys(currentMatch))
+        console.error('❌ Available user2 fields:', currentMatch.user2 ? Object.keys(currentMatch.user2) : 'user2 is null/undefined')
         throw new Error('Clerk ID not found in match data. Please refresh and try again.')
       }
+      
+      console.log('✅ Found Clerk ID:', toUserClerkId)
       
       const request = {
         potential_match_id: matchId,
