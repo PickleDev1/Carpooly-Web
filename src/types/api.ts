@@ -131,6 +131,8 @@ export interface MatchingPreferencesResponse {
 export interface PotentialMatchesResponse {
   pending_matches: Array<{
     id: string;
+    // Clerk ID for efficient API calls
+    user2_clerk_id?: string;
     user2: {
       id: string;
       name: string;

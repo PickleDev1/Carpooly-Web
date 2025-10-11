@@ -32,6 +32,8 @@ const transformBackendMatch = (backendMatch: any): PotentialMatch => {
     route_overlap_percentage: backendMatch.route_overlap_percentage,
     schedule: backendMatch.schedule || backendMatch.schedule_compatibility,
     total_distance_miles: backendMatch.total_distance_miles,
+    // Include the Clerk ID from backend response
+    user2_clerk_id: backendMatch.user2_clerk_id,
     user2: {
       id: backendMatch.user2.id,
       name: backendMatch.user2.name,
@@ -114,6 +116,14 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       const data = await matchingService.getPotentialMatches(currentFilters)
       console.log('📊 Received data:', data)
       console.log('📋 Pending matches:', data.pending_matches)
+      
+      // Debug: Log the first match to see its structure
+      if (data.pending_matches && data.pending_matches.length > 0) {
+        console.log('🔍 First match structure:', data.pending_matches[0])
+        console.log('🔍 First match keys:', Object.keys(data.pending_matches[0]))
+        console.log('🔍 user2_clerk_id in first match:', data.pending_matches[0].user2_clerk_id)
+      }
+      
       setMatches((data.pending_matches || []).map(transformBackendMatch))
       setFocusedIndex(0)
     } catch (error: any) {
@@ -171,9 +181,15 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         ? raw.slice(0, 280)
         : 'Hi! We have compatible routes and schedules. Would you like to carpool?'
 
+      // Debug: Log the full match data to see the structure
+      console.log('🔍 Full match data for debugging:', currentMatch)
+      console.log('🔍 user2_clerk_id field:', currentMatch.user2_clerk_id)
+      console.log('🔍 All match keys:', Object.keys(currentMatch))
+      
       // Use Clerk ID provided by backend for efficient API calls
       const toUserClerkId = currentMatch.user2_clerk_id
       if (!toUserClerkId) {
+        console.error('❌ Clerk ID not found. Available fields:', Object.keys(currentMatch))
         throw new Error('Clerk ID not found in match data. Please refresh and try again.')
       }
       
