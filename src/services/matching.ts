@@ -322,13 +322,16 @@ export const useMatchingService = () => {
           throw { status: response.status, message: text }
         }
         const text = await response.text()
+        console.log('🔍 getRequests raw response text:', text)
         const data = text ? JSON.parse(text) : {}
+        console.log('🔍 getRequests parsed data:', data)
         
         // Handle both wrapped and direct response formats
         const res: MatchRequestsResponse = data.incoming !== undefined 
           ? data 
           : { incoming: [], outgoing: [] }
         
+        console.log('🔍 getRequests final result:', res)
         logResponse('GET', endpoint, { incoming: res.incoming.length, outgoing: res.outgoing.length })
         return res
       } catch (error: any) {

@@ -31,7 +31,11 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
   const load = useCallback(async () => {
     setLoading(true)
     try {
+      console.log('🔄 MatchRequests: Loading requests...')
       const data = await matching.getRequests()
+      console.log('📋 MatchRequests: Received data:', data)
+      console.log('📋 MatchRequests: Incoming count:', data.incoming?.length || 0)
+      console.log('📋 MatchRequests: Outgoing count:', data.outgoing?.length || 0)
       setRequests(data)
       setIncomingIndex(0)
     } finally {
