@@ -16,6 +16,17 @@ import {
 import { useMatchingService } from '@/services/matching'
 import type { MatchRequestsResponse } from '@/types/matching'
 
+// Helper function to safely extract display name
+const getDisplayName = (displayName: any): string => {
+  if (typeof displayName === 'string') {
+    return displayName
+  }
+  if (displayName && typeof displayName === 'object' && displayName.String) {
+    return displayName.String
+  }
+  return 'User'
+}
+
 interface Props { 
   onStatsUpdate?: () => void
   refreshTrigger?: number
@@ -172,7 +183,7 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                   <div className="flex items-center gap-4">
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${currentIncoming?.from_user?.name || 'User'}`} />
-                      <AvatarFallback>{currentIncoming?.from_user?.display_name || 'User'}</AvatarFallback>
+                      <AvatarFallback>{getDisplayName(currentIncoming?.from_user?.display_name)}</AvatarFallback>
                     </Avatar>
                     <div>
                       <CardTitle className="text-lg">{currentIncoming?.from_user?.name || 'User'}</CardTitle>
@@ -246,7 +257,7 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                     <div className="flex items-center gap-4">
                       <Avatar className="w-12 h-12">
                         <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${r.to_user?.name || 'User'}`} />
-                        <AvatarFallback>{r.to_user?.display_name || 'User'}</AvatarFallback>
+                        <AvatarFallback>{getDisplayName(r.to_user?.display_name)}</AvatarFallback>
                       </Avatar>
                       <div>
                         <CardTitle className="text-lg">{r.to_user?.name || 'User'}</CardTitle>
