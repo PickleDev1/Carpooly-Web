@@ -19,6 +19,7 @@ export default function MatchingPage() {
   const [stats, setStats] = useState<any | null>(null)
   const [headerLoaded, setHeaderLoaded] = useState(false)
   const [headerCounts, setHeaderCounts] = useState({ potential: 0, incoming: 0, formed: 0, savings: 0 })
+  const [requestsRefreshTrigger, setRequestsRefreshTrigger] = useState(0)
 
   useEffect(() => {
     let mounted = true
@@ -82,13 +83,17 @@ export default function MatchingPage() {
             }}
             onNavigateToPreferences={() => setActiveTab('preferences')}
             onNavigateToRequests={() => setActiveTab('requests')}
+            onRequestSent={() => setRequestsRefreshTrigger(prev => prev + 1)}
           />
         </TabsContent>
 
         <TabsContent value="requests" className="space-y-6">
-          <MatchRequests onStatsUpdate={async () => {
-            const st = await matching.getStats(); setStats(st)
-          }} />
+          <MatchRequests 
+            onStatsUpdate={async () => {
+              const st = await matching.getStats(); setStats(st)
+            }}
+            refreshTrigger={requestsRefreshTrigger}
+          />
         </TabsContent>
 
         <TabsContent value="algorithm" className="space-y-6">

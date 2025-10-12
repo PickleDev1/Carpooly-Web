@@ -48,9 +48,10 @@ interface PotentialMatchesProps {
   onStatsUpdate?: () => void
   onNavigateToPreferences?: () => void
   onNavigateToRequests?: () => void
+  onRequestSent?: () => void
 }
 
-export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNavigateToRequests }: PotentialMatchesProps) {
+export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNavigateToRequests, onRequestSent }: PotentialMatchesProps) {
   const [matches, setMatches] = useState<PotentialMatch[]>([])
   const [loading, setLoading] = useState(true)
   const [sendingRequest, setSendingRequest] = useState<string | null>(null)
@@ -213,8 +214,9 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       setSentRequestIds(prev => new Set([...Array.from(prev), matchId]))
       setIsComposingForMatchId(null)
 
-      // Update stats and optionally navigate
+      // Update stats and refresh requests
       onStatsUpdate?.()
+      onRequestSent?.()
       // Optionally keep user on the page; provide a separate "View Requests" button
     } catch (error: any) {
       console.error('❌ Failed to send carpool request:', error)

@@ -16,9 +16,12 @@ import {
 import { useMatchingService } from '@/services/matching'
 import type { MatchRequestsResponse } from '@/types/matching'
 
-interface Props { onStatsUpdate?: () => void }
+interface Props { 
+  onStatsUpdate?: () => void
+  refreshTrigger?: number
+}
 
-export function MatchRequests({ onStatsUpdate }: Props) {
+export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
   const matching = useMatchingService()
   const [loading, setLoading] = useState(false)
   const [requests, setRequests] = useState<MatchRequestsResponse>({ incoming: [], outgoing: [] })
@@ -37,6 +40,13 @@ export function MatchRequests({ onStatsUpdate }: Props) {
   }, [])
 
   useEffect(() => { load() }, [load])
+  
+  // Refresh when trigger changes
+  useEffect(() => {
+    if (refreshTrigger && refreshTrigger > 0) {
+      load()
+    }
+  }, [refreshTrigger, load])
 
   const accept = async (id: string) => {
     setProcessing(id)
