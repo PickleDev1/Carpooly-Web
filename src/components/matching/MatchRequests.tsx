@@ -186,12 +186,12 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                       <AvatarFallback>{getDisplayName(currentIncoming?.from_user?.display_name)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-lg">{currentIncoming?.from_user?.name || 'User'}</CardTitle>
+                      <CardTitle className="text-lg">Request from {currentIncoming?.from_user?.name || 'User'}</CardTitle>
                       <CardDescription className="flex items-center gap-2 mt-1">
                         <Clock className="w-4 h-4" />
-                        <span>{formatDate(currentIncoming?.created_at || '')}</span>
+                        <span>Received {formatDate(currentIncoming?.created_at || '')}</span>
                         <span>•</span>
-                        <span>{timeUntil(currentIncoming?.expires_at || '')}</span>
+                        <span>{timeUntil(currentIncoming?.expires_at || '')} left</span>
                       </CardDescription>
                     </div>
                   </div>
@@ -199,7 +199,12 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                 </div>
               </CardHeader>
               <CardContent>
-                {currentIncoming?.message && <p className="text-gray-700 mb-4">{currentIncoming.message}</p>}
+                {currentIncoming?.message && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-green-800 font-medium mb-1">Message from {currentIncoming?.from_user?.name}:</p>
+                    <p className="text-gray-700">{currentIncoming.message}</p>
+                  </div>
+                )}
                 {currentIncoming?.status === 'pending' && (
                   <div className="flex gap-2">
                     <Button onClick={() => accept(currentIncoming?.id || '')} disabled={processing === currentIncoming?.id} className="flex-1">
@@ -260,12 +265,12 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                         <AvatarFallback>{getDisplayName(r.to_user?.display_name)}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-lg">{r.to_user?.name || 'User'}</CardTitle>
+                        <CardTitle className="text-lg">Request sent to {r.to_user?.name || 'User'}</CardTitle>
                         <CardDescription className="flex items-center gap-2 mt-1">
                           <Clock className="w-4 h-4" />
-                          <span>{formatDate(r.created_at)}</span>
+                          <span>Sent {formatDate(r.created_at)}</span>
                           <span>•</span>
-                          <span>{timeUntil(r.expires_at)}</span>
+                          <span>{timeUntil(r.expires_at)} left</span>
                         </CardDescription>
                       </div>
                     </div>
@@ -273,7 +278,12 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {r.message && <p className="text-gray-700">{r.message}</p>}
+                  {r.message && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-sm text-blue-800 font-medium mb-1">Your message:</p>
+                      <p className="text-gray-700">{r.message}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
