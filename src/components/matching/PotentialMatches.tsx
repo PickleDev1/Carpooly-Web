@@ -49,9 +49,10 @@ interface PotentialMatchesProps {
   onNavigateToPreferences?: () => void
   onNavigateToRequests?: () => void
   onRequestSent?: () => void
+  onMatchesLoaded?: (count: number) => void
 }
 
-export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNavigateToRequests, onRequestSent }: PotentialMatchesProps) {
+export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNavigateToRequests, onRequestSent, onMatchesLoaded }: PotentialMatchesProps) {
   const [matches, setMatches] = useState<PotentialMatch[]>([])
   const [loading, setLoading] = useState(true)
   const [sendingRequest, setSendingRequest] = useState<string | null>(null)
@@ -188,6 +189,9 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       console.log(`📊 Filtered matches: ${filteredMatches.length} out of ${transformedMatches.length} (removed ${transformedMatches.length - filteredMatches.length} with existing requests)`)
       setMatches(filteredMatches)
       setFocusedIndex(0)
+      
+      // Update header counts
+      onMatchesLoaded?.(filteredMatches.length)
     } catch (error: any) {
       console.error('❌ Failed to load matches:', error)
       if (error?.status === 400) {

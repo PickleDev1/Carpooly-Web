@@ -26,14 +26,13 @@ export default function MatchingPage() {
     ;(async () => {
       // Proactively trigger match generation before initial fetch
       try { await matching.findMatches({ filters: {} }) } catch (_) {}
-      const [matches, reqs, st] = await Promise.all([
-        matching.getPotentialMatches(),
+      const [reqs, st] = await Promise.all([
         matching.getRequests(),
         matching.getStats()
       ])
       if (!mounted) return
       setHeaderCounts({
-        potential: matches.pending_matches?.length ?? 0,
+        potential: 0, // Will be updated by PotentialMatches component
         incoming: reqs.incoming.length,
         formed: st.total_carpools_formed ?? 0,
         savings: st.total_savings ?? 0
@@ -84,6 +83,7 @@ export default function MatchingPage() {
             onNavigateToPreferences={() => setActiveTab('preferences')}
             onNavigateToRequests={() => setActiveTab('requests')}
             onRequestSent={() => setRequestsRefreshTrigger(prev => prev + 1)}
+            onMatchesLoaded={(count) => setHeaderCounts(prev => ({ ...prev, potential: count }))}
           />
         </TabsContent>
 
