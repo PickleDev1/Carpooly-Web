@@ -95,10 +95,16 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       })
       
       console.log('🚫 Existing request user IDs to filter out:', Array.from(existingUserIds))
+      console.log('🚫 Setting existingRequests state to:', Array.from(existingUserIds))
       setExistingRequests(existingUserIds)
+      
+      // Return the set so it can be used immediately
+      return existingUserIds
     } catch (error) {
       console.warn('⚠️ Failed to load existing requests for filtering:', error)
-      setExistingRequests(new Set())
+      const emptySet = new Set<string>()
+      setExistingRequests(emptySet)
+      return emptySet
     }
   }, [matchingService])
 
@@ -110,11 +116,13 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       
       // First, load existing requests to know which users to filter out
       console.log('🔄 About to call loadExistingRequests...')
+      let existingUserIds: Set<string>
       try {
-        await loadExistingRequests()
-        console.log('✅ loadExistingRequests completed')
+        existingUserIds = await loadExistingRequests()
+        console.log('✅ loadExistingRequests completed, got user IDs:', Array.from(existingUserIds))
       } catch (error) {
         console.error('❌ loadExistingRequests failed:', error)
+        existingUserIds = new Set<string>()
       }
       
       // First, let's check the user's preferences to see if they're properly set
@@ -174,10 +182,10 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       // Transform and filter out matches where requests already exist
       const transformedMatches = (data.pending_matches || []).map(transformBackendMatch)
       console.log('🔍 Transformed matches before filtering:', transformedMatches.map(m => ({ id: m.id, user2_id: m.user2.id, user2_name: m.user2.name })))
-      console.log('🔍 Existing requests set:', Array.from(existingRequests))
+      console.log('🔍 Using existing user IDs for filtering:', Array.from(existingUserIds))
       
       const filteredMatches = transformedMatches.filter(match => {
-        const shouldExclude = existingRequests.has(match.user2.id)
+        const shouldExclude = existingUserIds.has(match.user2.id)
         if (shouldExclude) {
           console.log(`🚫 Filtering out match with user ${match.user2.id} (${match.user2.name}) - request already exists`)
         } else {
