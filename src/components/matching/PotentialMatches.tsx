@@ -60,16 +60,48 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   const [isComposingForMatchId, setIsComposingForMatchId] = useState<string | null>(null)
   const [messageDraftByMatchId, setMessageDraftByMatchId] = useState<Record<string, string>>({})
   const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set())
+  const [existingRequests, setExistingRequests] = useState<Set<string>>(new Set()) // Track existing requests by user ID
   // Filters UI removed; backend should use saved Preferences
   const listRefs = useRef<HTMLDivElement[]>([])
   
   const matchingService = useMatchingService()
+
+  // Load existing requests to filter out users who already have requests
+  const loadExistingRequests = useCallback(async () => {
+    try {
+      const requestsData = await matchingService.getRequests()
+      const existingUserIds = new Set<string>()
+      
+      // Add users from outgoing requests (users we've already sent requests to)
+      requestsData.outgoing.forEach(request => {
+        if (request.to_user?.id) {
+          existingUserIds.add(request.to_user.id)
+        }
+      })
+      
+      // Add users from incoming requests (users who have sent us requests)
+      requestsData.incoming.forEach(request => {
+        if (request.from_user?.id) {
+          existingUserIds.add(request.from_user.id)
+        }
+      })
+      
+      console.log('🚫 Existing request user IDs to filter out:', Array.from(existingUserIds))
+      setExistingRequests(existingUserIds)
+    } catch (error) {
+      console.warn('⚠️ Failed to load existing requests for filtering:', error)
+      setExistingRequests(new Set())
+    }
+  }, [matchingService])
 
   const loadMatches = useCallback(async (currentFilters: MatchFilters = {}) => {
     setLoading(true)
     setMissingDestination(false)
     try {
       console.log('🔍 Loading matches with filters:', currentFilters)
+      
+      // First, load existing requests to know which users to filter out
+      await loadExistingRequests()
       
       // First, let's check the user's preferences to see if they're properly set
       try {
@@ -125,7 +157,18 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         console.log('🔍 user2_clerk_id in first match:', data.pending_matches[0].user2_clerk_id)
       }
       
-      setMatches((data.pending_matches || []).map(transformBackendMatch))
+      // Transform and filter out matches where requests already exist
+      const transformedMatches = (data.pending_matches || []).map(transformBackendMatch)
+      const filteredMatches = transformedMatches.filter(match => {
+        const shouldExclude = existingRequests.has(match.user2.id)
+        if (shouldExclude) {
+          console.log(`🚫 Filtering out match with user ${match.user2.id} - request already exists`)
+        }
+        return !shouldExclude
+      })
+      
+      console.log(`📊 Filtered matches: ${filteredMatches.length} out of ${transformedMatches.length} (removed ${transformedMatches.length - filteredMatches.length} with existing requests)`)
+      setMatches(filteredMatches)
       setFocusedIndex(0)
     } catch (error: any) {
       console.error('❌ Failed to load matches:', error)
@@ -136,7 +179,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
     } finally {
       setLoading(false)
     }
-  }, [matchingService])
+  }, [matchingService, loadExistingRequests])
 
   useEffect(() => {
     loadMatches()
@@ -213,6 +256,9 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       // Optimistically mark as sent for this session
       setSentRequestIds(prev => new Set([...Array.from(prev), matchId]))
       setIsComposingForMatchId(null)
+
+      // Add the user to existing requests to filter them out from future matches
+      setExistingRequests(prev => new Set([...Array.from(prev), currentMatch.user2.id]))
 
       // Update stats and refresh requests
       onStatsUpdate?.()
