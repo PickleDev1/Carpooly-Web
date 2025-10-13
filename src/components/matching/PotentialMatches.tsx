@@ -108,7 +108,13 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       console.log('🔍 Loading matches with filters:', currentFilters)
       
       // First, load existing requests to know which users to filter out
-      await loadExistingRequests()
+      console.log('🔄 About to call loadExistingRequests...')
+      try {
+        await loadExistingRequests()
+        console.log('✅ loadExistingRequests completed')
+      } catch (error) {
+        console.error('❌ loadExistingRequests failed:', error)
+      }
       
       // First, let's check the user's preferences to see if they're properly set
       try {
