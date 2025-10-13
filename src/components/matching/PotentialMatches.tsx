@@ -69,13 +69,19 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   // Load existing requests to filter out users who already have requests
   const loadExistingRequests = useCallback(async () => {
     try {
+      console.log('🔄 Loading existing requests for filtering...')
       const requestsData = await matchingService.getRequests()
+      console.log('📋 Requests data for filtering:', requestsData)
+      console.log('📋 Incoming requests count:', requestsData.incoming?.length || 0)
+      console.log('📋 Outgoing requests count:', requestsData.outgoing?.length || 0)
+      
       const existingUserIds = new Set<string>()
       
       // Add users from outgoing requests (users we've already sent requests to)
       requestsData.outgoing.forEach(request => {
         if (request.to_user?.id) {
           existingUserIds.add(request.to_user.id)
+          console.log('🚫 Adding outgoing request user to filter:', request.to_user.id)
         }
       })
       
@@ -83,6 +89,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       requestsData.incoming.forEach(request => {
         if (request.from_user?.id) {
           existingUserIds.add(request.from_user.id)
+          console.log('🚫 Adding incoming request user to filter:', request.from_user.id)
         }
       })
       
@@ -159,10 +166,15 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       
       // Transform and filter out matches where requests already exist
       const transformedMatches = (data.pending_matches || []).map(transformBackendMatch)
+      console.log('🔍 Transformed matches before filtering:', transformedMatches.map(m => ({ id: m.id, user2_id: m.user2.id, user2_name: m.user2.name })))
+      console.log('🔍 Existing requests set:', Array.from(existingRequests))
+      
       const filteredMatches = transformedMatches.filter(match => {
         const shouldExclude = existingRequests.has(match.user2.id)
         if (shouldExclude) {
-          console.log(`🚫 Filtering out match with user ${match.user2.id} - request already exists`)
+          console.log(`🚫 Filtering out match with user ${match.user2.id} (${match.user2.name}) - request already exists`)
+        } else {
+          console.log(`✅ Keeping match with user ${match.user2.id} (${match.user2.name}) - no existing request`)
         }
         return !shouldExclude
       })
