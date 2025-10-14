@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
   MessageSquare, 
   Clock, 
@@ -38,6 +39,8 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
   const [requests, setRequests] = useState<MatchRequestsResponse>({ incoming: [], outgoing: [] })
   const [processing, setProcessing] = useState<string | null>(null)
   const [incomingIndex, setIncomingIndex] = useState(0)
+  const [showAcceptDialog, setShowAcceptDialog] = useState(false)
+  const [requestToAccept, setRequestToAccept] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -63,12 +66,21 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
     }
   }, [refreshTrigger, load])
 
-  const accept = async (id: string) => {
-    setProcessing(id)
+  const handleAcceptClick = (id: string) => {
+    setRequestToAccept(id)
+    setShowAcceptDialog(true)
+  }
+
+  const confirmAccept = async () => {
+    if (!requestToAccept) return
+    
+    setProcessing(requestToAccept)
+    setShowAcceptDialog(false)
+    
     try {
-      await matching.updateRequestStatus(id, 'accepted')
+      await matching.updateRequestStatus(requestToAccept, 'accepted')
       setRequests(prev => ({
-        incoming: prev.incoming.map(r => (r.id === id ? { ...r, status: 'accepted' as const } : r)),
+        incoming: prev.incoming.map(r => (r.id === requestToAccept ? { ...r, status: 'accepted' as const } : r)),
         outgoing: prev.outgoing
       }))
       onStatsUpdate?.()
@@ -77,7 +89,13 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
       alert('Failed to accept request. Please try again.')
     } finally {
       setProcessing(null)
+      setRequestToAccept(null)
     }
+  }
+
+  const cancelAccept = () => {
+    setShowAcceptDialog(false)
+    setRequestToAccept(null)
   }
 
   const reject = async (id: string) => {
@@ -207,7 +225,7 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                 )}
                 {currentIncoming?.status === 'pending' && (
                   <div className="flex gap-2">
-                    <Button onClick={() => accept(currentIncoming?.id || '')} disabled={processing === currentIncoming?.id} className="flex-1">
+                    <Button onClick={() => handleAcceptClick(currentIncoming?.id || '')} disabled={processing === currentIncoming?.id} className="flex-1">
                       {processing === currentIncoming?.id ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -290,6 +308,40 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
           </div>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showAcceptDialog} onOpenChange={setShowAcceptDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Carpool Request</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to make a carpool with {currentIncoming?.from_user?.name || 'this person'}?
+              <br />
+              <span className="text-sm text-gray-600 mt-2 block">
+                You can delete it at any time.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelAccept}>
+              Cancel
+            </Button>
+            <Button onClick={confirmAccept} disabled={processing === requestToAccept}>
+              {processing === requestToAccept ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Accepting...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Yes, Accept Request
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 
