@@ -78,14 +78,33 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
     setShowAcceptDialog(false)
     
     try {
+      // First accept the request
       await matching.updateRequestStatus(requestToAccept, 'accepted')
-      setRequests(prev => ({
-        incoming: prev.incoming.map(r => (r.id === requestToAccept ? { ...r, status: 'accepted' as const } : r)),
-        outgoing: prev.outgoing
-      }))
-      onStatsUpdate?.()
+      
+      // Then create a carpool from the accepted match
+      console.log('🚗 Creating carpool from accepted match...')
+      const carpoolResult = await matching.createCarpoolFromMatch(requestToAccept)
+      
+      if (carpoolResult.success) {
+        console.log('✅ Carpool created successfully:', carpoolResult.carpool_id)
+        
+        // Update the request status in the UI
+        setRequests(prev => ({
+          incoming: prev.incoming.map(r => (r.id === requestToAccept ? { ...r, status: 'accepted' as const } : r)),
+          outgoing: prev.outgoing
+        }))
+        
+        // Show success message
+        alert(`Carpool created successfully! You can now coordinate rides with ${currentIncoming?.from_user?.name || 'your match'}.`)
+        
+        // Update stats
+        onStatsUpdate?.()
+      } else {
+        console.error('❌ Failed to create carpool from match')
+        alert('Request accepted but failed to create carpool. Please contact support.')
+      }
     } catch (error: any) {
-      console.error('❌ Failed to accept request:', error)
+      console.error('❌ Failed to accept request or create carpool:', error)
       alert('Failed to accept request. Please try again.')
     } finally {
       setProcessing(null)

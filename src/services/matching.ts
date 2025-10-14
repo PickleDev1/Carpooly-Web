@@ -509,6 +509,45 @@ export const useMatchingService = () => {
       } catch (error: any) {
         return handleApiError(error, 'update request status')
       }
+    },
+
+    /**
+     * Create a carpool from an accepted match request
+     * This method creates a new carpool with both users as participants
+     */
+    async createCarpoolFromMatch(requestId: string): Promise<{ carpool_id: string; success: boolean }> {
+      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/requests/${requestId}/create-carpool`
+      
+      logRequest('POST', endpoint, { requestId })
+      try {
+        console.log('🚗 Creating carpool from match request:', requestId)
+        
+        const headers = await api.getHeaders()
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({})
+        })
+        
+        if (!response.ok) {
+          const text = await response.text()
+          console.error('createCarpoolFromMatch error response:', response.status, text)
+          throw { status: response.status, message: text }
+        }
+        
+        const data = await response.json()
+        logResponse('POST', endpoint, { success: true, carpool_id: data.carpool_id })
+        
+        return {
+          carpool_id: data.carpool_id || data.id,
+          success: true
+        }
+      } catch (error: any) {
+        return handleApiError(error, 'create carpool from match')
+      }
     }
   };
 };
