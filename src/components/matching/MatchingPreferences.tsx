@@ -69,10 +69,15 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
       const p = await matching.getPreferences()
       setPrefs(p)
       
-      // Only use localStorage for UI display (address string)
+      // Only use localStorage for UI display (address string) IF coordinates are valid
       const savedAddress = localStorage.getItem('carpooly-saved-destination-address')
-      if (savedAddress) {
+      const coordsAreValid = !!(p.destination_latitude && p.destination_longitude && p.destination_latitude !== 0 && p.destination_longitude !== 0)
+      if (savedAddress && coordsAreValid) {
         setDestinationAddress(savedAddress)
+      } else if (!coordsAreValid) {
+        // Clear any stale address that could mislead the user when coords are 0,0
+        try { localStorage.removeItem('carpooly-saved-destination-address') } catch {}
+        setDestinationAddress('')
       }
       
       // Load saved schedule info from localStorage
@@ -88,8 +93,7 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
       
 
       // If backend has coordinates, try to reverse geocode for display
-      if (p.destination_latitude && p.destination_latitude !== 0 && 
-          p.destination_longitude && p.destination_longitude !== 0) {
+      if (coordsAreValid) {
         try {
           const geocoder = new window.google.maps.Geocoder()
           const result = await geocoder.geocode({
@@ -247,7 +251,7 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
               />
               <p className="text-xs text-gray-500 mt-1">Start typing to search for your work address</p>
             </div>
-            {destinationAddress && (
+            {destinationAddress && (prefs.destination_latitude !== 0 && prefs.destination_longitude !== 0) && (
               <div className="p-3 bg-green-50 rounded-md">
                 <p className="text-sm text-green-800">
                   <strong>Selected:</strong> {destinationAddress}
@@ -264,6 +268,16 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
                   Coordinates: {prefs.destination_latitude?.toFixed(6) || 'N/A'}, {prefs.destination_longitude?.toFixed(6) || 'N/A'}
+                </p>
+              </div>
+            )}
+            {destinationAddress && (prefs.destination_latitude === 0 || prefs.destination_longitude === 0) && (
+              <div className="p-3 bg-yellow-50 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  <strong>Address selected:</strong> {destinationAddress}
+                </p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  Coordinates not set yet. Please select an address from the dropdown to set coordinates, then click Save.
                 </p>
               </div>
             )}
