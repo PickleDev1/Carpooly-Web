@@ -111,6 +111,7 @@ export interface UpdateRequestResponse {
   status: string;
   updated_at: string;
   message: string;
+  carpool_id?: string; // Optional carpool ID when request is accepted
 }
 
 export interface MatchingSession {

@@ -78,15 +78,13 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
     setShowAcceptDialog(false)
     
     try {
-      // First accept the request
-      await matching.updateRequestStatus(requestToAccept, 'accepted')
+      // Accept the request - backend now automatically creates carpool
+      console.log('🚗 Accepting request and creating carpool automatically...')
+      const response = await matching.updateRequestStatus(requestToAccept, 'accepted')
       
-      // Then create a carpool from the accepted match
-      console.log('🚗 Creating carpool from accepted match...')
-      const carpoolResult = await matching.createCarpoolFromMatch(requestToAccept)
-      
-      if (carpoolResult.success) {
-        console.log('✅ Carpool created successfully:', carpoolResult.carpool_id)
+      // Check if carpool was created (new carpool_id field)
+      if (response.carpool_id) {
+        console.log('✅ Carpool created automatically:', response.carpool_id)
         
         // Update the request status in the UI
         setRequests(prev => ({
@@ -94,17 +92,25 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
           outgoing: prev.outgoing
         }))
         
-        // Show success message
-        alert(`Carpool created successfully! You can now coordinate rides with ${currentIncoming?.from_user?.name || 'your match'}.`)
+        // Show enhanced success message with carpool info
+        alert(`🎉 Carpool created successfully! You can now coordinate rides with ${currentIncoming?.from_user?.name || 'your match'}. Carpool ID: ${response.carpool_id}`)
         
         // Update stats
         onStatsUpdate?.()
       } else {
-        console.error('❌ Failed to create carpool from match')
-        alert('Request accepted but failed to create carpool. Please contact support.')
+        // Fallback: request accepted but no carpool created
+        console.warn('⚠️ Request accepted but no carpool created')
+        alert('Request accepted successfully!')
+        
+        // Still update the UI
+        setRequests(prev => ({
+          incoming: prev.incoming.map(r => (r.id === requestToAccept ? { ...r, status: 'accepted' as const } : r)),
+          outgoing: prev.outgoing
+        }))
+        onStatsUpdate?.()
       }
     } catch (error: any) {
-      console.error('❌ Failed to accept request or create carpool:', error)
+      console.error('❌ Failed to accept request:', error)
       alert('Failed to accept request. Please try again.')
     } finally {
       setProcessing(null)
