@@ -173,7 +173,8 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
     setPrefs((prev: Prefs) => ({
       ...prev,
       destination_latitude: location.lat,
-      destination_longitude: location.lng
+      destination_longitude: location.lng,
+      destination_address: location.address
     }))
   }, [])
 

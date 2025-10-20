@@ -10,6 +10,7 @@ export interface MatchingPreferences {
   // New required fields for destination-based matching
   destination_latitude: number;
   destination_longitude: number;
+  destination_address?: string; // Human-readable address
   // New optional schedule fields
   arrival_time?: string; // HH:MM:SS format
   commute_days?: string[]; // ["mon","tue","wed","thu","fri"] etc.

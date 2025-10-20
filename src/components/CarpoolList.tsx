@@ -8,6 +8,7 @@ import { useCarpools } from '@/hooks/useCarpools'
 import { useApi } from '@/services/api'
 import { TrashIcon, CalendarIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import { format, parseISO, isAfter, isEqual } from 'date-fns';
+import { CarpoolDestination } from '@/components/CarpoolDestination'
 
 import {
   Table,
@@ -239,7 +240,12 @@ export function CarpoolList() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Destination:</span>
-                      <span className="text-right max-w-[150px] truncate">{safeString(carpool.destination_address)}</span>
+                      <span className="text-right max-w-[150px] truncate">
+                        <CarpoolDestination 
+                          destinationAddress={safeString(carpool.destination_address)}
+                          fallback="Unknown Destination"
+                        />
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Next Ride:</span>
@@ -413,7 +419,12 @@ export function CarpoolList() {
                         <span className="text-xs text-gray-400">No members</span>
                       )}
                     </TableCell>
-                    <TableCell>{safeString(carpool.destination_address)}</TableCell>
+                    <TableCell>
+                      <CarpoolDestination 
+                        destinationAddress={safeString(carpool.destination_address)}
+                        fallback="Unknown Destination"
+                      />
+                    </TableCell>
                     <TableCell>
                       {getNextRide(ridesMap[carpool.id ?? ''] || [])}
                     </TableCell>

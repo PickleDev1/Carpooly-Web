@@ -188,6 +188,7 @@ export const useMatchingService = () => {
           // New required destination fields
           destination_latitude: update.destination_latitude,
           destination_longitude: update.destination_longitude,
+          destination_address: update.destination_address || `${update.destination_latitude},${update.destination_longitude}`,
           // New optional schedule fields
           arrival_time: update.arrival_time,
           commute_days: update.commute_days,
