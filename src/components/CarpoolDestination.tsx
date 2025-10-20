@@ -29,8 +29,8 @@ export function CarpoolDestination({
         return
       }
 
-      // If it looks like coordinates, geocode them
-      const coordMatch = destinationAddress.match(/^(-?\d+\.?\d*),(-?\d+\.?\d*)$/)
+      // If it looks like coordinates, geocode them (handle both pure coordinates and "Carpool to X,Y" format)
+      const coordMatch = destinationAddress.match(/(-?\d+\.?\d*),(-?\d+\.?\d*)/)
       if (coordMatch) {
         console.log('🌍 CarpoolDestination: Found coordinates, geocoding:', coordMatch[1], coordMatch[2])
         setLoading(true)

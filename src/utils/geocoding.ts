@@ -72,14 +72,16 @@ export async function formatDestinationAddress(destinationAddress: string): Prom
       return destinationAddress
     }
 
-    // Check if it looks like coordinates (lat,lng format)
-    const coordMatch = destinationAddress.match(/^(-?\d+\.?\d*),(-?\d+\.?\d*)$/)
+    // Check if it looks like coordinates (lat,lng format) - handle both pure coordinates and "Carpool to X,Y" format
+    const coordMatch = destinationAddress.match(/(-?\d+\.?\d*),(-?\d+\.?\d*)/)
     if (coordMatch) {
       const lat = parseFloat(coordMatch[1])
       const lng = parseFloat(coordMatch[2])
       
       if (!isNaN(lat) && !isNaN(lng)) {
+        console.log('🌍 formatDestinationAddress: Geocoding coordinates:', lat, lng)
         const result = await reverseGeocode(lat, lng)
+        console.log('🌍 formatDestinationAddress: Geocoding result:', result.address)
         return result.address
       }
     }
