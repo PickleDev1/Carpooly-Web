@@ -31,16 +31,21 @@ export async function reverseGeocode(lat: number, lng: number): Promise<Geocodin
     const geocoder = new window.google.maps.Geocoder()
     
     return new Promise((resolve) => {
+      console.log('🌍 reverseGeocode: Starting geocoding for:', lat, lng)
       geocoder.geocode(
         { location: { lat, lng } },
         (results, status) => {
+          console.log('🌍 reverseGeocode: Geocoding status:', status)
+          console.log('🌍 reverseGeocode: Results:', results)
+          
           if (status === 'OK' && results && results[0]) {
+            console.log('🌍 reverseGeocode: Success, address:', results[0].formatted_address)
             resolve({
               address: results[0].formatted_address,
               success: true
             })
           } else {
-            console.warn('Geocoding failed:', status)
+            console.warn('🌍 reverseGeocode: Geocoding failed:', status)
             resolve({
               address: `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
               success: false,
@@ -80,9 +85,19 @@ export async function formatDestinationAddress(destinationAddress: string): Prom
       
       if (!isNaN(lat) && !isNaN(lng)) {
         console.log('🌍 formatDestinationAddress: Geocoding coordinates:', lat, lng)
-        const result = await reverseGeocode(lat, lng)
-        console.log('🌍 formatDestinationAddress: Geocoding result:', result.address)
-        return result.address
+        console.log('🌍 formatDestinationAddress: Google Maps available:', !!window.google?.maps)
+        console.log('🌍 formatDestinationAddress: Geocoder available:', !!window.google?.maps?.Geocoder)
+        
+        try {
+          const result = await reverseGeocode(lat, lng)
+          console.log('🌍 formatDestinationAddress: Geocoding result:', result)
+          console.log('🌍 formatDestinationAddress: Success:', result.success)
+          console.log('🌍 formatDestinationAddress: Address:', result.address)
+          return result.address
+        } catch (geocodingError) {
+          console.error('🌍 formatDestinationAddress: Geocoding failed:', geocodingError)
+          return destinationAddress
+        }
       }
     }
 
