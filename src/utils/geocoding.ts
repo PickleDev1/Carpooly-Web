@@ -10,6 +10,59 @@ export interface GeocodingResult {
   error?: string;
 }
 
+// Global variable to track if script is loading/loaded
+let googleMapsScriptPromise: Promise<void> | null = null;
+
+// Function to load Google Maps API script
+const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
+  if (typeof window === 'undefined') {
+    return Promise.resolve(); // Server-side rendering, no browser API
+  }
+
+  if (window.google?.maps?.Geocoder) {
+    console.log('🌍 Google Maps API (Geocoder) already loaded.');
+    return Promise.resolve();
+  }
+
+  if (googleMapsScriptPromise) {
+    console.log('🌍 Google Maps API script already initiated, returning existing promise.');
+    return googleMapsScriptPromise;
+  }
+
+  googleMapsScriptPromise = new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+
+    // Define a global callback that resolves when the API is ready
+    (window as any).initMap = () => {
+      console.log('🌍 Google Maps API script loaded, waiting for Geocoder...');
+      // Poll until Geocoder is available
+      const checkGeocoder = () => {
+        if (window.google?.maps?.Geocoder) {
+          console.log('🌍 Google Maps Geocoder is now available.');
+          resolve();
+        } else {
+          console.log('🌍 Google Maps Geocoder not yet available, polling...');
+          setTimeout(checkGeocoder, 100); // Check again after 100ms
+        }
+      };
+      checkGeocoder();
+    };
+
+    script.onerror = (e) => {
+      console.error('🌍 Google Maps API script failed to load:', e);
+      googleMapsScriptPromise = null; // Reset on error
+      reject(e);
+    };
+    document.head.appendChild(script);
+    console.log('🌍 Google Maps API script appended to head.');
+  });
+
+  return googleMapsScriptPromise;
+};
+
 /**
  * Reverse geocode coordinates to a human-readable address
  * @param lat - Latitude
@@ -71,6 +124,20 @@ export async function reverseGeocode(lat: number, lng: number): Promise<Geocodin
  * @returns Promise with formatted address
  */
 export async function formatDestinationAddress(destinationAddress: string): Promise<string> {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    console.error('Google Maps API key is not set.');
+    return destinationAddress; // Fallback to original input
+  }
+
+  // Ensure Google Maps API is loaded and Geocoder is available
+  try {
+    await loadGoogleMapsScript(apiKey);
+  } catch (error) {
+    console.error('Failed to load Google Maps API script:', error);
+    return destinationAddress; // Fallback if script loading fails
+  }
+
   try {
     // Check if it's already a formatted address (contains letters) - but allow coordinates with "Carpool to" prefix
     if (/[a-zA-Z]/.test(destinationAddress) && !destinationAddress.includes(',')) {
