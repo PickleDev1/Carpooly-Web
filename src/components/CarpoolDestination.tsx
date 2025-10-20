@@ -20,8 +20,11 @@ export function CarpoolDestination({
 
   useEffect(() => {
     const geocodeDestination = async () => {
+      console.log('🌍 CarpoolDestination: Processing destination:', destinationAddress)
+      
       // If it's already a readable address, don't geocode
       if (/[a-zA-Z]/.test(destinationAddress) && !destinationAddress.includes(',')) {
+        console.log('🌍 CarpoolDestination: Already readable address, using as-is')
         setFormattedAddress(destinationAddress)
         return
       }
@@ -29,14 +32,16 @@ export function CarpoolDestination({
       // If it looks like coordinates, geocode them
       const coordMatch = destinationAddress.match(/^(-?\d+\.?\d*),(-?\d+\.?\d*)$/)
       if (coordMatch) {
+        console.log('🌍 CarpoolDestination: Found coordinates, geocoding:', coordMatch[1], coordMatch[2])
         setLoading(true)
         setError(null)
 
         try {
           const result = await formatDestinationAddress(destinationAddress)
+          console.log('🌍 CarpoolDestination: Geocoding result:', result)
           setFormattedAddress(result)
         } catch (err) {
-          console.error('Geocoding error:', err)
+          console.error('🌍 CarpoolDestination: Geocoding error:', err)
           setError(err instanceof Error ? err.message : 'Geocoding failed')
           setFormattedAddress(destinationAddress) // Fallback to original
         } finally {
@@ -44,6 +49,7 @@ export function CarpoolDestination({
         }
       } else {
         // Not coordinates, use as-is
+        console.log('🌍 CarpoolDestination: Not coordinates, using as-is')
         setFormattedAddress(destinationAddress)
       }
     }

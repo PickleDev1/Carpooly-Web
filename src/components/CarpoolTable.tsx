@@ -1,3 +1,5 @@
+import { CarpoolDestination } from '@/components/CarpoolDestination'
+
 interface Carpool {
   carpool_name: string;
   recurring_option: string;
@@ -32,7 +34,12 @@ export function CarpoolTable({ carpools }: { carpools: Carpool[] }) {
               <td className="px-6 py-4 whitespace-nowrap">{carpool.carpool_name}</td>
               <td className="px-6 py-4 whitespace-nowrap">{carpool.recurring_option}</td>
               <td className="px-6 py-4 whitespace-nowrap">{carpool.available_seats}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{carpool.destination_address}</td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <CarpoolDestination 
+                  destinationAddress={carpool.destination_address}
+                  fallback="Unknown Destination"
+                />
+              </td>
             </tr>
           ))}
         </tbody>
