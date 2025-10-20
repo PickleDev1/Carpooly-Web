@@ -72,8 +72,9 @@ export async function reverseGeocode(lat: number, lng: number): Promise<Geocodin
  */
 export async function formatDestinationAddress(destinationAddress: string): Promise<string> {
   try {
-    // Check if it's already a formatted address (contains letters)
-    if (/[a-zA-Z]/.test(destinationAddress)) {
+    // Check if it's already a formatted address (contains letters) - but allow coordinates with "Carpool to" prefix
+    if (/[a-zA-Z]/.test(destinationAddress) && !destinationAddress.includes(',')) {
+      console.log('🌍 formatDestinationAddress: Already readable address, using as-is')
       return destinationAddress
     }
 
