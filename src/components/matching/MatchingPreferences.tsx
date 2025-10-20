@@ -67,6 +67,12 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
   const load = useCallback(async () => {
     try {
       const p = await matching.getPreferences()
+      console.log('📥 Loaded preferences from backend:', p)
+      console.log('📥 Destination data in loaded preferences:', {
+        latitude: p.destination_latitude,
+        longitude: p.destination_longitude,
+        address: p.destination_address
+      })
       setPrefs(p)
       
       // Only use localStorage for UI display (address string) IF coordinates are valid
@@ -121,6 +127,12 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
         lat: prefs.destination_latitude, 
         lng: prefs.destination_longitude 
       })
+      console.log('📍 Destination address being saved:', prefs.destination_address)
+      console.log('📍 Full destination data:', {
+        latitude: prefs.destination_latitude,
+        longitude: prefs.destination_longitude,
+        address: prefs.destination_address
+      })
       await matching.updatePreferences(prefs)
       
       // Save destination address to localStorage
@@ -164,17 +176,27 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
 
   const handleDestinationSelect = useCallback((location: { address: string; lat: number; lng: number }) => {
     console.log('🎯 handleDestinationSelect called with:', location)
+    console.log('🎯 Address:', location.address)
+    console.log('🎯 Coordinates:', location.lat, location.lng)
+    
     setDestinationAddress(location.address)
     try {
       localStorage.setItem('carpooly-saved-destination-address', location.address)
+      console.log('💾 Saved address to localStorage:', location.address)
     } catch (e) {
       console.warn('Failed to persist destination to localStorage:', e)
     }
-    setPrefs((prev: Prefs) => ({
-      ...prev,
+    
+    const updatedPrefs = {
       destination_latitude: location.lat,
       destination_longitude: location.lng,
       destination_address: location.address
+    }
+    console.log('🎯 Updating preferences with:', updatedPrefs)
+    
+    setPrefs((prev: Prefs) => ({
+      ...prev,
+      ...updatedPrefs
     }))
   }, [])
 

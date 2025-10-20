@@ -83,6 +83,10 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
       const response = await matching.updateRequestStatus(requestToAccept, 'accepted')
       
       // Check if carpool was created (new carpool_id field)
+      console.log('🔍 Full response from updateRequestStatus:', response)
+      console.log('🔍 Response keys:', Object.keys(response))
+      console.log('🔍 Carpool ID in response:', response.carpool_id)
+      
       if (response.carpool_id) {
         console.log('✅ Carpool created automatically:', response.carpool_id)
         

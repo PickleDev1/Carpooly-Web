@@ -198,6 +198,13 @@ export const useMatchingService = () => {
           demographic_preferences: update.demographic_preferences,
           is_active: update.is_active,
         }
+        
+        console.log('🚀 Matching Service - Sending payload to backend:', payload)
+        console.log('🚀 Destination address in payload:', payload.destination_address)
+        console.log('🚀 Destination coordinates in payload:', {
+          lat: payload.destination_latitude,
+          lng: payload.destination_longitude
+        })
 
         const response = await fetch(endpoint, { method: 'PUT', headers, body: JSON.stringify(payload) })
         if (!response.ok) {
