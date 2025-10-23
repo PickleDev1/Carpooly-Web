@@ -60,6 +60,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   const [missingDestination, setMissingDestination] = useState(false)
   const [isComposingForMatchId, setIsComposingForMatchId] = useState<string | null>(null)
   const [messageDraftByMatchId, setMessageDraftByMatchId] = useState<Record<string, string>>({})
+  const [seatPreferenceByMatchId, setSeatPreferenceByMatchId] = useState<Record<string, number>>({})
   const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set())
   const [existingRequests, setExistingRequests] = useState<Set<string>>(new Set()) // Track existing requests by user ID
   // Filters UI removed; backend should use saved Preferences
@@ -238,6 +239,15 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
     setMessageDraftByMatchId(prev => ({ ...prev, [matchId]: value }))
   }
 
+  const handleChangeSeatPreference = (matchId: string, value: number) => {
+    // Validate the seat preference value
+    if (value < 2 || value > 8) {
+      console.warn('Invalid carpool size:', value, 'Must be between 2 and 8')
+      return
+    }
+    setSeatPreferenceByMatchId(prev => ({ ...prev, [matchId]: value }))
+  }
+
   const handleCancelCompose = () => {
     setIsComposingForMatchId(null)
   }
@@ -274,10 +284,17 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       
       console.log('✅ Found Clerk ID:', toUserClerkId)
       
+      // Validate and set carpool size preference
+      const preferredSize = seatPreferenceByMatchId[matchId] || 4
+      if (preferredSize < 2 || preferredSize > 8) {
+        throw new Error('Carpool size must be between 2 and 8 people')
+      }
+
       const request = {
         potential_match_id: matchId,
         to_user_id: toUserClerkId,
-        message
+        message,
+        preferred_carpool_size: preferredSize
       }
 
       const response = await matchingService.sendMatchRequest(request)
@@ -534,6 +551,32 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
                   className="w-full rounded-lg border-2 border-gray-200 bg-white p-3 text-sm text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors"
                   placeholder="Hey, my name is ... I work at ... I'd love to carpool Mon–Fri around 8:00 AM since we both go to the same workplace!"
                 />
+                {/* Seat Preference Selection */}
+                <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    How many people do you want in this carpool?
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {[2, 3, 4, 5, 6].map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => handleChangeSeatPreference(current.id, size)}
+                        className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                          (seatPreferenceByMatchId[current.id] || 4) === size
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300 hover:bg-blue-50'
+                        }`}
+                      >
+                        {size} people
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-2">
+                    This will be the total size of your carpool (including you and {current.user2.name}). 
+                    Room for {Math.max(0, (seatPreferenceByMatchId[current.id] || 4) - 2)} additional people.
+                  </p>
+                </div>
+
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-xs text-gray-600">
                     {(messageDraftByMatchId[current.id] ?? '').length}/280 characters

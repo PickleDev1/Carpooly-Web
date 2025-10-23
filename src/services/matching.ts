@@ -461,6 +461,7 @@ export const useMatchingService = () => {
       potential_match_id: string;
       to_user_id: string;
       message: string;
+      preferred_carpool_size?: number; // NEW: User's preferred carpool size
     }): Promise<MatchRequestResponse> {
       const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/requests`
       

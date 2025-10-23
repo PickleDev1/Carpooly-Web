@@ -252,6 +252,19 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                     <p className="text-gray-700">{currentIncoming.message}</p>
                   </div>
                 )}
+                
+                {/* Carpool Size Information */}
+                {currentIncoming?.preferred_carpool_size && currentIncoming.preferred_carpool_size >= 2 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-800 font-medium mb-1">Carpool Size Preference:</p>
+                    <p className="text-gray-700">
+                      {currentIncoming.preferred_carpool_size} people total 
+                      <span className="text-sm text-gray-600 ml-2">
+                        (Room for {Math.max(0, currentIncoming.preferred_carpool_size - 2)} more people)
+                      </span>
+                    </p>
+                  </div>
+                )}
                 {currentIncoming?.status === 'pending' && (
                   <div className="flex gap-2">
                     <Button onClick={() => handleAcceptClick(currentIncoming?.id || '')} disabled={processing === currentIncoming?.id} className="flex-1">
@@ -329,6 +342,19 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <p className="text-sm text-blue-800 font-medium mb-1">Your message:</p>
                       <p className="text-gray-700">{r.message}</p>
+                    </div>
+                  )}
+                  
+                  {/* Carpool Size Information for Outgoing Requests */}
+                  {r.preferred_carpool_size && r.preferred_carpool_size >= 2 && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-3">
+                      <p className="text-sm text-gray-800 font-medium mb-1">Your Carpool Size Preference:</p>
+                      <p className="text-gray-700">
+                        {r.preferred_carpool_size} people total 
+                        <span className="text-sm text-gray-600 ml-2">
+                          (Room for {Math.max(0, r.preferred_carpool_size - 2)} more people)
+                        </span>
+                      </p>
                     </div>
                   )}
                 </CardContent>

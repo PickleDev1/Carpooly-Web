@@ -72,23 +72,22 @@ export interface PotentialMatch {
 
 export interface MatchRequest {
   id: string;
-  from_user_id: string;
-  to_user_id: string;
-  potential_match_id: string;
+  from_user: {
+    id: string;
+    name: string;
+    display_name: string | { String: string; Valid: boolean };
+  };
+  to_user: {
+    id: string;
+    name: string;
+    display_name: string | { String: string; Valid: boolean };
+  };
   message: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'expired';
+  preferred_carpool_size?: number; // NEW: User's preferred carpool size
+  status: 'pending' | 'accepted' | 'declined' | 'rejected';
   expires_at: string;
   created_at: string;
-  from_user?: {
-    id: string;
-    name: string;
-    display_name: string;
-  };
-  to_user?: {
-    id: string;
-    name: string;
-    display_name: string;
-  };
+  updated_at: string;
 }
 
 export interface MatchRequestsResponse {
@@ -113,6 +112,35 @@ export interface UpdateRequestResponse {
   updated_at: string;
   message: string;
   carpool_id?: string; // Optional carpool ID when request is accepted
+  carpool?: CarpoolDetails; // Full carpool details when created
+}
+
+// New interface for carpool seat management
+export interface CarpoolDetails {
+  id: string;
+  name: string;
+  destination_address: string;
+  total_capacity: number; // Total seats in carpool
+  current_members: number; // Current number of members
+  available_seats: number; // Available seats (total - current)
+  is_full: boolean; // Whether carpool is full
+  members: CarpoolMember[];
+  created_at: string;
+}
+
+export interface CarpoolMember {
+  user_id: string;
+  name: string;
+  role: 'driver' | 'passenger';
+}
+
+// MatchRequest interface is already defined above
+
+export interface SendMatchRequestPayload {
+  potential_match_id: string;
+  to_user_id: string;
+  message: string;
+  preferred_carpool_size?: number; // NEW: User's preferred carpool size
 }
 
 export interface MatchingSession {

@@ -18,6 +18,17 @@ export interface Carpool {
   created_by?: string;
   created_at?: string;
   schedule?: Schedule;
+  // New fields for dynamic seat management
+  total_capacity?: number; // Total seats in carpool
+  current_members?: number; // Current number of members
+  is_full?: boolean; // Whether carpool is full
+  members?: CarpoolMember[]; // List of carpool members
+}
+
+export interface CarpoolMember {
+  user_id: string;
+  name: string;
+  role: 'driver' | 'passenger';
 }
 
 export interface CompletedRide {
