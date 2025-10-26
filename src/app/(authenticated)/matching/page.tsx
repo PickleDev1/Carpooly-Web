@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Users, MessageSquare, Star, Settings, Brain, Zap } from 'lucide-react'
 import { PotentialMatches } from '@/components/matching/PotentialMatches'
 import { MatchRequests } from '@/components/matching/MatchRequests'
+import { AcceptedRequests } from '@/components/matching/AcceptedRequests'
 import { MatchingStats } from '@/components/matching/MatchingStats'
 import { MatchingPreferences as MatchingPreferencesComponent } from '@/components/matching/MatchingPreferences'
 import { AdvancedMatching } from '@/components/matching/AdvancedMatching'
@@ -66,9 +67,10 @@ export default function MatchingPage() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="matches" className="flex items-center gap-2"><Users className="w-4 h-4" />Potential</TabsTrigger>
           <TabsTrigger value="requests" className="flex items-center gap-2"><MessageSquare className="w-4 h-4" />Requests</TabsTrigger>
+          <TabsTrigger value="accepted" className="flex items-center gap-2"><Star className="w-4 h-4" />Accepted</TabsTrigger>
           <TabsTrigger value="algorithm" className="flex items-center gap-2"><Brain className="w-4 h-4" />Algorithm</TabsTrigger>
           <TabsTrigger value="realtime" className="flex items-center gap-2"><Zap className="w-4 h-4" />Real-time</TabsTrigger>
           <TabsTrigger value="stats" className="flex items-center gap-2"><Star className="w-4 h-4" />Statistics</TabsTrigger>
@@ -147,6 +149,15 @@ export default function MatchingPage() {
               const st = await matching.getStats()
               setStats(st)
             }}
+          />
+        </TabsContent>
+
+        <TabsContent value="accepted" className="space-y-6">
+          <AcceptedRequests 
+            onStatsUpdate={async () => {
+              const st = await matching.getStats(); setStats(st)
+            }}
+            refreshTrigger={requestsRefreshTrigger}
           />
         </TabsContent>
 
