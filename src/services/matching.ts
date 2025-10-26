@@ -347,12 +347,14 @@ export const useMatchingService = () => {
       }
     },
 
-    async sendRequest(toUserId: string, potentialMatchId?: string, message?: string): Promise<MatchRequestResponse> {
+    async sendRequest(toUserId: string, potentialMatchId?: string, message?: string, carpoolName?: string, preferredCarpoolSize?: number): Promise<MatchRequestResponse> {
       const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/request`
       const body = {
         to_user_id: toUserId,
         ...(potentialMatchId && { potential_match_id: potentialMatchId }),
-        ...(message && { message })
+        ...(message && { message }),
+        ...(carpoolName && { carpool_name: carpoolName }),
+        ...(preferredCarpoolSize && { preferred_carpool_size: preferredCarpoolSize })
       }
       logRequest('POST', endpoint, body)
       try {
@@ -369,7 +371,7 @@ export const useMatchingService = () => {
         // Handle both wrapped and direct response formats
         const res: MatchRequestResponse = data.id !== undefined 
           ? data 
-          : { id: '', from_user_id: '', to_user_id: '', potential_match_id: '', message: '', status: 'pending', expires_at: '', created_at: '', from_user: { id: '', name: '', display_name: '' } }
+          : { id: '', from_user_id: '', to_user_id: '', potential_match_id: '', message: '', carpool_name: '', status: 'pending', expires_at: '', created_at: '' }
         
         logResponse('POST', endpoint, { id: res.id, status: res.status })
         return res

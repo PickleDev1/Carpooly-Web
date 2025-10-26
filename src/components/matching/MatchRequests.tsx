@@ -252,6 +252,14 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                     <p className="text-gray-700">{currentIncoming.message}</p>
                   </div>
                 )}
+
+                {/* Carpool Name Information */}
+                {currentIncoming?.carpool_name && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-800 font-medium mb-1">Proposed Carpool Name:</p>
+                    <p className="text-lg font-semibold text-blue-900">{currentIncoming.carpool_name}</p>
+                  </div>
+                )}
                 
                 {/* Carpool Size Information */}
                 {currentIncoming?.preferred_carpool_size && currentIncoming.preferred_carpool_size >= 2 && (
@@ -342,6 +350,14 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <p className="text-sm text-blue-800 font-medium mb-1">Your message:</p>
                       <p className="text-gray-700">{r.message}</p>
+                    </div>
+                  )}
+
+                  {/* Carpool Name Information for Outgoing Requests */}
+                  {r.carpool_name && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
+                      <p className="text-sm text-green-800 font-medium mb-1">Your Proposed Carpool Name:</p>
+                      <p className="text-lg font-semibold text-green-900">{r.carpool_name}</p>
                     </div>
                   )}
                   

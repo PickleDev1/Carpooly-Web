@@ -83,6 +83,7 @@ export interface MatchRequest {
     display_name: string | { String: string; Valid: boolean };
   };
   message: string;
+  carpool_name: string; // NEW: Carpool name chosen by the sender
   preferred_carpool_size?: number; // NEW: User's preferred carpool size
   status: 'pending' | 'accepted' | 'declined' | 'rejected';
   expires_at: string;
@@ -101,7 +102,8 @@ export interface MatchRequestResponse {
   to_user_id: string;
   potential_match_id: string;
   message: string;
-  status: string;
+  carpool_name: string; // NEW: Carpool name chosen by the sender
+  status: 'pending' | 'accepted' | 'declined' | 'rejected';
   expires_at: string;
   created_at: string;
 }
@@ -140,6 +142,7 @@ export interface SendMatchRequestPayload {
   potential_match_id: string;
   to_user_id: string;
   message: string;
+  carpool_name: string; // NEW: Carpool name chosen by the sender
   preferred_carpool_size?: number; // NEW: User's preferred carpool size
 }
 

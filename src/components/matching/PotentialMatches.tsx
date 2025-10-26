@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { useMatchingService } from '@/services/matching'
 import { type PotentialMatch, type MatchFilters } from '@/types/matching'
+import { validateCarpoolName } from '@/utils/validation'
 // Advanced filters removed from Potential Matches; filters are managed via Preferences
 
 // Transform backend response to match our interface
@@ -60,7 +61,9 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   const [missingDestination, setMissingDestination] = useState(false)
   const [isComposingForMatchId, setIsComposingForMatchId] = useState<string | null>(null)
   const [messageDraftByMatchId, setMessageDraftByMatchId] = useState<Record<string, string>>({})
+  const [carpoolNameByMatchId, setCarpoolNameByMatchId] = useState<Record<string, string>>({})
   const [seatPreferenceByMatchId, setSeatPreferenceByMatchId] = useState<Record<string, number>>({})
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set())
   const [existingRequests, setExistingRequests] = useState<Set<string>>(new Set()) // Track existing requests by user ID
   // Filters UI removed; backend should use saved Preferences
@@ -239,6 +242,19 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
     setMessageDraftByMatchId(prev => ({ ...prev, [matchId]: value }))
   }
 
+  const handleChangeCarpoolName = (matchId: string, value: string) => {
+    setCarpoolNameByMatchId(prev => ({ ...prev, [matchId]: value }))
+    
+    // Clear validation error when user starts typing
+    if (validationErrors[matchId]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[matchId]
+        return newErrors
+      })
+    }
+  }
+
   const handleChangeSeatPreference = (matchId: string, value: number) => {
     // Validate the seat preference value
     if (value < 2 || value > 8) {
@@ -258,6 +274,18 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       const currentMatch = matches.find(m => m.id === matchId)
       if (!currentMatch) {
         throw new Error('Match not found')
+      }
+
+      // Validate carpool name
+      const carpoolName = carpoolNameByMatchId[matchId]?.trim()
+      const nameValidation = validateCarpoolName(carpoolName)
+      
+      if (!nameValidation.isValid) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [matchId]: nameValidation.error!
+        }))
+        return
       }
 
       const raw = (messageDraftByMatchId[matchId] ?? '').trim()
@@ -290,14 +318,13 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         throw new Error('Carpool size must be between 2 and 8 people')
       }
 
-      const request = {
-        potential_match_id: matchId,
-        to_user_id: toUserClerkId,
+      const response = await matchingService.sendRequest(
+        toUserClerkId,
+        matchId,
         message,
-        preferred_carpool_size: preferredSize
-      }
-
-      const response = await matchingService.sendMatchRequest(request)
+        carpoolName,
+        preferredSize
+      )
       console.log('✅ Carpool request sent successfully:', response)
 
       // Optimistically mark as sent for this session
@@ -542,6 +569,33 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
             {/* Compose message */}
             {isComposingForMatchId === current.id && (
               <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                {/* Carpool Name Input */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    What would you like to call this carpool? <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={carpoolNameByMatchId[current.id] ?? ''}
+                    onChange={(e) => handleChangeCarpoolName(current.id, e.target.value)}
+                    maxLength={255}
+                    className={`w-full rounded-lg border-2 bg-white p-3 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 transition-colors ${
+                      validationErrors[current.id] 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                        : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                    }`}
+                    placeholder="e.g., Morning Commute to Downtown, Evening Ride Home"
+                    required
+                  />
+                  {validationErrors[current.id] ? (
+                    <p className="text-xs text-red-600 mt-1">{validationErrors[current.id]}</p>
+                  ) : (
+                    <p className="text-xs text-gray-600 mt-1">
+                      Choose a name that describes this carpool (e.g., "Morning Commute to Downtown")
+                    </p>
+                  )}
+                </div>
+
                 <label className="block text-sm font-medium text-gray-900 mb-2">Add a short message (optional)</label>
                 <textarea
                   value={messageDraftByMatchId[current.id] ?? ''}
@@ -593,7 +647,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
                     <Button 
                       size="sm" 
                       onClick={() => handleSendRequest(current.id)} 
-                      disabled={sendingRequest === current.id}
+                      disabled={sendingRequest === current.id || !carpoolNameByMatchId[current.id]?.trim()}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       {sendingRequest === current.id ? 'Sending…' : 'Send Request'}
