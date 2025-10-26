@@ -169,7 +169,7 @@ export function RealTimeUpdates({
       globalUpdateCheckInProgress = false
       console.log('✅ Update check completed')
     }
-  }, [isEnabled, matchingService, onNewMatches, onNewRequests, onStatsUpdate])
+  }, [isEnabled, matchingService, onNewMatches, onNewRequests, onStatsUpdate, authError])
 
   // Set up polling interval
   useEffect(() => {

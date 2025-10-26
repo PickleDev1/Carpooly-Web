@@ -213,11 +213,11 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
     } finally {
       setLoading(false)
     }
-  }, [matchingService, loadExistingRequests])
+  }, [matchingService, loadExistingRequests, onMatchesLoaded])
 
   useEffect(() => {
     loadMatches()
-  }, []) // Only run once on mount
+  }, [loadMatches]) // Include loadMatches dependency
 
   const sortedMatches = useMemo(() => {
     return [...matches].sort((a, b) => b.compatibility_score - a.compatibility_score)
@@ -591,7 +591,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
                     <p className="text-xs text-red-600 mt-1">{validationErrors[current.id]}</p>
                   ) : (
                     <p className="text-xs text-gray-600 mt-1">
-                      Choose a name that describes this carpool (e.g., "Morning Commute to Downtown")
+                      Choose a name that describes this carpool (e.g., &quot;Morning Commute to Downtown&quot;)
                     </p>
                   )}
                 </div>

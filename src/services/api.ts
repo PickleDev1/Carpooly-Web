@@ -1487,5 +1487,5 @@ export const useApi = () => {
         return data;
       },
     }
-  }, [getToken])
+  }, [getToken, isLoaded, isSignedIn])
 }

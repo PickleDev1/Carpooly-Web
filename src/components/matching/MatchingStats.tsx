@@ -28,7 +28,7 @@ export function MatchingStats() {
       setLoading(false)
     })()
     return () => { mounted = false }
-  }, [])
+  }, [matching])
 
   if (loading) {
     return (
