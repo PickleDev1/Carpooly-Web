@@ -217,7 +217,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
 
   useEffect(() => {
     loadMatches()
-  }, [loadMatches]) // Include loadMatches dependency
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Only run once on mount to prevent infinite loop
 
   const sortedMatches = useMemo(() => {
     return [...matches].sort((a, b) => b.compatibility_score - a.compatibility_score)
