@@ -16,14 +16,25 @@ import { useMatchingService } from '@/services/matching'
 import type { MatchRequestsResponse } from '@/types/matching'
 
 // Helper function to safely extract display name
-const getDisplayName = (displayName: any, fallbackName?: string): string => {
-  if (typeof displayName === 'string') {
+const getDisplayName = (displayName: any, fallbackName?: string, userId?: string): string => {
+  if (typeof displayName === 'string' && displayName.trim()) {
     return displayName
   }
-  if (displayName && typeof displayName === 'object' && displayName.String) {
+  if (displayName && typeof displayName === 'object' && displayName.String && displayName.String.trim()) {
     return displayName.String
   }
-  return fallbackName || 'User'
+  if (fallbackName && fallbackName.trim()) {
+    return fallbackName
+  }
+  
+  // If no name is available, try to create initials from user ID
+  if (userId) {
+    // Extract first 2 characters from user ID for initials
+    const initials = userId.substring(0, 2).toUpperCase()
+    return `User ${initials}`
+  }
+  
+  return 'User'
 }
 
 interface Props { 
@@ -148,10 +159,10 @@ export function AcceptedRequests({ onStatsUpdate, refreshTrigger }: Props) {
                   <div className="flex items-center gap-4">
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${currentIncoming?.from_user?.name || 'User'}`} />
-                      <AvatarFallback>{getDisplayName(currentIncoming?.from_user?.display_name, currentIncoming?.from_user?.name)}</AvatarFallback>
+                      <AvatarFallback>{getDisplayName(currentIncoming?.from_user?.display_name, currentIncoming?.from_user?.name, currentIncoming?.from_user?.id)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-lg">Accepted from {currentIncoming?.from_user?.name || 'User'}</CardTitle>
+                      <CardTitle className="text-lg">Accepted from {getDisplayName(currentIncoming?.from_user?.display_name, currentIncoming?.from_user?.name, currentIncoming?.from_user?.id)}</CardTitle>
                       <CardDescription className="flex items-center gap-2 mt-1">
                         <Clock className="w-4 h-4" />
                         <span>Accepted {formatDate(currentIncoming?.created_at || '')}</span>
@@ -217,10 +228,10 @@ export function AcceptedRequests({ onStatsUpdate, refreshTrigger }: Props) {
                     <div className="flex items-center gap-4">
                       <Avatar className="w-12 h-12">
                         <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${r.to_user?.name || 'User'}`} />
-                        <AvatarFallback>{getDisplayName(r.to_user?.display_name, r.to_user?.name)}</AvatarFallback>
+                        <AvatarFallback>{getDisplayName(r.to_user?.display_name, r.to_user?.name, r.to_user?.id)}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-lg">Accepted by {r.to_user?.name || 'User'}</CardTitle>
+                        <CardTitle className="text-lg">Accepted by {getDisplayName(r.to_user?.display_name, r.to_user?.name, r.to_user?.id)}</CardTitle>
                         <CardDescription className="flex items-center gap-2 mt-1">
                           <Clock className="w-4 h-4" />
                           <span>Accepted {formatDate(r.created_at)}</span>
