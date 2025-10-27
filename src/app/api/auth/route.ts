@@ -19,7 +19,7 @@ export async function POST() {
       body: JSON.stringify({ 
         clerk_id: userId,
         email: user.emailAddresses[0]?.emailAddress || '',
-        name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '',
+        name: user.firstName || user.lastName ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : user.emailAddresses[0]?.emailAddress?.split('@')[0] || 'User',
         display_name: user.username || user.firstName || user.emailAddresses[0]?.emailAddress?.split('@')[0] || 'Unknown User'
       }),
     });
@@ -52,7 +52,7 @@ export async function PUT() {
       },
       body: JSON.stringify({ 
         email: user.emailAddresses[0]?.emailAddress || '',
-        name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '',
+        name: user.firstName || user.lastName ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : user.emailAddresses[0]?.emailAddress?.split('@')[0] || 'User',
         display_name: user.username || user.firstName || user.emailAddresses[0]?.emailAddress?.split('@')[0] || 'Unknown User'
       }),
     });

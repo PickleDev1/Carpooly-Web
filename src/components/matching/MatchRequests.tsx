@@ -18,7 +18,7 @@ import { useMatchingService } from '@/services/matching'
 import type { MatchRequestsResponse } from '@/types/matching'
 
 // Helper function to safely extract display name
-const getDisplayName = (displayName: any, fallbackName?: string, userId?: string): string => {
+const getDisplayName = (displayName: any, fallbackName?: string, userId?: string, email?: string): string => {
   if (typeof displayName === 'string' && displayName.trim()) {
     return displayName
   }
@@ -27,6 +27,23 @@ const getDisplayName = (displayName: any, fallbackName?: string, userId?: string
   }
   if (fallbackName && fallbackName.trim()) {
     return fallbackName
+  }
+  
+  // If no name is available, try to extract name from email
+  if (email && email.includes('@')) {
+    const emailName = email.split('@')[0]
+    // Capitalize first letter and replace dots/numbers with spaces
+    const formattedName = emailName
+      .replace(/[._-]/g, ' ')
+      .replace(/\d+/g, '')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+      .trim()
+    
+    if (formattedName && formattedName.length > 0) {
+      return formattedName
+    }
   }
   
   // If no name is available, try to create initials from user ID
