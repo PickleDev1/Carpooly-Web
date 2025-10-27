@@ -9,6 +9,8 @@ import { useApi } from '@/services/api'
 import { TrashIcon, CalendarIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import { format, parseISO, isAfter, isEqual } from 'date-fns';
 import { CarpoolDestination } from '@/components/CarpoolDestination'
+import { useMatchingService } from '@/services/matching'
+import { calculateNextRide, formatNextRide } from '@/utils/nextRideCalculator'
 
 import {
   Table,
@@ -47,6 +49,7 @@ export function CarpoolList() {
   const { uuid, loading: uuidLoading, error: uuidError } = useUserUuid()
   const { carpools, deleteCarpool } = useCarpools()
   const api = useApi()
+  const matching = useMatchingService()
 
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const router = useRouter()
@@ -55,6 +58,10 @@ export function CarpoolList() {
   const [ridesMap, setRidesMap] = useState<Record<string, any[]>>({});
   const [schedulesMap, setSchedulesMap] = useState<Record<string, any>>({});
   const [loadingRides, setLoadingRides] = useState(false);
+  const [userPreferences, setUserPreferences] = useState<{
+    arrival_time?: string;
+    commute_days?: string[];
+  } | null>(null);
 
   useEffect(() => {
     async function fetchMembersDetailsRidesAndSchedules() {
@@ -96,6 +103,24 @@ export function CarpoolList() {
     fetchMembersDetailsRidesAndSchedules();
   }, [carpools, api]);
 
+  // Fetch user preferences for next ride calculation
+  useEffect(() => {
+    const fetchUserPreferences = async () => {
+      try {
+        const preferences = await matching.getPreferences();
+        setUserPreferences({
+          arrival_time: preferences.arrival_time,
+          commute_days: preferences.commute_days
+        });
+      } catch (error) {
+        console.error('Failed to fetch user preferences:', error);
+        setUserPreferences(null);
+      }
+    };
+
+    fetchUserPreferences();
+  }, [matching]);
+
   // Helper to get schedule type label
   const getScheduleTypeLabel = (scheduleType?: string) => {
     if (!scheduleType) return 'One-time';
@@ -110,8 +135,17 @@ export function CarpoolList() {
     return getScheduleTypeLabel(schedule?.schedule_type);
   };
 
-  // Helper to find the next ride in the future (including today, after now)
+  // Helper to find the next ride based on user preferences
   const getNextRide = (rides: any[]): string => {
+    // First try to use user preferences to calculate next ride
+    if (userPreferences?.arrival_time && userPreferences?.commute_days) {
+      const nextRide = calculateNextRide(userPreferences.arrival_time, userPreferences.commute_days);
+      if (nextRide) {
+        return formatNextRide(nextRide);
+      }
+    }
+    
+    // Fallback to existing logic if no preferences or calculation fails
     if (!rides || rides.length === 0) return 'N/A';
     const now = new Date();
     // rides should have a start_time field (ISO string)

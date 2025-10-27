@@ -38,6 +38,8 @@ import { isMobileDevice, isIOSDevice } from '@/lib/utils'
 import { OnboardingTour } from '@/components/OnboardingTour'
 import { HelpTips } from '@/components/HelpTips'
 import { ContextualTooltip, useTooltips } from '@/components/ContextualTooltip'
+import { useMatchingService } from '@/services/matching'
+import { calculateNextRide, formatNextRide, getTimeUntilNextRide } from '@/utils/nextRideCalculator'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -112,6 +114,12 @@ export default function Dashboard() {
   const { activeRides, loading: activeRidesLoading } = useActiveRides();
   const notifiedRidesRef = useRef<Set<string>>(new Set());
   const { activeTooltip, showTooltip, hideTooltip, dismissTooltip } = useTooltips();
+  const matching = useMatchingService();
+  const [nextRideInfo, setNextRideInfo] = useState<{
+    nextRide: string;
+    timeUntil: string;
+    hasSchedule: boolean;
+  } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -307,7 +315,38 @@ export default function Dashboard() {
     return () => { isMounted = false; };
   }, [router, getToken, user?.id]);
 
+  // Fetch user preferences and calculate next ride
+  useEffect(() => {
+    const fetchNextRide = async () => {
+      try {
+        const preferences = await matching.getPreferences();
+        const nextRide = calculateNextRide(preferences.arrival_time, preferences.commute_days);
+        
+        if (nextRide) {
+          setNextRideInfo({
+            nextRide: formatNextRide(nextRide),
+            timeUntil: getTimeUntilNextRide(nextRide),
+            hasSchedule: true
+          });
+        } else {
+          setNextRideInfo({
+            nextRide: 'No schedule set',
+            timeUntil: 'Set your preferences',
+            hasSchedule: false
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch preferences for next ride:', error);
+        setNextRideInfo({
+          nextRide: 'No schedule set',
+          timeUntil: 'Set your preferences',
+          hasSchedule: false
+        });
+      }
+    };
 
+    fetchNextRide();
+  }, [matching]);
 
   // Calculate stats
   useEffect(() => {
@@ -585,7 +624,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-6">
         <Card className="hover-lift">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6">
             <CardTitle className="text-xs sm:text-sm font-medium">Total Carpools</CardTitle>
@@ -699,6 +738,35 @@ export default function Dashboard() {
             <p className="text-xs text-muted-foreground">
               This month
             </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover-lift">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Next Ride</CardTitle>
+            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold">
+              {nextRideInfo ? nextRideInfo.nextRide : 'Loading...'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {nextRideInfo ? nextRideInfo.timeUntil : 'Calculating...'}
+            </p>
+            {nextRideInfo && !nextRideInfo.hasSchedule && (
+              <Link 
+                href="/matching"
+                onMouseEnter={() => showTooltip({
+                  id: 'set-schedule',
+                  title: 'Set Your Schedule',
+                  content: 'Configure your commute days and arrival time to see your next ride',
+                  position: 'top'
+                })}
+                onMouseLeave={hideTooltip}
+              >
+                Set schedule
+              </Link>
+            )}
           </CardContent>
         </Card>
       </div>
