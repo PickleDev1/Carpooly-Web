@@ -59,16 +59,16 @@ export function AcceptedRequests({ onStatsUpdate, refreshTrigger }: Props) {
     } finally {
       setLoading(false)
     }
-  }, [matching])
+  }, []) // Remove matching dependency to prevent infinite loop
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Only run once on mount to prevent infinite loop
   
   // Refresh when trigger changes
   useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
       load()
     }
-  }, [refreshTrigger, load])
+  }, [refreshTrigger]) // eslint-disable-line react-hooks/exhaustive-deps -- Only depend on refreshTrigger to prevent infinite loop
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

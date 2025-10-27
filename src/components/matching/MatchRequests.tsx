@@ -48,9 +48,18 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
       console.log('🔄 MatchRequests: Loading requests...')
       const data = await matching.getRequests()
       console.log('📋 MatchRequests: Received data:', data)
-      console.log('📋 MatchRequests: Incoming count:', data.incoming?.length || 0)
-      console.log('📋 MatchRequests: Outgoing count:', data.outgoing?.length || 0)
-      setRequests(data)
+      
+      // Filter for pending requests only (exclude accepted, declined, rejected)
+      const pendingIncoming = data.incoming.filter(r => r.status === 'pending')
+      const pendingOutgoing = data.outgoing.filter(r => r.status === 'pending')
+      
+      console.log('📋 MatchRequests: Pending incoming count:', pendingIncoming.length)
+      console.log('📋 MatchRequests: Pending outgoing count:', pendingOutgoing.length)
+      
+      setRequests({
+        incoming: pendingIncoming,
+        outgoing: pendingOutgoing
+      })
       setIncomingIndex(0)
     } finally {
       setLoading(false)
@@ -90,9 +99,9 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
       if (response.carpool_id) {
         console.log('✅ Carpool created automatically:', response.carpool_id)
         
-        // Update the request status in the UI
+        // Remove the accepted request from the pending list (it will now appear in Accepted tab)
         setRequests(prev => ({
-          incoming: prev.incoming.map(r => (r.id === requestToAccept ? { ...r, status: 'accepted' as const } : r)),
+          incoming: prev.incoming.filter(r => r.id !== requestToAccept),
           outgoing: prev.outgoing
         }))
         
@@ -194,7 +203,7 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold">Incoming Requests ({requests.incoming.filter(r => r.status === 'pending').length})</h2>
+            <h2 className="text-xl font-semibold">Incoming Requests ({requests.incoming.length})</h2>
             {hasIncoming && (
               <>
                 <p className="text-sm text-muted-foreground">{incomingIndex + 1} of {requests.incoming.length}</p>
@@ -309,12 +318,12 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
         )}
       </div>
 
-      {/* Outgoing Requests Section (Pending/Rejected/Expired) */}
+      {/* Outgoing Requests Section (Pending Only) */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Outgoing Requests ({requests.outgoing.filter(r => r.status !== 'accepted').length})</h2>
+          <h2 className="text-xl font-semibold">Outgoing Requests ({requests.outgoing.length})</h2>
         </div>
-        {requests.outgoing.filter(r => r.status !== 'accepted').length === 0 ? (
+        {requests.outgoing.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -324,7 +333,7 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
           </Card>
         ) : (
           <div className="space-y-4">
-            {requests.outgoing.filter(r => r.status !== 'accepted').map((r) => (
+            {requests.outgoing.map((r) => (
               <Card key={r.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
