@@ -741,21 +741,27 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover-lift">
+        <Card className="hover-lift border-l-4 border-l-green-500 bg-gradient-to-br from-green-50/50 to-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Next Ride</CardTitle>
-            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" />
+              Next Ride
+            </CardTitle>
           </CardHeader>
           <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-            <div className="text-lg sm:text-2xl font-bold">
-              {nextRideInfo ? nextRideInfo.nextRide : 'Loading...'}
+            <div className="space-y-1">
+              <div className="text-base sm:text-xl font-bold text-gray-900 leading-tight">
+                {nextRideInfo ? nextRideInfo.nextRide : 'Loading...'}
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <Clock className="h-3.5 w-3.5 text-green-600" />
+                <span className="font-medium">{nextRideInfo ? nextRideInfo.timeUntil : 'Calculating...'}</span>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {nextRideInfo ? nextRideInfo.timeUntil : 'Calculating...'}
-            </p>
             {nextRideInfo && !nextRideInfo.hasSchedule && (
               <Link 
                 href="/matching"
+                className="inline-block mt-3 text-xs font-medium text-green-600 hover:text-green-700 hover:underline transition-colors"
                 onMouseEnter={() => showTooltip({
                   id: 'set-schedule',
                   title: 'Set Your Schedule',
@@ -764,7 +770,7 @@ export default function Dashboard() {
                 })}
                 onMouseLeave={hideTooltip}
               >
-                Set schedule
+                Set schedule →
               </Link>
             )}
           </CardContent>
