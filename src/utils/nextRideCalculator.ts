@@ -158,19 +158,38 @@ function getNextRideDate(dayNumber: number, hours: number, minutes: number): Dat
 }
 
 /**
+ * Converts 24-hour time format (HH:MM) to 12-hour format with AM/PM
+ * @param time24 - Time in 24-hour format (e.g., "09:00", "14:30")
+ * @returns Formatted time string (e.g., "9 A.M.", "2:30 P.M.")
+ */
+function formatTime12Hour(time24: string): string {
+  const [hours, minutes] = time24.split(':').map(Number);
+  const period = hours >= 12 ? 'P.M.' : 'A.M.';
+  const hours12 = hours % 12 || 12; // Convert to 12-hour format (0 becomes 12)
+  
+  if (minutes === 0) {
+    return `${hours12} ${period}`;
+  } else {
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  }
+}
+
+/**
  * Formats the next ride info for display
  */
 export function formatNextRide(nextRide: NextRideInfo): string {
+  const formattedTime = formatTime12Hour(nextRide.nextRideTime);
+  
   if (nextRide.isToday) {
-    return `Today at ${nextRide.nextRideTime}`;
+    return `Today at ${formattedTime}`;
   } else if (nextRide.isTomorrow) {
-    return `Tomorrow at ${nextRide.nextRideTime}`;
+    return `Tomorrow at ${formattedTime}`;
   } else if (nextRide.daysUntil === 1) {
-    return `Tomorrow at ${nextRide.nextRideTime}`;
+    return `Tomorrow at ${formattedTime}`;
   } else if (nextRide.daysUntil < 7) {
-    return `${nextRide.nextRideDay} at ${nextRide.nextRideTime}`;
+    return `${nextRide.nextRideDay} at ${formattedTime}`;
   } else {
-    return `${nextRide.nextRideDay} at ${nextRide.nextRideTime}`;
+    return `${nextRide.nextRideDay} at ${formattedTime}`;
   }
 }
 
