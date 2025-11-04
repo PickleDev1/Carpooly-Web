@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -63,12 +64,15 @@ interface Props {
 
 export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
   const matching = useMatchingService()
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [requests, setRequests] = useState<MatchRequestsResponse>({ incoming: [], outgoing: [] })
   const [processing, setProcessing] = useState<string | null>(null)
   const [incomingIndex, setIncomingIndex] = useState(0)
   const [showAcceptDialog, setShowAcceptDialog] = useState(false)
   const [requestToAccept, setRequestToAccept] = useState<string | null>(null)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [acceptedInfo, setAcceptedInfo] = useState<{ carpoolId: string; carpoolName?: string } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -133,8 +137,10 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
           outgoing: prev.outgoing
         }))
         
-        // Show enhanced success message with carpool info
-        alert(`🎉 Carpool created successfully! You can now coordinate rides with ${currentIncoming?.from_user?.name || 'your match'}. Carpool ID: ${response.carpool_id}`)
+        // Show enhanced success dialog with quick actions
+        const derivedName = (response as any).carpool_name || response.carpool?.name
+        setAcceptedInfo({ carpoolId: response.carpool_id, carpoolName: derivedName })
+        setShowSuccessDialog(true)
         
         // Update stats
         onStatsUpdate?.()
@@ -447,6 +453,41 @@ export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
                   Yes, Accept Request
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Carpool Created</DialogTitle>
+            <DialogDescription>
+              {acceptedInfo?.carpoolName
+                ? `"${acceptedInfo.carpoolName}" has been created. Rides for your shared days are ready on the calendar.`
+                : 'Your carpool has been created. Rides for your shared days are ready on the calendar.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowSuccessDialog(false)
+              }}
+            >
+              Stay Here
+            </Button>
+            <Button
+              onClick={() => {
+                if (acceptedInfo?.carpoolId) {
+                  router.push(`/carpools/${acceptedInfo.carpoolId}/calendar`)
+                } else {
+                  setShowSuccessDialog(false)
+                }
+              }}
+            >
+              View Calendar
             </Button>
           </DialogFooter>
         </DialogContent>

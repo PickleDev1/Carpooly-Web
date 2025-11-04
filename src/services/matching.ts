@@ -110,6 +110,33 @@ const handleApiError = (error: any, operation: string): never => {
     );
   }
 
+  // Handle validation errors (400) with structured payloads
+  if (error.status === 400) {
+    let parsed: any = undefined
+    try {
+      parsed = typeof error.message === 'string' ? JSON.parse(error.message) : error.message
+    } catch {
+      // ignore JSON parse failure
+    }
+
+    // Map known backend validation errors for carpool_name
+    if (parsed && (parsed.error === 'MISSING_CARPOOL_NAME' || parsed.error === 'EMPTY_CARPOOL_NAME' || parsed.error === 'INVALID_CARPOOL_NAME')) {
+      throw new MatchingServiceError(
+        parsed.message || 'Invalid input.',
+        'VALIDATION_ERROR',
+        400,
+        parsed
+      )
+    }
+
+    throw new MatchingServiceError(
+      parsed?.message || 'Invalid request.',
+      'BAD_REQUEST',
+      400,
+      parsed
+    )
+  }
+
   // Network or other errors
   throw new MatchingServiceError(
     `Failed to ${operation}. Please check your connection and try again.`,

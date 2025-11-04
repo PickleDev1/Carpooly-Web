@@ -340,7 +340,15 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       // Optionally keep user on the page; provide a separate "View Requests" button
     } catch (error: any) {
       console.error('❌ Failed to send carpool request:', error)
-      alert(error?.message || 'Failed to send carpool request. Please try again.')
+      // Map backend validation errors to inline field message
+      if (error?.code === 'VALIDATION_ERROR' && error?.details?.field === 'carpool_name') {
+        const backendMsg = error?.details?.message || 'Please enter a valid carpool name.'
+        setValidationErrors(prev => ({ ...prev, [matchId]: backendMsg }))
+      } else if (typeof error?.message === 'string') {
+        alert(error.message)
+      } else {
+        alert('Failed to send carpool request. Please try again.')
+      }
     } finally {
       setSendingRequest(null)
     }
