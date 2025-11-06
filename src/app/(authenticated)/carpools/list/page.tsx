@@ -227,7 +227,7 @@ export default function ListCarpoolsPage() {
                 )}
               </div>
               <Link 
-                href="/matching"
+                href="/matching?tab=requests"
                 className="inline-block text-sm font-semibold text-green-600 hover:text-green-700 hover:underline transition-colors"
               >
                 View & respond →

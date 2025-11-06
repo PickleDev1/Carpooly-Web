@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useMatchingService } from '@/services/matching'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -13,14 +14,24 @@ import { MatchingPreferences as MatchingPreferencesComponent } from '@/component
 import { AdvancedMatching } from '@/components/matching/AdvancedMatching'
 import { RealTimeUpdates } from '@/components/matching/RealTimeUpdates'
 
-export default function MatchingPage() {
+function MatchingPageContent() {
   const matching = useMatchingService()
-  const [activeTab, setActiveTab] = useState('matches')
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get('tab') || 'matches'
+  const [activeTab, setActiveTab] = useState(tabFromUrl)
 
   const [stats, setStats] = useState<any | null>(null)
   const [headerLoaded, setHeaderLoaded] = useState(false)
   const [headerCounts, setHeaderCounts] = useState({ potential: 0, incoming: 0, formed: 0, savings: 0 })
   const [requestsRefreshTrigger, setRequestsRefreshTrigger] = useState(0)
+
+  // Update active tab when URL parameter changes
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam && ['matches', 'requests', 'accepted', 'algorithm', 'realtime', 'stats', 'preferences'].includes(tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     let mounted = true
@@ -200,5 +211,26 @@ function StatTile({ title, value, icon }: { title: string; value: any; icon?: Re
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+export default function MatchingPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto max-w-6xl py-8 space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">Matching</h1>
+          <p className="text-muted-foreground">Find, review, and manage your carpool matches</p>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <MatchingPageContent />
+    </Suspense>
   )
 } 

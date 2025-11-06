@@ -886,7 +886,7 @@ export default function Dashboard() {
                   )}
                 </div>
                 <Link 
-                  href="/matching"
+                  href="/matching?tab=requests"
                   className="inline-block mt-2 text-xs font-medium text-green-600 hover:text-green-700 hover:underline transition-colors"
                   onMouseEnter={() => showTooltip({
                     id: 'view-requests',
