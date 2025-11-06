@@ -21,7 +21,8 @@ import {
   Settings,
   ArrowRight,
   HelpCircle,
-  Play
+  Play,
+  MessageSquare
 } from 'lucide-react'
 import { useAuth, useUser } from '@clerk/nextjs'
 import { useCarpools } from '@/hooks/useCarpools'
@@ -39,7 +40,6 @@ import { OnboardingTour } from '@/components/OnboardingTour'
 import { HelpTips } from '@/components/HelpTips'
 import { ContextualTooltip, useTooltips } from '@/components/ContextualTooltip'
 import { useMatchingService } from '@/services/matching'
-import { calculateNextRide, formatNextRide, getTimeUntilNextRide } from '@/utils/nextRideCalculator'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -115,10 +115,16 @@ export default function Dashboard() {
   const notifiedRidesRef = useRef<Set<string>>(new Set());
   const { activeTooltip, showTooltip, hideTooltip, dismissTooltip } = useTooltips();
   const matching = useMatchingService();
-  const [nextRideInfo, setNextRideInfo] = useState<{
-    nextRide: string;
-    timeUntil: string;
-    hasSchedule: boolean;
+  const [incomingRequestsInfo, setIncomingRequestsInfo] = useState<{
+    count: number;
+    message: string;
+    hasRequests: boolean;
+    mostRecent?: {
+      fromName: string;
+      carpoolName?: string;
+      timeUntil: string;
+      isUrgent: boolean;
+    };
   } | null>(null);
 
   useEffect(() => {
@@ -315,37 +321,129 @@ export default function Dashboard() {
     return () => { isMounted = false; };
   }, [router, getToken, user?.id]);
 
-  // Fetch user preferences and calculate next ride
+  // Helper to get display name from match request user object
+  const getDisplayNameFromRequest = (user: any): string => {
+    if (!user) return 'User';
+    
+    if (user.display_name) {
+      if (typeof user.display_name === 'string' && user.display_name.trim()) {
+        return user.display_name;
+      }
+      if (user.display_name?.String && typeof user.display_name.String === 'string' && user.display_name.String.trim()) {
+        return user.display_name.String;
+      }
+    }
+    return user.name || 'User';
+  };
+
+  // Helper to calculate time until expiry
+  const getTimeUntilExpiry = (expiresAt: string | undefined | null): { text: string; isUrgent: boolean } => {
+    if (!expiresAt) return { text: 'No expiry date', isUrgent: false };
+    
+    try {
+      const now = new Date();
+      const expiry = new Date(expiresAt);
+      
+      // Check if date is valid
+      if (isNaN(expiry.getTime())) {
+        return { text: 'Invalid date', isUrgent: false };
+      }
+      
+      const diff = expiry.getTime() - now.getTime();
+      
+      if (diff <= 0) return { text: 'Expired', isUrgent: true };
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(hours / 24);
+      
+      const isUrgent = hours < 24; // Urgent if less than 24 hours
+      
+      if (days > 0) return { text: `${days}d ${hours % 24}h left`, isUrgent };
+      if (hours > 0) return { text: `${hours}h left`, isUrgent };
+      return { text: 'Expires soon', isUrgent: true };
+    } catch (error) {
+      console.error('Error calculating time until expiry:', error);
+      return { text: 'Unknown', isUrgent: false };
+    }
+  };
+
+  // Fetch incoming match requests
   useEffect(() => {
-    const fetchNextRide = async () => {
+    const fetchIncomingRequests = async () => {
       try {
-        const preferences = await matching.getPreferences();
-        const nextRide = calculateNextRide(preferences.arrival_time, preferences.commute_days);
+        const requests = await matching.getRequests();
         
-        if (nextRide) {
-          setNextRideInfo({
-            nextRide: formatNextRide(nextRide),
-            timeUntil: getTimeUntilNextRide(nextRide),
-            hasSchedule: true
+        // Ensure requests and incoming array exist
+        if (!requests || !Array.isArray(requests.incoming)) {
+          setIncomingRequestsInfo({
+            count: 0,
+            message: 'No incoming requests',
+            hasRequests: false
+          });
+          return;
+        }
+        
+        const pendingIncoming = requests.incoming.filter(r => r && r.status === 'pending');
+        
+        if (pendingIncoming.length > 0) {
+          // Sort by most recent first, with error handling for invalid dates
+          const sortedRequests = [...pendingIncoming].sort((a, b) => {
+            try {
+              const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+              const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+              if (isNaN(dateA)) return 1; // Invalid dates go to end
+              if (isNaN(dateB)) return -1;
+              return dateB - dateA;
+            } catch {
+              return 0; // Keep original order if sort fails
+            }
+          });
+          
+          const mostRecent = sortedRequests[0];
+          if (!mostRecent) {
+            // Fallback if somehow no request found
+            setIncomingRequestsInfo({
+              count: pendingIncoming.length,
+              message: `${pendingIncoming.length} pending requests`,
+              hasRequests: true
+            });
+            return;
+          }
+          
+          const timeInfo = getTimeUntilExpiry(mostRecent.expires_at);
+          const fromName = getDisplayNameFromRequest(mostRecent.from_user);
+          
+          setIncomingRequestsInfo({
+            count: pendingIncoming.length,
+            message: pendingIncoming.length === 1 
+              ? '1 pending request' 
+              : `${pendingIncoming.length} pending requests`,
+            hasRequests: true,
+            mostRecent: {
+              fromName,
+              carpoolName: mostRecent.carpool_name || undefined,
+              timeUntil: timeInfo.text,
+              isUrgent: timeInfo.isUrgent
+            }
           });
         } else {
-          setNextRideInfo({
-            nextRide: 'No schedule set',
-            timeUntil: 'Set your preferences',
-            hasSchedule: false
+          setIncomingRequestsInfo({
+            count: 0,
+            message: 'No incoming requests',
+            hasRequests: false
           });
         }
       } catch (error) {
-        console.error('Failed to fetch preferences for next ride:', error);
-        setNextRideInfo({
-          nextRide: 'No schedule set',
-          timeUntil: 'Set your preferences',
-          hasSchedule: false
+        console.error('Failed to fetch incoming requests:', error);
+        setIncomingRequestsInfo({
+          count: 0,
+          message: 'Unable to load requests',
+          hasRequests: false
         });
       }
     };
 
-    fetchNextRide();
+    fetchIncomingRequests();
   }, [matching]);
 
   // Calculate stats
@@ -741,37 +839,76 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover-lift border-l-4 border-l-green-500 bg-gradient-to-br from-green-50/50 to-white">
+        <Card className={`hover-lift border-l-4 bg-gradient-to-br from-green-50/50 to-white ${
+          incomingRequestsInfo?.mostRecent?.isUrgent 
+            ? 'border-l-orange-500' 
+            : 'border-l-green-500'
+        }`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-6">
             <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" />
-              Next Ride
+              <Bell className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${
+                incomingRequestsInfo?.mostRecent?.isUrgent 
+                  ? 'text-orange-600' 
+                  : 'text-green-600'
+              }`} />
+              Incoming Requests
             </CardTitle>
           </CardHeader>
           <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-            <div className="space-y-1">
-              <div className="text-base sm:text-xl font-bold text-gray-900 leading-tight">
-                {nextRideInfo ? nextRideInfo.nextRide : 'Loading...'}
+            {incomingRequestsInfo?.hasRequests && incomingRequestsInfo.mostRecent ? (
+              <div className="space-y-2">
+                <div className="text-base sm:text-xl font-bold text-gray-900 leading-tight">
+                  {incomingRequestsInfo.count === 1 
+                    ? `From ${incomingRequestsInfo.mostRecent.fromName}`
+                    : `${incomingRequestsInfo.count} requests`
+                  }
+                </div>
+                {incomingRequestsInfo.mostRecent.carpoolName && (
+                  <div className="text-sm text-gray-700 font-medium">
+                    &quot;{incomingRequestsInfo.mostRecent.carpoolName}&quot;
+                  </div>
+                )}
+                <div className={`flex items-center gap-1.5 text-xs ${
+                  incomingRequestsInfo.mostRecent.isUrgent 
+                    ? 'text-orange-600 font-semibold' 
+                    : 'text-gray-600'
+                }`}>
+                  <Clock className={`h-3.5 w-3.5 ${
+                    incomingRequestsInfo.mostRecent.isUrgent 
+                      ? 'text-orange-600' 
+                      : 'text-green-600'
+                  }`} />
+                  <span className="font-medium">{incomingRequestsInfo.mostRecent.timeUntil}</span>
+                  {incomingRequestsInfo.count > 1 && (
+                    <span className="text-gray-500 ml-1">
+                      • {incomingRequestsInfo.count - 1} more
+                    </span>
+                  )}
+                </div>
+                <Link 
+                  href="/matching"
+                  className="inline-block mt-2 text-xs font-medium text-green-600 hover:text-green-700 hover:underline transition-colors"
+                  onMouseEnter={() => showTooltip({
+                    id: 'view-requests',
+                    title: 'View Requests',
+                    content: 'Review and respond to incoming carpool match requests',
+                    position: 'top'
+                  })}
+                  onMouseLeave={hideTooltip}
+                >
+                  View & respond →
+                </Link>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                <Clock className="h-3.5 w-3.5 text-green-600" />
-                <span className="font-medium">{nextRideInfo ? nextRideInfo.timeUntil : 'Calculating...'}</span>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-base sm:text-xl font-bold text-gray-900 leading-tight">
+                  {incomingRequestsInfo ? incomingRequestsInfo.count : 'Loading...'}
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                  <MessageSquare className="h-3.5 w-3.5 text-green-600" />
+                  <span className="font-medium">{incomingRequestsInfo ? incomingRequestsInfo.message : 'Calculating...'}</span>
+                </div>
               </div>
-            </div>
-            {nextRideInfo && !nextRideInfo.hasSchedule && (
-              <Link 
-                href="/matching"
-                className="inline-block mt-3 text-xs font-medium text-green-600 hover:text-green-700 hover:underline transition-colors"
-                onMouseEnter={() => showTooltip({
-                  id: 'set-schedule',
-                  title: 'Set Your Schedule',
-                  content: 'Configure your commute days and arrival time to see your next ride',
-                  position: 'top'
-                })}
-                onMouseLeave={hideTooltip}
-              >
-                Set schedule →
-              </Link>
             )}
           </CardContent>
         </Card>
