@@ -1086,31 +1086,50 @@ export const useApi = () => {
 
       async getCarpoolRideByDate(carpoolId: string, date: string) {
         const headers = await getHeaders()
-        console.log('Fetching ride by date for carpool:', carpoolId, 'date:', date)
+        const endpoint = `${API_URL}/api/carpools/${carpoolId}/rides/${date}`
+        console.log('🔍 API: getCarpoolRideByDate called')
+        console.log('🔍 API: Endpoint:', endpoint)
+        console.log('🔍 API: Carpool ID:', carpoolId)
+        console.log('🔍 API: Date:', date)
         
-        const response = await fetch(`${API_URL}/api/carpools/${carpoolId}/rides/${date}`, {
+        const response = await fetch(endpoint, {
           headers
         })
         
+        console.log('🔍 API: Response status:', response.status, response.statusText)
+        console.log('🔍 API: Response headers:', Object.fromEntries(response.headers.entries()))
+        
         if (!response.ok) {
-          console.error('Ride by date API Error:', response.status, response.statusText)
-          throw new Error('Failed to fetch ride details')
+          if (response.status === 404) {
+            console.warn('🔍 API: ⚠️ 404 - No ride found for this date (this is expected if backend did not create rides)')
+          } else {
+            console.error('🔍 API: ❌ Error response:', response.status, response.statusText)
+          }
+          // Return empty array instead of throwing for 404
+          if (response.status === 404) {
+            return []
+          }
+          throw new Error(`Failed to fetch ride details: ${response.status} ${response.statusText}`)
         }
         
         const text = await response.text()
-        console.log('Raw ride by date response:', text)
+        console.log('🔍 API: Raw response text length:', text.length)
+        console.log('🔍 API: Raw response text:', text.substring(0, 500)) // First 500 chars
         
-        if (!text) {
-          console.log('Empty response received')
+        if (!text || text.trim() === '') {
+          console.warn('🔍 API: ⚠️ Empty response received')
           return []
         }
         
         try {
           const data = JSON.parse(text)
-          console.log('Parsed ride by date data:', data)
+          console.log('🔍 API: ✅ Successfully parsed JSON')
+          console.log('🔍 API: Parsed data type:', Array.isArray(data) ? 'Array' : typeof data)
+          console.log('🔍 API: Parsed data:', JSON.stringify(data, null, 2))
           return data
         } catch (error) {
-          console.error('JSON Parse Error:', error, 'Response:', text)
+          console.error('🔍 API: ❌ JSON Parse Error:', error)
+          console.error('🔍 API: Response text that failed to parse:', text)
           return []
         }
       },

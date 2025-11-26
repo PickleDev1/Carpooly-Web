@@ -69,33 +69,50 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
 
   const fetchDayDetails = async () => {
     try {
-      console.log('Fetching day details for date:', format(date, 'yyyy-MM-dd'))
+      const dateStr = format(date, 'yyyy-MM-dd')
+      console.log('🚗 CarpoolDayModal: ==========================================')
+      console.log('🚗 CarpoolDayModal: Fetching ride details')
+      console.log('🚗 CarpoolDayModal: Carpool ID:', carpoolId)
+      console.log('🚗 CarpoolDayModal: Date:', dateStr, `(${format(date, 'EEEE, MMMM d, yyyy')})`)
+      
+      setIsLoading(true)
       
       // Fetch rides for the specific date
-      const rides = await api.getCarpoolRideByDate(carpoolId, format(date, 'yyyy-MM-dd'))
-      console.log('Received rides:', rides)
+      console.log('🚗 CarpoolDayModal: Calling API: getCarpoolRideByDate')
+      const rides = await api.getCarpoolRideByDate(carpoolId, dateStr)
+      console.log('🚗 CarpoolDayModal: API Response received')
+      console.log('🚗 CarpoolDayModal: Response type:', Array.isArray(rides) ? 'Array' : typeof rides)
+      console.log('🚗 CarpoolDayModal: Response length:', Array.isArray(rides) ? rides.length : 'N/A')
+      console.log('🚗 CarpoolDayModal: Full response:', JSON.stringify(rides, null, 2))
       
       // Use participants from the ride data instead of separate call
       let participants = []
       if (rides && rides.length > 0) {
+        console.log('🚗 CarpoolDayModal: ✅ Ride found!')
         const rideDetails = rides[0]
-        console.log('Ride details:', rideDetails)
+        console.log('🚗 CarpoolDayModal: Ride ID:', rideDetails.id)
+        console.log('🚗 CarpoolDayModal: Ride details:', JSON.stringify(rideDetails, null, 2))
         
         // Extract participants from the ride data
         if (rideDetails.participants && Array.isArray(rideDetails.participants)) {
           participants = rideDetails.participants;
+          console.log('🚗 CarpoolDayModal: ✅ Found', participants.length, 'participants in ride')
+        } else {
+          console.warn('🚗 CarpoolDayModal: ⚠️ Ride has no participants array')
         }
-        
-        console.log('Participants from ride data:', participants)
         
         setDayDetails({
           id: rideDetails.id,
           driver: rideDetails.driver_id ? { id: rideDetails.driver_id } : undefined,
           participants: participants,
         })
+        console.log('🚗 CarpoolDayModal: ✅ Day details set successfully')
       } else {
         // No ride exists yet, try to get participants from separate call as fallback
-        console.log('No ride exists, trying separate participants call')
+        console.warn('🚗 CarpoolDayModal: ⚠️ NO RIDE FOUND for this date!')
+        console.warn('🚗 CarpoolDayModal: This means the backend did not create a ride for:', dateStr)
+        console.warn('🚗 CarpoolDayModal: Expected: A ride should exist because this date is in the schedule')
+        console.warn('🚗 CarpoolDayModal: Trying fallback: get participants from carpool members...')
         try {
           const participantsData = await api.getCarpoolParticipantsByDate(carpoolId, format(date, 'yyyy-MM-dd'))
           console.log('Fallback participants data:', participantsData)
@@ -114,18 +131,24 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
           }
           console.log('Fallback participants array:', participants);
         } catch (error) {
-          console.error('Error fetching fallback participants:', error)
+          console.error('🚗 CarpoolDayModal: ❌ Error fetching fallback participants:', error)
           participants = []
         }
         
+        console.log('🚗 CarpoolDayModal: Fallback participants count:', participants.length)
         setDayDetails({
           id: '',
           driver: undefined,
           participants: participants,
         })
+        console.log('🚗 CarpoolDayModal: ⚠️ Day details set with NO RIDE ID (ride does not exist)')
       }
+      setIsLoading(false)
+      console.log('🚗 CarpoolDayModal: ==========================================')
     } catch (error) {
-      console.error('Error fetching ride details:', error)
+      console.error('🚗 CarpoolDayModal: ❌ Error fetching ride details:', error)
+      setIsLoading(false)
+      console.log('🚗 CarpoolDayModal: ==========================================')
     }
   }
 
