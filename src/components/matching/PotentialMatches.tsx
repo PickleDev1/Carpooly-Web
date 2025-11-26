@@ -66,6 +66,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set())
   const [existingRequests, setExistingRequests] = useState<Set<string>>(new Set()) // Track existing requests by user ID
+  const [incomingRequestsCount, setIncomingRequestsCount] = useState(0)
   // Filters UI removed; backend should use saved Preferences
   const listRefs = useRef<HTMLDivElement[]>([])
   
@@ -79,6 +80,10 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       console.log('📋 Requests data for filtering:', requestsData)
       console.log('📋 Incoming requests count:', requestsData.incoming?.length || 0)
       console.log('📋 Outgoing requests count:', requestsData.outgoing?.length || 0)
+      
+      // Count pending incoming requests
+      const pendingIncoming = requestsData.incoming.filter(r => r.status === 'pending')
+      setIncomingRequestsCount(pendingIncoming.length)
       
       const existingUserIds = new Set<string>()
       
@@ -108,6 +113,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       console.warn('⚠️ Failed to load existing requests for filtering:', error)
       const emptySet = new Set<string>()
       setExistingRequests(emptySet)
+      setIncomingRequestsCount(0)
       return emptySet
     }
   }, [matchingService])
@@ -397,6 +403,36 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   if (matches.length === 0) {
     return (
       <div className="space-y-6">
+        {/* Incoming Requests Alert Banner */}
+        {incomingRequestsCount > 0 && (
+          <Card className="border-l-4 border-l-orange-500 bg-orange-50/50">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-orange-900 mb-1">
+                    You have {incomingRequestsCount} pending request{incomingRequestsCount > 1 ? 's' : ''}!
+                  </h3>
+                  <p className="text-sm text-orange-800 mb-3">
+                    Someone wants to carpool with you. Check the <strong>Requests</strong> tab to view and respond.
+                  </p>
+                  <Button 
+                    onClick={onNavigateToRequests}
+                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                    size="sm"
+                  >
+                    View Requests →
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header */}
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">Potential Matches</h2>
@@ -439,6 +475,36 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   if (!current) {
     return (
       <div className="space-y-6">
+        {/* Incoming Requests Alert Banner */}
+        {incomingRequestsCount > 0 && (
+          <Card className="border-l-4 border-l-orange-500 bg-orange-50/50">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-orange-900 mb-1">
+                    You have {incomingRequestsCount} pending request{incomingRequestsCount > 1 ? 's' : ''}!
+                  </h3>
+                  <p className="text-sm text-orange-800 mb-3">
+                    Someone wants to carpool with you. Check the <strong>Requests</strong> tab to view and respond.
+                  </p>
+                  <Button 
+                    onClick={onNavigateToRequests}
+                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                    size="sm"
+                  >
+                    View Requests →
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">Potential Matches</h2>
           <Badge variant="secondary">0 matches</Badge>
@@ -475,6 +541,36 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
 
   return (
     <div className="space-y-6">
+      {/* Incoming Requests Alert Banner */}
+      {incomingRequestsCount > 0 && (
+        <Card className="border-l-4 border-l-orange-500 bg-orange-50/50">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-orange-900 mb-1">
+                  You have {incomingRequestsCount} pending request{incomingRequestsCount > 1 ? 's' : ''}!
+                </h3>
+                <p className="text-sm text-orange-800 mb-3">
+                  Someone wants to carpool with you. Check the <strong>Requests</strong> tab to view and respond.
+                </p>
+                <Button 
+                  onClick={onNavigateToRequests}
+                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                  size="sm"
+                >
+                  View Requests →
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

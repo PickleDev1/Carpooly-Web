@@ -920,6 +920,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {quickActions.map((action) => {
             const Icon = action.icon
+            const hasIncomingRequests = action.href === '/matching' && incomingRequestsInfo?.hasRequests && incomingRequestsInfo.count > 0
             return (
               <Link 
                 key={action.title} 
@@ -927,14 +928,26 @@ export default function Dashboard() {
                 onMouseEnter={() => showTooltip({
                   id: `quick-action-${action.title.toLowerCase().replace(/\s+/g, '-')}`,
                   title: action.title,
-                  content: action.description,
+                  content: hasIncomingRequests 
+                    ? `${action.description} (${incomingRequestsInfo.count} incoming request${incomingRequestsInfo.count > 1 ? 's' : ''} waiting)` 
+                    : action.description,
                   position: 'top'
                 })}
                 onMouseLeave={hideTooltip}
               >
-                <Card className="card-interactive group">
+                <Card className="card-interactive group relative">
+                  {hasIncomingRequests && (
+                    <div className="absolute -top-2 -right-2 z-10">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                        <div className="relative bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-lg">
+                          {incomingRequestsInfo.count > 9 ? '9+' : incomingRequestsInfo.count}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <CardContent className="p-4 sm:p-6">
-                    <div className={`w-10 h-10 sm:w-12 sm:h-12 ${action.color} rounded-lg flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform`}>
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 ${action.color} rounded-lg flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform relative`}>
                       <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">{action.title}</h3>
