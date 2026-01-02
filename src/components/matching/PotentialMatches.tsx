@@ -214,8 +214,11 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         console.log('🔍 First match keys:', Object.keys(data.pending_matches[0]))
         if (data.pending_matches[0].user2) {
           console.log('🔍 First match user2:', data.pending_matches[0].user2)
-          if (data.pending_matches[0].user2.destination_location) {
-            console.log('🔍 First match destination:', data.pending_matches[0].user2.destination_location)
+          if (data.pending_matches[0].user2.work_location) {
+            console.log('🔍 First match work location:', data.pending_matches[0].user2.work_location)
+          }
+          if (data.pending_matches[0].user2.home_location) {
+            console.log('🔍 First match home location:', data.pending_matches[0].user2.home_location)
           }
         }
         console.log('🔍 First match compatibility_score:', data.pending_matches[0].compatibility_score)
