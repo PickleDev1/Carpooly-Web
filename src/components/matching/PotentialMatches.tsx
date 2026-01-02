@@ -203,13 +203,30 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       
       const data = await matchingService.getPotentialMatches(currentFilters)
       console.log('📊 Received data:', data)
-      console.log('📋 Pending matches:', data.pending_matches)
+      console.log('📋 Pending matches count:', data.pending_matches?.length || 0)
+      console.log('📋 Accepted matches count:', data.accepted_matches?.length || 0)
+      console.log('📋 Expired matches count:', data.expired_matches?.length || 0)
       
-      // Debug: Log the first match to see its structure
+      // Debug: Log all matches to see their structure
       if (data.pending_matches && data.pending_matches.length > 0) {
+        console.log('🔍 All pending matches:', data.pending_matches)
         console.log('🔍 First match structure:', data.pending_matches[0])
         console.log('🔍 First match keys:', Object.keys(data.pending_matches[0]))
-        console.log('🔍 user2_clerk_id in first match:', data.pending_matches[0].user2_clerk_id)
+        if (data.pending_matches[0].user2) {
+          console.log('🔍 First match user2:', data.pending_matches[0].user2)
+          if (data.pending_matches[0].user2.destination_location) {
+            console.log('🔍 First match destination:', data.pending_matches[0].user2.destination_location)
+          }
+        }
+        console.log('🔍 First match compatibility_score:', data.pending_matches[0].compatibility_score)
+        console.log('🔍 First match route_overlap_percentage:', data.pending_matches[0].route_overlap_percentage)
+      } else {
+        console.warn('⚠️ No pending matches returned from backend')
+        console.warn('⚠️ This could mean:')
+        console.warn('   - No other users with active preferences')
+        console.warn('   - Compatibility scores below threshold')
+        console.warn('   - Schedule/demographic mismatches')
+        console.warn('   - Destination proximity not close enough')
       }
       
       // Transform and filter out matches where requests already exist
