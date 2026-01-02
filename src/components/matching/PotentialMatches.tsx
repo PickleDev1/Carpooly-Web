@@ -27,20 +27,33 @@ import { validateCarpoolName } from '@/utils/validation'
 const transformBackendMatch = (backendMatch: any): PotentialMatch => {
   return {
     id: backendMatch.id,
-    compatibility_score: backendMatch.compatibility_score,
-    estimated_savings_per_month: backendMatch.estimated_savings_per_month,
-    match_reasons: backendMatch.match_reasons,
-    route_overlap_percentage: backendMatch.route_overlap_percentage,
-    schedule: backendMatch.schedule || backendMatch.schedule_compatibility,
-    total_distance_miles: backendMatch.total_distance_miles,
+    compatibility_score: backendMatch.compatibility_score ?? (backendMatch.compatibility_percentage ? backendMatch.compatibility_percentage / 100 : 0),
+    compatibility_percentage: backendMatch.compatibility_percentage ?? (backendMatch.compatibility_score ? backendMatch.compatibility_score * 100 : 0),
+    estimated_savings_per_month: backendMatch.estimated_savings_per_month ?? 0,
+    match_reasons: backendMatch.match_reasons ?? [],
+    route_overlap_percentage: backendMatch.route_overlap_percentage ?? 0,
+    schedule: backendMatch.schedule ? {
+      ...backendMatch.schedule,
+      compatibility_percentage: backendMatch.schedule.compatibility_percentage ?? (backendMatch.schedule.compatibility_score ? backendMatch.schedule.compatibility_score * 100 : undefined)
+    } : undefined,
+    total_distance_miles: backendMatch.total_distance_miles ?? 0,
+    status: backendMatch.status ?? 'pending',
+    expires_at: backendMatch.expires_at,
+    created_at: backendMatch.created_at,
     // Include the Clerk ID from backend response (try both possible locations)
     user2_clerk_id: backendMatch.user2_clerk_id || backendMatch.user2?.clerk_id,
     user2: {
       id: backendMatch.user2.id,
+      clerk_id: backendMatch.user2.clerk_id,
       name: backendMatch.user2.name,
       display_name: backendMatch.user2.display_name,
+      email: backendMatch.user2.email,
+      home_latitude: backendMatch.user2.home_latitude ?? backendMatch.user2.home_location?.lat ?? 0,
+      home_longitude: backendMatch.user2.home_longitude ?? backendMatch.user2.home_location?.lng ?? 0,
+      // Legacy support
       home_location: backendMatch.user2.home_location,
-      destination_location: backendMatch.user2.destination_location
+      destination_location: backendMatch.user2.destination_location,
+      work_location: backendMatch.user2.work_location
     }
   };
 };
@@ -208,11 +221,27 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         }
       }
       
-      const data = await matchingService.getPotentialMatches(currentFilters)
-      console.log('📊 Received data:', data)
-      console.log('📋 Pending matches count:', data.pending_matches?.length || 0)
-      console.log('📋 Accepted matches count:', data.accepted_matches?.length || 0)
-      console.log('📋 Expired matches count:', data.expired_matches?.length || 0)
+      let data
+      try {
+        data = await matchingService.getPotentialMatches(currentFilters)
+        console.log('📊 Received data:', data)
+        console.log('📋 Pending matches count:', data.pending_matches?.length || 0)
+        console.log('📋 Accepted matches count:', data.accepted_matches?.length || 0)
+        console.log('📋 Expired matches count:', data.expired_matches?.length || 0)
+      } catch (matchesErr: any) {
+        // If endpoint doesn't exist (404), show helpful error message
+        if (matchesErr?.status === 404) {
+          console.error('❌ Potential matches endpoint not found (404)')
+          console.error('❌ The backend endpoint /api/matching/potential-matches is not implemented yet')
+          console.error('❌ Please contact the backend team to implement this endpoint')
+          setMatches([])
+          setLoading(false)
+          // Show user-friendly error
+          alert('Matching feature is not yet available. The backend endpoint needs to be implemented.')
+          return
+        }
+        throw matchesErr // Re-throw other errors
+      }
       
       // Debug: Log all matches to see their structure
       if (data.pending_matches && data.pending_matches.length > 0) {
@@ -410,11 +439,23 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
     }
   }
 
-  const getCompatibilityColor = (score: number) => {
-    if (score >= 0.9) return 'bg-green-100 text-green-800'
-    if (score >= 0.8) return 'bg-blue-100 text-blue-800'
-    if (score >= 0.7) return 'bg-yellow-100 text-yellow-800'
-    return 'bg-gray-100 text-gray-800'
+  const getCompatibilityColor = (percentage: number) => {
+    if (percentage >= 80) return 'bg-green-100 text-green-800 border-green-300'
+    if (percentage >= 70) return 'bg-yellow-100 text-yellow-800 border-yellow-300'
+    return 'bg-gray-100 text-gray-800 border-gray-300'
+  }
+  
+  const getRouteOverlapColor = (percentage: number) => {
+    if (percentage >= 70) return 'text-green-600'
+    if (percentage >= 50) return 'text-yellow-600'
+    return 'text-gray-600'
+  }
+  
+  const getScheduleCompatibilityColor = (percentage?: number) => {
+    if (!percentage) return 'text-gray-500'
+    if (percentage >= 80) return 'text-green-600'
+    if (percentage >= 70) return 'text-yellow-600'
+    return 'text-gray-600'
   }
 
   if (loading) {
@@ -675,48 +716,85 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
                 </div>
               </div>
               <div className="text-right">
-                <Badge className={getCompatibilityColor(current.compatibility_score)}>
-                  {Math.round(current.compatibility_score * 100)}% Match
+                <Badge className={`${getCompatibilityColor(current.compatibility_percentage ?? current.compatibility_score * 100)} border-2 font-semibold text-base px-3 py-1`}>
+                  {Math.round(current.compatibility_percentage ?? current.compatibility_score * 100)}% Match
                 </Badge>
               </div>
             </div>
           </CardHeader>
           
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <Route className="w-4 h-4 text-blue-500" />
-                <div>
-                  <p className="text-sm font-medium">{current.route_overlap_percentage}% Route Overlap</p>
-                  <p className="text-xs text-gray-600">{Number(current.total_distance_miles).toFixed(2)} miles total</p>
-                </div>
+            {/* Compatibility Score Progress Bar */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">Overall Compatibility</span>
+                <span className={`text-sm font-semibold ${getCompatibilityColor(current.compatibility_percentage ?? current.compatibility_score * 100).split(' ')[1]}`}>
+                  {Math.round(current.compatibility_percentage ?? current.compatibility_score * 100)}%
+                </span>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-green-500" />
-                <div>
-                  <p className="text-sm font-medium">{current.schedule?.departure_time || 'Not specified'}</p>
-                  <p className="text-xs text-gray-600">{current.schedule?.frequency || 'Not specified'}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-orange-500" />
-                <div>
-                  <p className="text-sm font-medium">${Number(current.estimated_savings_per_month).toFixed(2)}/month</p>
-                  <p className="text-xs text-gray-600">Estimated savings</p>
-                </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className={`h-2.5 rounded-full transition-all ${
+                    (current.compatibility_percentage ?? current.compatibility_score * 100) >= 80 ? 'bg-green-500' :
+                    (current.compatibility_percentage ?? current.compatibility_score * 100) >= 70 ? 'bg-yellow-500' : 'bg-gray-400'
+                  }`}
+                  style={{ width: `${Math.min(100, Math.max(0, current.compatibility_percentage ?? current.compatibility_score * 100))}%` }}
+                ></div>
               </div>
             </div>
 
-            <div className="mb-4">
-              <h4 className="text-sm font-medium mb-2">Why you match:</h4>
-              <div className="flex flex-wrap gap-2">
-                {current.match_reasons?.map((reason, idx) => (
-                  <Badge key={idx} variant="secondary" className="text-xs">
-                    {reason}
-                  </Badge>
-                )) || <Badge variant="secondary" className="text-xs">Compatible preferences</Badge>}
+            {/* Match Reasons - Prominent Display */}
+            {current.match_reasons && current.match_reasons.length > 0 && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Why you match:
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {current.match_reasons.map((reason, idx) => (
+                    <Badge key={idx} variant="secondary" className="text-xs bg-blue-100 text-blue-800 border-blue-300">
+                      {reason}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Key Metrics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <Route className={`w-5 h-5 mt-0.5 ${getRouteOverlapColor(current.route_overlap_percentage)}`} />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-900">{current.route_overlap_percentage}% Route Overlap</p>
+                  <p className="text-xs text-gray-600 mt-1">{Number(current.total_distance_miles).toFixed(1)} miles total distance</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <Clock className={`w-5 h-5 mt-0.5 ${getScheduleCompatibilityColor(current.schedule?.compatibility_percentage)}`} />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-900">
+                    {current.schedule?.departure_time || 'Not specified'}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs text-gray-600">{current.schedule?.frequency || 'Not specified'}</p>
+                    {current.schedule?.compatibility_percentage !== undefined && (
+                      <Badge variant="outline" className="text-xs">
+                        {Math.round(current.schedule.compatibility_percentage)}% match
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <DollarSign className="w-5 h-5 mt-0.5 text-orange-500" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-900">
+                    ${Number(current.estimated_savings_per_month).toFixed(2)}/month
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">Estimated savings</p>
+                </div>
               </div>
             </div>
 

@@ -40,33 +40,48 @@ export interface MatchingPreferences {
 
 export interface PotentialMatch {
   id: string;
-  compatibility_score: number;
+  compatibility_score: number; // 0.0 to 1.0 (for calculations)
+  compatibility_percentage: number; // 0 to 100 (for display)
   estimated_savings_per_month: number;
   match_reasons: string[];
-  route_overlap_percentage: number;
+  route_overlap_percentage: number; // 0 to 100
   schedule?: {
     departure_time: string;
     flexibility_minutes: number;
     frequency: string;
-    compatibility_score?: number;
+    compatibility_score?: number; // 0.0 to 1.0
+    compatibility_percentage?: number; // 0 to 100 (for display)
   };
   total_distance_miles: number;
+  status: 'pending' | 'accepted' | 'expired';
+  expires_at: string;
+  created_at: string;
   // Clerk ID for efficient API calls (preferred over UUID)
   user2_clerk_id?: string;
   user2: {
     id: string;
+    clerk_id?: string;
     name: string;
     display_name: string | {
       String: string;
       Valid: boolean;
     };
-    home_location: {
+    home_latitude: number;
+    home_longitude: number;
+    email?: string;
+    // Legacy support (may still be present)
+    home_location?: {
       lat: number;
       lng: number;
     };
-    destination_location: {
+    destination_location?: {
       lat: number;
       lng: number;
+    };
+    work_location?: {
+      lat: number;
+      lng: number;
+      address: string;
     };
   };
 }
