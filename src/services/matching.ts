@@ -31,7 +31,6 @@ import type {
   MatchingSessionResponse,
   MatchingStatsResponse,
 } from '../types/api';
-import type { Scope } from '@/types/company';
 
 // Re-export types to avoid breaking existing imports from this module
 export type { MatchingPreferences, PotentialMatch, MatchRequest, MatchingStats, MatchFilters } from '../types/matching';
@@ -180,27 +179,12 @@ export const useMatchingService = () => {
      * Get matching preferences
      * GET /api/matching/preferences
      * 
-     * Supports optional scope parameter for company preferences
-     * - No scope or scope=personal → Returns personal preferences (existing behavior)
-     * - scope=company&company_id=... → Returns company-specific preferences
-     * 
-     * Backward compatible: When no scope provided, works exactly as before
+     * Returns user's matching preferences
      */
-    async getPreferences(scope?: Scope): Promise<MatchingPreferences | { configured: false; message: string; company_id: string }> {
+    async getPreferences(): Promise<MatchingPreferences | { configured: false; message: string }> {
       const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/preferences`
-      const params = new URLSearchParams()
-      
-      // Add scope parameters if provided
-      if (scope?.type === 'company') {
-        params.set('scope', 'company')
-        params.set('company_id', scope.companyId)
-      } else {
-        // Default to personal scope (backward compatible)
-        params.set('scope', 'personal')
-      }
-      
-      const url = params.toString() ? `${endpoint}?${params.toString()}` : endpoint
-      logRequest('GET', url, { scope })
+      const url = endpoint
+      logRequest('GET', url, {})
       
       try {
         const headers = await api.getHeaders()
@@ -215,9 +199,9 @@ export const useMatchingService = () => {
         const text = await response.text()
         const payload = text ? JSON.parse(text) : null
         
-        // Handle "not configured" response for company preferences
+        // Handle "not configured" response
         if (payload && payload.configured === false) {
-          return payload as { configured: false; message: string; company_id: string }
+          return payload as { configured: false; message: string }
         }
         
         // Handle normal preferences response
@@ -236,13 +220,9 @@ export const useMatchingService = () => {
      * Update matching preferences
      * PUT /api/matching/preferences
      * 
-     * Supports optional scope parameter for company preferences
-     * - No scope or scope=personal → Updates personal preferences (existing behavior)
-     * - scope=company&company_id=... → Updates company-specific preferences
-     * 
-     * Backward compatible: When no scope provided, works exactly as before
+     * Updates user's matching preferences
      */
-    async updatePreferences(update: Partial<MatchingPreferences>, scope?: Scope): Promise<MatchingPreferences> {
+    async updatePreferences(update: Partial<MatchingPreferences>): Promise<MatchingPreferences> {
       const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/preferences`
       
       // Send all user-editable fields including new destination and schedule fields
@@ -267,15 +247,6 @@ export const useMatchingService = () => {
         is_active: update.is_active,
       }
       
-      // Add scope to payload if provided (for company preferences)
-      if (scope?.type === 'company') {
-        payload.company_id = scope.companyId
-        if (scope.siteId) {
-          payload.site_id = scope.siteId
-        }
-      }
-      // If no scope, defaults to personal (backend handles this)
-      
       logRequest('PUT', endpoint, payload)
       
       try {
@@ -287,7 +258,7 @@ export const useMatchingService = () => {
           lat: payload.destination_latitude,
           lng: payload.destination_longitude
         })
-        console.log('🚀 Scope:', scope || 'personal (default)')
+        
 
         const response = await fetch(endpoint, { method: 'PUT', headers, body: JSON.stringify(payload) })
         if (!response.ok) {
@@ -313,13 +284,9 @@ export const useMatchingService = () => {
    * Get potential matches
    * GET /api/matching/potential-matches
    * 
-   * Supports optional scope parameter for company matching
-   * - No scope or scope=personal → Returns personal matches (existing behavior)
-   * - scope=company&company_id=... → Returns company-only matches
-   * 
-   * Backward compatible: When no scope provided, works exactly as before
+   * Returns potential matches for the user
    */
-  async getPotentialMatches(filters: MatchFilters = {}, scope?: Scope): Promise<PotentialMatchesResponse> {
+  async getPotentialMatches(filters: MatchFilters = {}): Promise<PotentialMatchesResponse> {
     const base = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/potential-matches`
     const params = new URLSearchParams()
     
@@ -340,18 +307,8 @@ export const useMatchingService = () => {
     if (filters.occupations?.length) params.set('occupations', filters.occupations.join(','))
     if (filters.student_preference) params.set('student_preference', filters.student_preference)
     
-    // Add scope parameters if provided (for company matching)
-    if (scope?.type === 'company') {
-      params.set('scope', 'company')
-      params.set('company_id', scope.companyId)
-      if (scope.siteId) {
-        params.set('site_id', scope.siteId)
-      }
-    }
-    // If no scope, defaults to personal (backend handles this)
-    
     const endpoint = params.toString() ? `${base}?${params.toString()}` : base
-    logRequest('GET', endpoint, { filters, scope: scope || 'personal (default)' })
+    logRequest('GET', endpoint, { filters })
     try {
       const headers = await api.getHeaders()
       const response = await fetch(endpoint, { method: 'GET', headers })
@@ -425,25 +382,12 @@ export const useMatchingService = () => {
      * Get match requests (incoming and outgoing)
      * GET /api/matching/requests
      * 
-     * Supports optional scope parameter for company requests
-     * - No scope or scope=personal → Returns personal requests (existing behavior)
-     * - scope=company&company_id=... → Returns company-only requests
-     * 
-     * Backward compatible: When no scope provided, works exactly as before
+     * Returns match requests for the user
      */
-    async getRequests(scope?: Scope): Promise<MatchRequestsResponse> {
+    async getRequests(): Promise<MatchRequestsResponse> {
       const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/requests`
-      const params = new URLSearchParams()
-      
-      // Add scope parameters if provided (for company requests)
-      if (scope?.type === 'company') {
-        params.set('scope', 'company')
-        params.set('company_id', scope.companyId)
-      }
-      // If no scope, defaults to personal (backend handles this)
-      
-      const url = params.toString() ? `${endpoint}?${params.toString()}` : endpoint
-      logRequest('GET', url, { scope: scope || 'personal (default)' })
+      const url = endpoint
+      logRequest('GET', url, {})
       
       try {
         const headers = await api.getHeaders()
@@ -475,11 +419,7 @@ export const useMatchingService = () => {
      * Send a match request
      * POST /api/matching/request
      * 
-     * Supports optional scope parameter for company requests
-     * - No scope or scope=personal → Creates personal request (existing behavior)
-     * - scope=company&company_id=... → Creates company request
-     * 
-     * Backward compatible: When no scope provided, works exactly as before
+     * Sends a match request to another user
      * 
      * Note: carpoolName and preferredCarpoolSize are validated at runtime
      * (backend requires them, but we keep signature flexible for backward compatibility)
@@ -489,8 +429,7 @@ export const useMatchingService = () => {
       potentialMatchId?: string, 
       message?: string, 
       carpoolName?: string, 
-      preferredCarpoolSize?: number,
-      scope?: Scope
+      preferredCarpoolSize?: number
     ): Promise<MatchRequestResponse> {
       const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/request`
       
@@ -512,15 +451,6 @@ export const useMatchingService = () => {
         preferred_carpool_size: preferredCarpoolSize,
         ...(message && { message }),
       }
-      
-      // Add scope to body if provided (for company requests)
-      if (scope?.type === 'company') {
-        body.company_id = scope.companyId
-        if (scope.siteId) {
-          body.site_id = scope.siteId
-        }
-      }
-      // If no scope, defaults to personal (backend handles this)
       
       logRequest('POST', endpoint, body)
       try {

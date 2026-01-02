@@ -1,5 +1,4 @@
 import { Carpool, CompletedRide, Analytics, Schedule } from '@/types/api'
-import { CompanyMembershipsResponse, UpdateCompanySiteResponse, CompanyStats, SiteStats, CompanyAdoption, Scope } from '@/types/company'
 import { useAuth } from '@clerk/nextjs'
 import { mockService } from '@/mocks/mockService'
 import { useMemo } from 'react'
@@ -166,34 +165,16 @@ export const useApi = () => {
        * Get user's carpools
        * GET /api/carpools/users/{userId}
        * 
-       * Supports optional scope parameter for company carpools
-       * - No scope or scope=personal → Returns personal carpools (existing behavior)
-       * - scope=company&company_id=... → Returns company carpools
+       * Returns personal carpools for the user
        * 
-       * Backward compatible: When no scope provided, works exactly as before
        */
-      async getCarpools(userId: string, scope?: Scope) {
+      async getCarpools(userId: string) {
         if (useMockApi) {
           return mockService.getCarpools()
         }
-        console.log('🔐 getCarpools: Starting API call for userId:', userId, 'scope:', scope)
+        console.log('🔐 getCarpools: Starting API call for userId:', userId)
         const headers = await getHeaders()
-        const params = new URLSearchParams()
-        
-        // Add scope parameters if provided (for company carpools)
-        if (scope?.type === 'company') {
-          params.set('scope', 'company')
-          params.set('company_id', scope.companyId)
-          if (scope.siteId) {
-            params.set('site_id', scope.siteId)
-          }
-        }
-        // If no scope, defaults to personal (backend handles this)
-        
-        const queryString = params.toString()
-        const url = queryString 
-          ? `${process.env.NEXT_PUBLIC_API_URL}/api/carpools/users/${userId}?${queryString}`
-          : `${process.env.NEXT_PUBLIC_API_URL}/api/carpools/users/${userId}`
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/carpools/users/${userId}`
         console.log('🔐 getCarpools: Making request to:', url)
         console.log('🔐 getCarpools: Request headers:', {
           'Content-Type': headers['Content-Type'],
@@ -259,27 +240,15 @@ export const useApi = () => {
        * Create a new carpool
        * POST /api/carpools
        * 
-       * Supports optional scope parameter for company carpools
-       * - No scope or scope=personal → Creates personal carpool (existing behavior)
-       * - scope=company&company_id=... → Creates company carpool
+       * Creates a new carpool
        * 
-       * Backward compatible: When no scope provided, works exactly as before
        */
-      async createCarpool(carpoolData: any, scope?: Scope) {
+      async createCarpool(carpoolData: any) {
         if (useMockApi) {
           return mockService.createCarpool(carpoolData)
         }
         const headers = await getHeaders()
-        
-        // Add scope to request body if provided (for company carpools)
         const body = { ...carpoolData }
-        if (scope?.type === 'company') {
-          body.company_id = scope.companyId
-          if (scope.siteId) {
-            body.site_id = scope.siteId
-          }
-        }
-        // If no scope, defaults to personal (backend handles this)
         
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/carpools`, {
           method: 'POST',
@@ -961,26 +930,10 @@ export const useApi = () => {
        * Get carpool schedules
        * GET /api/carpools/{id}/schedules
        * 
-       * Supports optional scope parameter for company carpools
-       * Backward compatible: When no scope provided, works exactly as before
        */
-      async getCarpoolSchedules(carpoolId: string, scope?: Scope): Promise<Schedule[]> {
+      async getCarpoolSchedules(carpoolId: string): Promise<Schedule[]> {
         const headers = await getHeaders()
-        const params = new URLSearchParams()
-        
-        // Add scope parameters if provided (for company carpools)
-        if (scope?.type === 'company') {
-          params.set('scope', 'company')
-          params.set('company_id', scope.companyId)
-          if (scope.siteId) {
-            params.set('site_id', scope.siteId)
-          }
-        }
-        
-        const queryString = params.toString()
-        const url = queryString
-          ? `${API_URL}/carpools/${carpoolId}/schedules?${queryString}`
-          : `${API_URL}/carpools/${carpoolId}/schedules`
+        const url = `${API_URL}/carpools/${carpoolId}/schedules`
         
         const response = await fetch(url, {
           method: 'GET',
@@ -1108,27 +1061,11 @@ export const useApi = () => {
        * Get carpool participants by date
        * GET /api/carpools/{id}/days/{date}/participants
        * 
-       * Supports optional scope parameter for company carpools
-       * Backward compatible: When no scope provided, works exactly as before
        */
-      async getCarpoolParticipantsByDate(carpoolId: string, date: string, scope?: Scope) {
+      async getCarpoolParticipantsByDate(carpoolId: string, date: string) {
         const headers = await getHeaders()
-        console.log('Fetching participants for carpool:', carpoolId, 'date:', date, 'scope:', scope)
-        const params = new URLSearchParams()
-        
-        // Add scope parameters if provided (for company carpools)
-        if (scope?.type === 'company') {
-          params.set('scope', 'company')
-          params.set('company_id', scope.companyId)
-          if (scope.siteId) {
-            params.set('site_id', scope.siteId)
-          }
-        }
-        
-        const queryString = params.toString()
-        const url = queryString
-          ? `${API_URL}/api/carpools/${carpoolId}/days/${date}/participants?${queryString}`
-          : `${API_URL}/api/carpools/${carpoolId}/days/${date}/participants`
+        console.log('Fetching participants for carpool:', carpoolId, 'date:', date)
+        const url = `${API_URL}/api/carpools/${carpoolId}/days/${date}/participants`
         
         const response = await fetch(url, {
           method: 'GET',
@@ -1186,31 +1123,15 @@ export const useApi = () => {
        * Get carpool ride by date
        * GET /api/carpools/{id}/rides/{date}
        * 
-       * Supports optional scope parameter for company carpools
-       * Backward compatible: When no scope provided, works exactly as before
        */
-      async getCarpoolRideByDate(carpoolId: string, date: string, scope?: Scope) {
+      async getCarpoolRideByDate(carpoolId: string, date: string) {
         const headers = await getHeaders()
-        const params = new URLSearchParams()
-        
-        // Add scope parameters if provided (for company carpools)
-        if (scope?.type === 'company') {
-          params.set('scope', 'company')
-          params.set('company_id', scope.companyId)
-          if (scope.siteId) {
-            params.set('site_id', scope.siteId)
-          }
-        }
-        
-        const queryString = params.toString()
-        const endpoint = queryString
-          ? `${API_URL}/api/carpools/${carpoolId}/rides/${date}?${queryString}`
-          : `${API_URL}/api/carpools/${carpoolId}/rides/${date}`
+        const endpoint = `${API_URL}/api/carpools/${carpoolId}/rides/${date}`
         console.log('🔍 API: getCarpoolRideByDate called')
         console.log('🔍 API: Endpoint:', endpoint)
         console.log('🔍 API: Carpool ID:', carpoolId)
         console.log('🔍 API: Date:', date)
-        console.log('🔍 API: Scope:', scope)
+        
         
         const response = await fetch(endpoint, {
           headers
@@ -1617,26 +1538,10 @@ export const useApi = () => {
        * Get all carpool rides
        * GET /api/carpools/{id}/rides
        * 
-       * Supports optional scope parameter for company carpools
-       * Backward compatible: When no scope provided, works exactly as before
        */
-      async getCarpoolRides(carpoolId: string, scope?: Scope) {
+      async getCarpoolRides(carpoolId: string) {
         const headers = await getHeaders();
-        const params = new URLSearchParams()
-        
-        // Add scope parameters if provided (for company carpools)
-        if (scope?.type === 'company') {
-          params.set('scope', 'company')
-          params.set('company_id', scope.companyId)
-          if (scope.siteId) {
-            params.set('site_id', scope.siteId)
-          }
-        }
-        
-        const queryString = params.toString()
-        const url = queryString
-          ? `${API_URL}/api/carpools/${carpoolId}/rides?${queryString}`
-          : `${API_URL}/api/carpools/${carpoolId}/rides`
+        const url = `${API_URL}/api/carpools/${carpoolId}/rides`
         
         const response = await fetch(url, {
           method: 'GET',
@@ -1647,152 +1552,7 @@ export const useApi = () => {
         }
         const data = await response.json();
         return data;
-      },
-
-      // ============================================
-      // Company Spaces API Methods
-      // ============================================
-      // These methods are backward compatible - they gracefully handle
-      // cases where the backend endpoints don't exist yet (before Phase 4)
-
-      /**
-       * Get user's company memberships
-       * GET /api/me/company
-       * 
-       * Returns list of companies the user belongs to
-       * Backward compatible: Returns empty array if endpoint doesn't exist
-       */
-      async getCompanyMemberships() {
-        try {
-          const headers = await getHeaders();
-          const response = await fetch(`${API_URL}/api/me/company`, {
-            method: 'GET',
-            headers
-          });
-          
-          if (!response.ok) {
-            // If endpoint doesn't exist (404) or not implemented yet, return empty
-            if (response.status === 404) {
-              console.warn('Company memberships endpoint not available yet (backend Phase 4 not complete)');
-              return { memberships: [] };
-            }
-            throw new Error(`Failed to fetch company memberships: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          return data;
-        } catch (error: any) {
-          // Gracefully handle errors (endpoint might not exist yet)
-          console.warn('Failed to fetch company memberships:', error);
-          return { memberships: [] };
-        }
-      },
-
-      /**
-       * Update user's site selection within a company
-       * PUT /api/me/company-site
-       * 
-       * Request body: { company_id: string, site_id: string | null }
-       * Response: { company_id: string, site_id: string | null, updated_at: string }
-       */
-      async updateCompanySite(companyId: string, siteId: string | null) {
-        const headers = await getHeaders();
-        const response = await fetch(`${API_URL}/api/me/company-site`, {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify({
-            company_id: companyId,
-            site_id: siteId
-          })
-        });
-        
-        if (!response.ok) {
-          const text = await response.text();
-          let errorMessage = `Failed to update company site: ${response.status}`;
-          try {
-            const errorData = JSON.parse(text);
-            errorMessage = errorData.message || errorMessage;
-          } catch {
-            errorMessage = text || errorMessage;
-          }
-          throw new Error(errorMessage);
-        }
-        
-        const data = await response.json();
-        return data;
-      },
-
-      /**
-       * Get company-wide analytics (admin only)
-       * GET /api/companies/{companyId}/stats
-       * 
-       * Requires: company_admin or site_admin role
-       */
-      async getCompanyStats(companyId: string) {
-        const headers = await getHeaders();
-        const response = await fetch(`${API_URL}/api/companies/${companyId}/stats`, {
-          method: 'GET',
-          headers
-        });
-        
-        if (!response.ok) {
-          if (response.status === 403) {
-            throw new Error('Access denied: Admin role required');
-          }
-          throw new Error(`Failed to fetch company stats: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return data;
-      },
-
-      /**
-       * Get site-specific analytics (admin only)
-       * GET /api/companies/{companyId}/sites/{siteId}/stats
-       * 
-       * Requires: company_admin or site_admin role (for that site)
-       */
-      async getSiteStats(companyId: string, siteId: string) {
-        const headers = await getHeaders();
-        const response = await fetch(`${API_URL}/api/companies/${companyId}/sites/${siteId}/stats`, {
-          method: 'GET',
-          headers
-        });
-        
-        if (!response.ok) {
-          if (response.status === 403) {
-            throw new Error('Access denied: Admin role required');
-          }
-          throw new Error(`Failed to fetch site stats: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return data;
-      },
-
-      /**
-       * Get company adoption breakdown by site (admin only)
-       * GET /api/companies/{companyId}/adoption
-       * 
-       * Requires: company_admin role
-       */
-      async getCompanyAdoption(companyId: string) {
-        const headers = await getHeaders();
-        const response = await fetch(`${API_URL}/api/companies/${companyId}/adoption`, {
-          method: 'GET',
-          headers
-        });
-        
-        if (!response.ok) {
-          if (response.status === 403) {
-            throw new Error('Access denied: Company admin role required');
-          }
-          throw new Error(`Failed to fetch company adoption: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return data;
-      },
+      }
     }
   }, [getToken, isLoaded, isSignedIn])
 }
