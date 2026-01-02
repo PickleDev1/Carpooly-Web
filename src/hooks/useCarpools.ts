@@ -43,6 +43,8 @@ export function useCarpools() {
         setCarpools(processedCarpools);
       } catch (error) {
         console.error('Error fetching carpools:', error);
+        // Set empty array on error to prevent UI breakage
+        setCarpools([]);
       }
     }
 

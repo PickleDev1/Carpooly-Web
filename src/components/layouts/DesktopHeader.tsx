@@ -116,7 +116,6 @@ export function DesktopHeader() {
             </nav>
           )}
 
-
           {/* User Menu / Sign In */}
           <div className="flex items-center gap-4">
             {isSignedIn && user ? (

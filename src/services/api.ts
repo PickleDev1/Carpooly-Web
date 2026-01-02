@@ -220,6 +220,13 @@ export const useApi = () => {
             headers: Object.fromEntries(response.headers.entries()),
             body: responseText
           })
+          
+          // For 500 errors, return empty array instead of throwing to prevent UI breakage
+          if (response.status === 500) {
+            console.warn('🔐 getCarpools: Backend returned 500 error, returning empty array to prevent UI breakage')
+            return { data: [] }
+          }
+          
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
