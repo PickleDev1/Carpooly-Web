@@ -527,7 +527,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         {/* Header */}
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">Potential Matches</h2>
-          <Badge variant="secondary">0 matches</Badge>
+          <Badge variant="secondary">{sortedMatches.length} {sortedMatches.length === 1 ? 'match' : 'matches'}</Badge>
         </div>
 
         <Card>
@@ -598,7 +598,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
 
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">Potential Matches</h2>
-          <Badge variant="secondary">0 matches</Badge>
+          <Badge variant="secondary">{sortedMatches.length} {sortedMatches.length === 1 ? 'match' : 'matches'}</Badge>
         </div>
         <Card>
           <CardContent className="p-8 text-center">
