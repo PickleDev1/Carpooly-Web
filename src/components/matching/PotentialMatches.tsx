@@ -149,6 +149,12 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         const prefs = prefsResponse as import('@/types/matching').MatchingPreferences
         console.log('👤 User preferences:', prefs)
         console.log('📍 Destination coordinates:', { lat: prefs.destination_latitude, lng: prefs.destination_longitude })
+        console.log('📍 Destination address:', prefs.destination_address)
+        console.log('⏰ Arrival time:', prefs.arrival_time)
+        console.log('📅 Commute days:', prefs.commute_days)
+        console.log('✅ Is active:', prefs.is_active)
+        console.log('👥 Preferred group size:', prefs.preferred_group_size)
+        console.log('🎯 Min compatibility score:', prefs.min_compatibility_score)
         
         // Check if destination is set (not 0,0 and not null/undefined)
         let hasValidDestination = prefs.destination_latitude !== 0 && 
@@ -170,7 +176,8 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         }
         
         if (!prefs.is_active) {
-          console.warn('⚠️ User preferences are not active!')
+          console.warn('⚠️ User preferences are not active! This will prevent matches from being generated.')
+          console.warn('⚠️ Please enable preferences in the Preferences tab')
         }
       } catch (prefErr) {
         console.warn('⚠️ Could not fetch user preferences:', prefErr)
@@ -180,11 +187,18 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       // Ensure server has up-to-date generated matches for this user
       try {
         console.log('🔄 Triggering match generation...')
-        await matchingService.findMatches({ filters: currentFilters })
-        console.log('✅ Match generation completed')
+        console.log('🔄 Using filters:', currentFilters)
+        const matchResult = await matchingService.findMatches({ 
+          filters: currentFilters,
+          force_refresh: true, // Force backend to regenerate matches
+          max_results: 50 // Increase max results to see more matches
+        })
+        console.log('✅ Match generation completed:', matchResult)
+        console.log('✅ Matches found:', matchResult.matches_found)
+        console.log('✅ Message:', matchResult.message)
       } catch (genErr) {
-        console.warn('⚠️ Match generation failed:', genErr)
-        console.warn('⚠️ This might be why no matches are found')
+        console.error('❌ Match generation failed:', genErr)
+        console.error('❌ This might be why no matches are found')
       }
       
       const data = await matchingService.getPotentialMatches(currentFilters)

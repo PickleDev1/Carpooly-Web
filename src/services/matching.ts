@@ -349,13 +349,20 @@ export const useMatchingService = () => {
 
     async findMatches(opts: { max_results?: number; force_refresh?: boolean; filters?: MatchFilters } = {}): Promise<FindMatchesResponse> {
       const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/find-matches`
-      const body: any = { max_results: opts.max_results ?? 10 }
+      const body: any = { max_results: opts.max_results ?? 50 } // Increased default to 50
       if (opts.force_refresh !== undefined) body.force_refresh = opts.force_refresh
       if (opts.filters) body.filters = opts.filters
+      
+      console.log('🔄 findMatches: Request body:', body)
+      console.log('🔄 findMatches: Endpoint:', endpoint)
       logRequest('POST', endpoint, body)
+      
       try {
         const headers = await api.getHeaders()
         const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) })
+        
+        console.log('🔄 findMatches: Response status:', response.status, response.statusText)
+        
         if (!response.ok) {
           const text = await response.text()
           console.error('❌ findMatches error response:', response.status, text)
@@ -364,16 +371,20 @@ export const useMatchingService = () => {
           throw { status: response.status, message: text }
         }
         const text = await response.text()
+        console.log('🔄 findMatches: Raw response text:', text.substring(0, 500))
         const data = text ? JSON.parse(text) : {}
+        console.log('🔄 findMatches: Parsed response data:', data)
         
         // Handle both wrapped and direct response formats
         const res: FindMatchesResponse = data.matches_found !== undefined 
           ? data 
           : { matches_found: 0, message: 'No matches found' }
         
+        console.log('🔄 findMatches: Final result:', res)
         logResponse('POST', endpoint, res)
         return res
       } catch (error: any) {
+        console.error('❌ findMatches: Exception caught:', error)
         return handleApiError(error, 'find matches')
       }
     },
