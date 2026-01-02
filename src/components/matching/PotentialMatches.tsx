@@ -185,6 +185,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       
 
       // Ensure server has up-to-date generated matches for this user
+      // Note: This endpoint may not be implemented yet on the backend
       try {
         console.log('🔄 Triggering match generation...')
         console.log('🔄 Using filters:', currentFilters)
@@ -196,9 +197,15 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         console.log('✅ Match generation completed:', matchResult)
         console.log('✅ Matches found:', matchResult.matches_found)
         console.log('✅ Message:', matchResult.message)
-      } catch (genErr) {
-        console.error('❌ Match generation failed:', genErr)
-        console.error('❌ This might be why no matches are found')
+      } catch (genErr: any) {
+        // If endpoint doesn't exist (404), that's okay - backend may generate matches automatically
+        if (genErr?.status === 404) {
+          console.warn('⚠️ Match generation endpoint not found (404) - backend may generate matches automatically')
+          console.warn('⚠️ This is expected if the backend endpoint is not yet implemented')
+        } else {
+          console.error('❌ Match generation failed:', genErr)
+          console.error('❌ This might be why no matches are found')
+        }
       }
       
       const data = await matchingService.getPotentialMatches(currentFilters)
