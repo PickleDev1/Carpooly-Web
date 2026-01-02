@@ -126,7 +126,7 @@ export function CarpoolForm({ userId, onSuccess }: CarpoolFormProps) {
       }
 
       console.log('Creating carpool with data:', carpoolData)
-      const newCarpool = await api.createCarpool(carpoolData, activeScope)
+      const newCarpool = await api.createCarpool(carpoolData)
       console.log('Carpool created successfully:', newCarpool)
 
       // Create schedule

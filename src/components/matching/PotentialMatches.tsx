@@ -21,7 +21,6 @@ import {
 import { useMatchingService } from '@/services/matching'
 import { type PotentialMatch, type MatchFilters } from '@/types/matching'
 import { validateCarpoolName } from '@/utils/validation'
-import { useCompany } from '@/contexts/CompanyContext'
 // Advanced filters removed from Potential Matches; filters are managed via Preferences
 
 // Transform backend response to match our interface

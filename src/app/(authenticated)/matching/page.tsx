@@ -13,8 +13,6 @@ import { MatchingStats } from '@/components/matching/MatchingStats'
 import { MatchingPreferences as MatchingPreferencesComponent } from '@/components/matching/MatchingPreferences'
 import { AdvancedMatching } from '@/components/matching/AdvancedMatching'
 import { RealTimeUpdates } from '@/components/matching/RealTimeUpdates'
-import { SiteSelectionPrompt } from '@/components/company/SiteSelectionPrompt'
-import { MembershipNotification } from '@/components/company/MembershipNotification'
 
 function MatchingPageContent() {
   const matching = useMatchingService()
@@ -224,12 +222,6 @@ export default function MatchingPage() {
           <h1 className="text-2xl font-bold">Matching</h1>
           <p className="text-muted-foreground">Find, review, and manage your carpool matches</p>
         </div>
-        
-        {/* Company membership notifications */}
-        <MembershipNotification />
-        
-        {/* Site selection prompt (if in company scope without site) */}
-        <SiteSelectionPrompt />
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>

@@ -40,8 +40,6 @@ import { OnboardingTour } from '@/components/OnboardingTour'
 import { HelpTips } from '@/components/HelpTips'
 import { ContextualTooltip, useTooltips } from '@/components/ContextualTooltip'
 import { useMatchingService } from '@/services/matching'
-import { MembershipNotification } from '@/components/company/MembershipNotification'
-import { SiteSelectionPrompt } from '@/components/company/SiteSelectionPrompt'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -726,12 +724,6 @@ export default function Dashboard() {
             Here&apos;s what&apos;s happening with your carpools today
           </p>
         </div>
-        
-        {/* Company membership notifications */}
-        <MembershipNotification />
-        
-        {/* Site selection prompt (if in company scope without site) */}
-        <SiteSelectionPrompt />
         <div className="flex items-center gap-3">
           <NotificationPopup />
         </div>

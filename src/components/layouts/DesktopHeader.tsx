@@ -116,12 +116,6 @@ export function DesktopHeader() {
             </nav>
           )}
 
-          {/* Company Selector - Only shows if user has memberships */}
-          {isSignedIn && (
-            <div className="hidden md:block">
-              <CompanySelector />
-            </div>
-          )}
 
           {/* User Menu / Sign In */}
           <div className="flex items-center gap-4">
