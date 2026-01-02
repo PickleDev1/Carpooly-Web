@@ -199,6 +199,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
 
       // Ensure server has up-to-date generated matches for this user
       // Note: This endpoint may not be implemented yet on the backend
+      let matchesGenerated = false
       try {
         console.log('🔄 Triggering match generation...')
         console.log('🔄 Using filters:', currentFilters)
@@ -210,6 +211,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         console.log('✅ Match generation completed:', matchResult)
         console.log('✅ Matches found:', matchResult.matches_found)
         console.log('✅ Message:', matchResult.message)
+        matchesGenerated = matchResult.matches_found > 0
       } catch (genErr: any) {
         // If endpoint doesn't exist (404), that's okay - backend may generate matches automatically
         if (genErr?.status === 404) {
@@ -221,9 +223,48 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         }
       }
       
+      // If matches were just generated, wait a moment for backend to persist them
+      if (matchesGenerated) {
+        console.log('⏳ Waiting for backend to persist generated matches...')
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
+        console.log('✅ Wait complete, fetching matches...')
+      }
+      
       let data
-      try {
-        data = await matchingService.getPotentialMatches(currentFilters)
+      let retryCount = 0
+      const maxRetries = 3
+      
+      // Retry logic: if matches were generated but not returned, retry a few times
+      while (retryCount <= maxRetries) {
+        try {
+          data = await matchingService.getPotentialMatches(currentFilters)
+          console.log('📊 Received data:', data)
+          console.log('📋 Pending matches count:', data.pending_matches?.length || 0)
+          
+          // If we just generated matches and got none, but matches were found, retry
+          if (matchesGenerated && (data.pending_matches?.length || 0) === 0 && retryCount < maxRetries) {
+            retryCount++
+            console.log(`🔄 No matches returned but ${matchesGenerated ? 'matches were generated' : 'expected matches'}, retrying... (attempt ${retryCount}/${maxRetries})`)
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)) // Exponential backoff
+            continue
+          }
+          
+          break // Success or max retries reached
+        } catch (matchesErr: any) {
+          // If endpoint doesn't exist (404), show helpful error message
+          if (matchesErr?.status === 404) {
+            console.error('❌ Potential matches endpoint not found (404)')
+            console.error('❌ The backend endpoint /api/matching/potential-matches is not implemented yet')
+            console.error('❌ Please contact the backend team to implement this endpoint')
+            setMatches([])
+            setLoading(false)
+            // Show user-friendly error
+            alert('Matching feature is not yet available. The backend endpoint needs to be implemented.')
+            return
+          }
+          throw matchesErr // Re-throw other errors
+        }
+      }
         console.log('📊 Received data:', data)
         console.log('📋 Pending matches count:', data.pending_matches?.length || 0)
         console.log('📋 Accepted matches count:', data.accepted_matches?.length || 0)
