@@ -72,10 +72,10 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
                 const p = await matching.getPreferences()
         if (!mounted) return
         
-        // Handle "not configured" response for company preferences
+        // Handle "not configured" response
         if ('configured' in p && p.configured === false) {
-          console.warn('Company preferences not configured:', p.message)
-          // Use defaults for company preferences not configured
+          console.warn('Preferences not configured:', p.message)
+          // Use defaults if preferences not configured
           setPrefs(defaults)
           return
         }

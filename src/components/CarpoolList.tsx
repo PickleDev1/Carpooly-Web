@@ -112,9 +112,9 @@ export function CarpoolList() {
         const preferences = await matching.getPreferences();
         if (!mounted) return
         
-        // Handle "not configured" response for company preferences
+        // Handle "not configured" response
         if ('configured' in preferences && preferences.configured === false) {
-          // Company preferences not configured, skip
+          // Preferences not configured, skip
           return;
         }
         // Type guard: preferences is MatchingPreferences at this point

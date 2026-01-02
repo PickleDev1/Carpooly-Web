@@ -138,7 +138,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       // First, let's check the user's preferences to see if they're properly set
       try {
         const prefsResponse = await matchingService.getPreferences()
-        // Handle "not configured" response for company preferences
+        // Handle "not configured" response
         if ('configured' in prefsResponse && prefsResponse.configured === false) {
           console.warn('Preferences not configured:', prefsResponse.message)
           setMatches([])
