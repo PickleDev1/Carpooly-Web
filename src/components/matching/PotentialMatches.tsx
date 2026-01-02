@@ -230,7 +230,7 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         console.log('✅ Wait complete, fetching matches...')
       }
       
-      let data
+      let data: { pending_matches?: any[]; accepted_matches?: any[]; expired_matches?: any[] } | undefined
       let retryCount = 0
       const maxRetries = 3
       
@@ -264,6 +264,14 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
           }
           throw matchesErr // Re-throw other errors
         }
+      }
+      
+      // Ensure data is defined before using it
+      if (!data) {
+        console.error('❌ Failed to fetch matches after retries')
+        setMatches([])
+        setLoading(false)
+        return
       }
       
       // Log final results
