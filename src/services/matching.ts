@@ -308,22 +308,43 @@ export const useMatchingService = () => {
     if (filters.student_preference) params.set('student_preference', filters.student_preference)
     
     const endpoint = params.toString() ? `${base}?${params.toString()}` : base
+    console.log('🔍 getPotentialMatches: Endpoint:', endpoint)
+    console.log('🔍 getPotentialMatches: Filters:', filters)
     logRequest('GET', endpoint, { filters })
     try {
       const headers = await api.getHeaders()
       const response = await fetch(endpoint, { method: 'GET', headers })
+      
+      console.log('🔍 getPotentialMatches: Response status:', response.status, response.statusText)
+      
       if (!response.ok) {
         const text = await response.text()
-        console.error('getPotentialMatches error response:', response.status, text)
+        console.error('❌ getPotentialMatches error response:', response.status, text)
         throw { status: response.status, message: text }
       }
       const text = await response.text()
-      console.log('🔍 Raw response text:', text)
+      console.log('🔍 getPotentialMatches: Raw response text length:', text.length)
+      console.log('🔍 getPotentialMatches: Raw response text (first 1000 chars):', text.substring(0, 1000))
       const data = text ? JSON.parse(text) : {}
-      console.log('🔍 Parsed response data:', data)
-      console.log('🔍 pending_matches in response:', data.pending_matches)
-      console.log('🔍 pending_matches type:', typeof data.pending_matches)
-      console.log('🔍 pending_matches length:', data.pending_matches?.length)
+      console.log('🔍 getPotentialMatches: Parsed response data:', data)
+      console.log('🔍 getPotentialMatches: pending_matches in response:', data.pending_matches)
+      console.log('🔍 getPotentialMatches: pending_matches type:', typeof data.pending_matches)
+      console.log('🔍 getPotentialMatches: pending_matches length:', data.pending_matches?.length)
+      
+      // Log details about each match
+      if (data.pending_matches && Array.isArray(data.pending_matches) && data.pending_matches.length > 0) {
+        console.log('🔍 getPotentialMatches: Match details:')
+        data.pending_matches.forEach((match: any, index: number) => {
+          console.log(`  Match ${index + 1}:`, {
+            id: match.id,
+            compatibility_score: match.compatibility_score,
+            user2_id: match.user2?.id,
+            user2_name: match.user2?.name,
+            destination: match.user2?.destination_location || match.user2?.work_location,
+            route_overlap: match.route_overlap_percentage
+          })
+        })
+      }
 
       // Handle both wrapped and direct response formats
       const res: PotentialMatchesResponse = data.pending_matches !== undefined
