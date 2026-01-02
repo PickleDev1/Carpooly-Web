@@ -54,7 +54,7 @@ export default function CarpoolCalendarPage() {
       }
     }
     fetchSchedules()
-  }, [params.id, api])
+  }, [params.id, api, activeScope])
 
   const calculateRecurringDatesFromAllSchedules = (allSchedules: Schedule[]) => {
     const allDates: Date[] = []

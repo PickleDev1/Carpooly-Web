@@ -105,21 +105,37 @@ export function CarpoolList() {
 
   // Fetch user preferences for next ride calculation
   useEffect(() => {
+    let mounted = true
+    
     const fetchUserPreferences = async () => {
       try {
         const preferences = await matching.getPreferences();
+        if (!mounted) return
+        
+        // Handle "not configured" response for company preferences
+        if ('configured' in preferences && preferences.configured === false) {
+          // Company preferences not configured, skip
+          return;
+        }
+        // Type guard: preferences is MatchingPreferences at this point
+        const prefs = preferences as import('@/types/matching').MatchingPreferences;
         setUserPreferences({
-          arrival_time: preferences.arrival_time,
-          commute_days: preferences.commute_days
+          arrival_time: prefs.arrival_time,
+          commute_days: prefs.commute_days
         });
       } catch (error) {
+        if (!mounted) return
         console.error('Failed to fetch user preferences:', error);
         setUserPreferences(null);
       }
     };
 
     fetchUserPreferences();
-  }, [matching]);
+    
+    return () => {
+      mounted = false
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Only run once on mount to prevent infinite loop
 
   // Helper to get schedule type label
   const getScheduleTypeLabel = (scheduleType?: string) => {

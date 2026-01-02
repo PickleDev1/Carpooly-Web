@@ -114,7 +114,7 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
         console.warn('🚗 CarpoolDayModal: Expected: A ride should exist because this date is in the schedule')
         console.warn('🚗 CarpoolDayModal: Trying fallback: get participants from carpool members...')
         try {
-          const participantsData = await api.getCarpoolParticipantsByDate(carpoolId, format(date, 'yyyy-MM-dd'))
+          const participantsData = await api.getCarpoolParticipantsByDate(carpoolId, format(date, 'yyyy-MM-dd'), activeScope)
           console.log('Fallback participants data:', participantsData)
           
           // Always extract the .participants array if present

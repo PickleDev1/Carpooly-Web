@@ -11,7 +11,9 @@ export default function AuthenticatedLayout({
   return (
     <>
       <SignInRedirect />
-      {children}
+      <MainLayout>
+        {children}
+      </MainLayout>
     </>
   )
 }

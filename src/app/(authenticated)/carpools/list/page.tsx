@@ -84,9 +84,13 @@ export default function ListCarpoolsPage() {
 
   // Fetch incoming match requests
   useEffect(() => {
+    let mounted = true
+    
     const fetchIncomingRequests = async () => {
       try {
         const requests = await matching.getRequests()
+        
+        if (!mounted) return // Prevent state update if component unmounted
         
         // Ensure requests and incoming array exist
         if (!requests || !Array.isArray(requests.incoming)) {
@@ -159,7 +163,11 @@ export default function ListCarpoolsPage() {
     }
 
     fetchIncomingRequests()
-  }, [matching])
+    
+    return () => {
+      mounted = false
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Only run once on mount to prevent infinite loop
 
   return (
     <div className="px-2 sm:px-4 py-4 sm:py-8">

@@ -23,6 +23,9 @@ export interface Carpool {
   current_members?: number; // Current number of members
   is_full?: boolean; // Whether carpool is full
   members?: CarpoolMember[]; // List of carpool members
+  // Company Spaces fields (optional - backward compatible)
+  company_id?: string | null; // NULL for personal carpools, UUID for company carpools
+  site_id?: string | null; // Optional site within company
 }
 
 export interface CarpoolMember {

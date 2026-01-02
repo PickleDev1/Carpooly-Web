@@ -65,6 +65,7 @@ interface Props {
 export function MatchRequests({ onStatsUpdate, refreshTrigger }: Props) {
   const matching = useMatchingService()
   const router = useRouter()
+  const { activeScope } = useCompany()
   const [loading, setLoading] = useState(false)
   const [requests, setRequests] = useState<MatchRequestsResponse>({ incoming: [], outgoing: [] })
   const [processing, setProcessing] = useState<string | null>(null)

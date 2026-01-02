@@ -28,7 +28,7 @@ export function MatchingStats() {
       setLoading(false)
     })()
     return () => { mounted = false }
-  }, [matching])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Only run once on mount to prevent infinite loop
 
   if (loading) {
     return (

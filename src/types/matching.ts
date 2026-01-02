@@ -1,5 +1,6 @@
 // Core matching domain types
 export interface MatchingPreferences {
+  id?: string; // NEW - surrogate primary key (added in backend Phase 2)
   user_id: string;
   max_detour_minutes: number;
   preferred_group_size: number;
@@ -33,6 +34,9 @@ export interface MatchingPreferences {
     occupation_preferences: string[];
   };
   is_active: boolean;
+  // Company Spaces fields (optional - backward compatible)
+  company_id?: string | null; // NULL for personal preferences, UUID for company-specific
+  site_id?: string | null; // Optional site within company
   created_at: string;
   updated_at: string;
 }
@@ -85,6 +89,9 @@ export interface MatchRequest {
   message: string;
   carpool_name: string; // NEW: Carpool name chosen by the sender
   preferred_carpool_size?: number; // NEW: User's preferred carpool size
+  // Company Spaces fields (optional - backward compatible)
+  company_id?: string | null; // NULL for personal requests, UUID for company requests
+  site_id?: string | null; // Optional site within company
   status: 'pending' | 'accepted' | 'declined' | 'rejected';
   expires_at: string;
   created_at: string;

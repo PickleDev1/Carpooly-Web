@@ -21,6 +21,7 @@ import {
 import { useMatchingService } from '@/services/matching'
 import { type PotentialMatch, type MatchFilters } from '@/types/matching'
 import { validateCarpoolName } from '@/utils/validation'
+import { useCompany } from '@/contexts/CompanyContext'
 // Advanced filters removed from Potential Matches; filters are managed via Preferences
 
 // Transform backend response to match our interface
@@ -137,7 +138,16 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       
       // First, let's check the user's preferences to see if they're properly set
       try {
-        const prefs = await matchingService.getPreferences()
+        const prefsResponse = await matchingService.getPreferences()
+        // Handle "not configured" response for company preferences
+        if ('configured' in prefsResponse && prefsResponse.configured === false) {
+          console.warn('Preferences not configured:', prefsResponse.message)
+          setMatches([])
+          setLoading(false)
+          return
+        }
+        // Type guard: prefsResponse is MatchingPreferences at this point
+        const prefs = prefsResponse as import('@/types/matching').MatchingPreferences
         console.log('👤 User preferences:', prefs)
         console.log('📍 Destination coordinates:', { lat: prefs.destination_latitude, lng: prefs.destination_longitude })
         

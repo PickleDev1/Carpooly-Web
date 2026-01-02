@@ -47,7 +47,7 @@ export function useCarpools() {
     }
 
     fetchCarpools();
-  }, [user?.id, api]);
+  }, [user?.id, api, activeScope]);
 
   const deleteCarpool = async (carpoolId: string) => {
     try {

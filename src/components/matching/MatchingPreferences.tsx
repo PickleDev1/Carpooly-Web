@@ -64,60 +64,80 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
     commuteDays?: string[]
   }>({})
 
-  const load = useCallback(async () => {
-    try {
-      const p = await matching.getPreferences()
-      console.log('📥 Loaded preferences from backend:', p)
-      console.log('📥 Destination data in loaded preferences:', {
-        latitude: p.destination_latitude,
-        longitude: p.destination_longitude,
-        address: p.destination_address
-      })
-      setPrefs(p)
-      
-      // Only use localStorage for UI display (address string) IF coordinates are valid
-      const savedAddress = localStorage.getItem('carpooly-saved-destination-address')
-      const coordsAreValid = !!(p.destination_latitude && p.destination_longitude && p.destination_latitude !== 0 && p.destination_longitude !== 0)
-      if (savedAddress && coordsAreValid) {
-        setDestinationAddress(savedAddress)
-      } else if (!coordsAreValid) {
-        // Clear any stale address that could mislead the user when coords are 0,0
-        try { localStorage.removeItem('carpooly-saved-destination-address') } catch {}
-        setDestinationAddress('')
-      }
-      
-      // Load saved schedule info from localStorage
-      const savedSchedule = localStorage.getItem('carpooly-saved-schedule')
-      if (savedSchedule) {
-        try {
-          const scheduleData = JSON.parse(savedSchedule)
-          setSavedScheduleInfo(scheduleData)
-        } catch (err) {
-          console.warn('Failed to parse saved schedule data:', err)
+  useEffect(() => {
+    let mounted = true
+    
+    const load = async () => {
+      try {
+                const p = await matching.getPreferences()
+        if (!mounted) return
+        
+        // Handle "not configured" response for company preferences
+        if ('configured' in p && p.configured === false) {
+          console.warn('Company preferences not configured:', p.message)
+          // Use defaults for company preferences not configured
+          setPrefs(defaults)
+          return
         }
-      }
-      
-
-      // If backend has coordinates, try to reverse geocode for display
-      if (coordsAreValid) {
-        try {
-          const geocoder = new window.google.maps.Geocoder()
-          const result = await geocoder.geocode({
-            location: { lat: p.destination_latitude, lng: p.destination_longitude }
-          })
-          if (result.results && result.results[0]) {
-            setDestinationAddress(result.results[0].formatted_address)
+        // Type guard: p is MatchingPreferences at this point
+        const prefs = p as Prefs
+        console.log('📥 Loaded preferences from backend:', prefs)
+        console.log('📥 Destination data in loaded preferences:', {
+          latitude: prefs.destination_latitude,
+          longitude: prefs.destination_longitude,
+          address: prefs.destination_address
+        })
+        setPrefs(prefs)
+        
+        // Only use localStorage for UI display (address string) IF coordinates are valid
+        const savedAddress = localStorage.getItem('carpooly-saved-destination-address')
+        const coordsAreValid = !!(prefs.destination_latitude && prefs.destination_longitude && prefs.destination_latitude !== 0 && prefs.destination_longitude !== 0)
+        if (savedAddress && coordsAreValid) {
+          setDestinationAddress(savedAddress)
+        } else if (!coordsAreValid) {
+          // Clear any stale address that could mislead the user when coords are 0,0
+          try { localStorage.removeItem('carpooly-saved-destination-address') } catch {}
+          setDestinationAddress('')
+        }
+        
+        // Load saved schedule info from localStorage
+        const savedSchedule = localStorage.getItem('carpooly-saved-schedule')
+        if (savedSchedule) {
+          try {
+            const scheduleData = JSON.parse(savedSchedule)
+            setSavedScheduleInfo(scheduleData)
+          } catch (err) {
+            console.warn('Failed to parse saved schedule data:', err)
           }
-        } catch (err) {
-          console.warn('Failed to reverse geocode destination:', err)
         }
-      }
-    } catch {
-      setPrefs(defaults)
-    }
-  }, [])
+        
 
-  useEffect(() => { load() }, [load])
+        // If backend has coordinates, try to reverse geocode for display
+        if (coordsAreValid) {
+          try {
+            const geocoder = new window.google.maps.Geocoder()
+            const result = await geocoder.geocode({
+              location: { lat: prefs.destination_latitude, lng: prefs.destination_longitude }
+            })
+            if (result.results && result.results[0]) {
+              setDestinationAddress(result.results[0].formatted_address)
+            }
+          } catch (err) {
+            console.warn('Failed to reverse geocode destination:', err)
+          }
+        }
+      } catch {
+        if (!mounted) return
+        setPrefs(defaults)
+      }
+    }
+    
+            load()
+            
+            return () => {
+              mounted = false
+            }
+          }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Only run once on mount to prevent infinite loop
 
   const save = async () => {
     setLoading(true)
@@ -133,7 +153,7 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
         longitude: prefs.destination_longitude,
         address: prefs.destination_address
       })
-      await matching.updatePreferences(prefs)
+              await matching.updatePreferences(prefs)
       
       // Save destination address to localStorage
       if (destinationAddress) {

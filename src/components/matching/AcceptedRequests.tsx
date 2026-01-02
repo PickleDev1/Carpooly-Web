@@ -13,6 +13,7 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { useMatchingService } from '@/services/matching'
+import { useCompany } from '@/contexts/CompanyContext'
 import type { MatchRequestsResponse } from '@/types/matching'
 
 // Helper function to safely extract display name

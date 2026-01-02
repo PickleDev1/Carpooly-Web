@@ -13,6 +13,8 @@ import { MatchingStats } from '@/components/matching/MatchingStats'
 import { MatchingPreferences as MatchingPreferencesComponent } from '@/components/matching/MatchingPreferences'
 import { AdvancedMatching } from '@/components/matching/AdvancedMatching'
 import { RealTimeUpdates } from '@/components/matching/RealTimeUpdates'
+import { SiteSelectionPrompt } from '@/components/company/SiteSelectionPrompt'
+import { MembershipNotification } from '@/components/company/MembershipNotification'
 
 function MatchingPageContent() {
   const matching = useMatchingService()
@@ -38,10 +40,10 @@ function MatchingPageContent() {
     ;(async () => {
       // Proactively trigger match generation before initial fetch
       try { await matching.findMatches({ filters: {} }) } catch (_) {}
-      const [reqs, st] = await Promise.all([
-        matching.getRequests(),
-        matching.getStats()
-      ])
+                  const [reqs, st] = await Promise.all([
+                    matching.getRequests(),
+                    matching.getStats()
+                  ])
       if (!mounted) return
       setHeaderCounts({
         potential: 0, // Will be updated by PotentialMatches component
@@ -112,11 +114,11 @@ function MatchingPageContent() {
         <TabsContent value="algorithm" className="space-y-6">
           <AdvancedMatching onMatchesGenerated={async (count) => {
             // Refresh header counts when new matches are generated
-            const [matches, reqs, st] = await Promise.all([
-              matching.getPotentialMatches(),
-              matching.getRequests(),
-              matching.getStats()
-            ])
+                        const [matches, reqs, st] = await Promise.all([
+                          matching.getPotentialMatches({}),
+                          matching.getRequests(),
+                          matching.getStats()
+                        ])
             setHeaderCounts({
               potential: matches.pending_matches?.length ?? 0,
               incoming: reqs.incoming.length,
@@ -180,11 +182,11 @@ function MatchingPageContent() {
           <MatchingPreferencesComponent onSaved={async () => {
             setActiveTab('matches')
             // Refresh counts after save
-            const [matches, reqs, st] = await Promise.all([
-              matching.getPotentialMatches(),
-              matching.getRequests(),
-              matching.getStats()
-            ])
+                        const [matches, reqs, st] = await Promise.all([
+                          matching.getPotentialMatches({}),
+                          matching.getRequests(),
+                          matching.getStats()
+                        ])
             setHeaderCounts({
               potential: matches.pending_matches?.length ?? 0,
               incoming: reqs.incoming.length,
@@ -222,6 +224,12 @@ export default function MatchingPage() {
           <h1 className="text-2xl font-bold">Matching</h1>
           <p className="text-muted-foreground">Find, review, and manage your carpool matches</p>
         </div>
+        
+        {/* Company membership notifications */}
+        <MembershipNotification />
+        
+        {/* Site selection prompt (if in company scope without site) */}
+        <SiteSelectionPrompt />
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
