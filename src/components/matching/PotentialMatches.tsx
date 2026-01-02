@@ -265,23 +265,17 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
           throw matchesErr // Re-throw other errors
         }
       }
-        console.log('📊 Received data:', data)
-        console.log('📋 Pending matches count:', data.pending_matches?.length || 0)
-        console.log('📋 Accepted matches count:', data.accepted_matches?.length || 0)
-        console.log('📋 Expired matches count:', data.expired_matches?.length || 0)
-      } catch (matchesErr: any) {
-        // If endpoint doesn't exist (404), show helpful error message
-        if (matchesErr?.status === 404) {
-          console.error('❌ Potential matches endpoint not found (404)')
-          console.error('❌ The backend endpoint /api/matching/potential-matches is not implemented yet')
-          console.error('❌ Please contact the backend team to implement this endpoint')
-          setMatches([])
-          setLoading(false)
-          // Show user-friendly error
-          alert('Matching feature is not yet available. The backend endpoint needs to be implemented.')
-          return
-        }
-        throw matchesErr // Re-throw other errors
+      
+      // Log final results
+      console.log('📊 Received data:', data)
+      console.log('📋 Pending matches count:', data.pending_matches?.length || 0)
+      console.log('📋 Accepted matches count:', data.accepted_matches?.length || 0)
+      console.log('📋 Expired matches count:', data.expired_matches?.length || 0)
+      
+      // Log if matches were generated but not returned
+      if (matchesGenerated && (data.pending_matches?.length || 0) === 0) {
+        console.warn('⚠️ Matches were generated but not returned in response')
+        console.warn('⚠️ This might indicate a backend timing issue or filtering problem')
       }
       
       // Debug: Log all matches to see their structure
