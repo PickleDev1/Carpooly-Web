@@ -329,6 +329,40 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         console.warn('   - Destination proximity not close enough')
       }
       
+      // Log ALL unique users received from backend BEFORE any frontend processing
+      const backendUserIds = new Set<string>()
+      const backendUsers = new Map<string, { id: string; name: string; clerk_id?: string; email?: string }>()
+      if (data.pending_matches && Array.isArray(data.pending_matches)) {
+        data.pending_matches.forEach((match: any) => {
+          const userId = match.user2?.id
+          if (userId) {
+            backendUserIds.add(userId)
+            if (!backendUsers.has(userId)) {
+              backendUsers.set(userId, {
+                id: userId,
+                name: match.user2?.name || 'Unknown',
+                clerk_id: match.user2?.clerk_id,
+                email: match.user2?.email
+              })
+            }
+          }
+        })
+        console.log('📊 BACKEND VERIFICATION: Total matches received:', data.pending_matches.length)
+        console.log('📊 BACKEND VERIFICATION: Unique users received:', backendUserIds.size)
+        console.log('📊 BACKEND VERIFICATION: Unique user details:', Array.from(backendUsers.values()).map(u => ({
+          id: u.id,
+          name: u.name,
+          clerk_id: u.clerk_id,
+          email: u.email
+        })))
+        if (backendUserIds.size < data.pending_matches.length) {
+          console.warn('⚠️ BACKEND ISSUE: Backend sent duplicate matches for the same users!')
+          console.warn(`   - Total matches: ${data.pending_matches.length}`)
+          console.warn(`   - Unique users: ${backendUserIds.size}`)
+          console.warn(`   - Duplicates: ${data.pending_matches.length - backendUserIds.size}`)
+        }
+      }
+      
       // Transform and filter out matches where requests already exist
       const transformedMatches = (data.pending_matches || []).map(transformBackendMatch)
       console.log('🔍 Transformed matches before filtering:', transformedMatches.map(m => ({ id: m.id, user2_id: m.user2.id, user2_name: m.user2.name })))
@@ -347,14 +381,63 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       console.log(`📊 Filtered matches: ${filteredMatches.length} out of ${transformedMatches.length} (removed ${transformedMatches.length - filteredMatches.length} with existing requests)`)
       console.log('📊 Filtered matches details:', filteredMatches.map(m => ({ id: m.id, user2_id: m.user2.id, user2_name: m.user2.name, compatibility: m.compatibility_percentage })))
       
+      // Deduplicate matches by user2_id - keep the match with highest compatibility score for each user
+      const seenUserIds = new Map<string, PotentialMatch>()
+      const deduplicatedMatches: PotentialMatch[] = []
+      
+      for (const match of filteredMatches) {
+        const userId = match.user2.id
+        const existingMatch = seenUserIds.get(userId)
+        
+        if (!existingMatch) {
+          // First match for this user - keep it
+          seenUserIds.set(userId, match)
+          deduplicatedMatches.push(match)
+          console.log(`✅ Keeping first match for user ${userId} (${match.user2.name}) - match ID: ${match.id}`)
+        } else {
+          // Duplicate user - keep the one with higher compatibility score
+          const existingScore = existingMatch.compatibility_percentage ?? (existingMatch.compatibility_score ?? 0) * 100
+          const currentScore = match.compatibility_percentage ?? (match.compatibility_score ?? 0) * 100
+          
+          if (currentScore > existingScore) {
+            // Replace with better match
+            const index = deduplicatedMatches.indexOf(existingMatch)
+            deduplicatedMatches[index] = match
+            seenUserIds.set(userId, match)
+            console.log(`🔄 Replacing match for user ${userId} (${match.user2.name}) - old: ${existingMatch.id} (${existingScore}%), new: ${match.id} (${currentScore}%)`)
+          } else {
+            console.log(`🚫 Skipping duplicate match for user ${userId} (${match.user2.name}) - match ID: ${match.id} (${currentScore}% vs existing ${existingScore}%)`)
+          }
+        }
+      }
+      
+      console.log(`🔍 Deduplicated matches: ${deduplicatedMatches.length} out of ${filteredMatches.length} (removed ${filteredMatches.length - deduplicatedMatches.length} duplicates)`)
+      console.log('🔍 Deduplicated matches details:', deduplicatedMatches.map(m => ({ id: m.id, user2_id: m.user2.id, user2_name: m.user2.name, compatibility: m.compatibility_percentage })))
+      
+      // Final verification: Show what frontend is displaying vs what backend sent
+      const finalUserIds = new Set(deduplicatedMatches.map(m => m.user2.id))
+      console.log('✅ FRONTEND FINAL RESULT:')
+      console.log(`   - Unique users displayed: ${finalUserIds.size}`)
+      console.log(`   - Backend sent ${backendUserIds.size} unique users`)
+      console.log(`   - Frontend filtered out: ${backendUserIds.size - finalUserIds.size} users (due to existing requests)`)
+      console.log(`   - Frontend deduplicated: ${filteredMatches.length - deduplicatedMatches.length} duplicate matches`)
+      
+      if (backendUserIds.size === finalUserIds.size) {
+        console.log('✅ All unique users from backend are being displayed (no frontend filtering)')
+      } else {
+        const filteredOutUsers = Array.from(backendUserIds).filter(id => !finalUserIds.has(id))
+        console.warn('⚠️ Frontend filtered out users:', filteredOutUsers)
+        console.warn('   This is expected if these users have pending requests')
+      }
+      
       // Only reset focusedIndex if matches actually changed (different length or different IDs)
       const currentMatchIds = new Set(matches.map(m => m.id))
-      const newMatchIds = new Set(filteredMatches.map(m => m.id))
-      const matchesChanged = matches.length !== filteredMatches.length || 
+      const newMatchIds = new Set(deduplicatedMatches.map(m => m.id))
+      const matchesChanged = matches.length !== deduplicatedMatches.length || 
                             !Array.from(currentMatchIds).every(id => newMatchIds.has(id)) ||
                             !Array.from(newMatchIds).every(id => currentMatchIds.has(id))
       
-      setMatches(filteredMatches)
+      setMatches(deduplicatedMatches)
       
       // Only reset focusedIndex if matches actually changed, otherwise preserve current index
       if (matchesChanged) {
