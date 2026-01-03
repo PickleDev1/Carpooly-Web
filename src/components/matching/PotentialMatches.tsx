@@ -335,10 +335,30 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       
       console.log(`📊 Filtered matches: ${filteredMatches.length} out of ${transformedMatches.length} (removed ${transformedMatches.length - filteredMatches.length} with existing requests)`)
       console.log('📊 Filtered matches details:', filteredMatches.map(m => ({ id: m.id, user2_id: m.user2.id, user2_name: m.user2.name, compatibility: m.compatibility_percentage })))
+      
+      // Only reset focusedIndex if matches actually changed (different length or different IDs)
+      const currentMatchIds = new Set(matches.map(m => m.id))
+      const newMatchIds = new Set(filteredMatches.map(m => m.id))
+      const matchesChanged = matches.length !== filteredMatches.length || 
+                            !Array.from(currentMatchIds).every(id => newMatchIds.has(id)) ||
+                            !Array.from(newMatchIds).every(id => currentMatchIds.has(id))
+      
       setMatches(filteredMatches)
-      setFocusedIndex(0)
+      
+      // Only reset focusedIndex if matches actually changed, otherwise preserve current index
+      if (matchesChanged) {
+        console.log('🔄 Matches changed, resetting focusedIndex to 0')
+        setFocusedIndex(0)
+      } else {
+        console.log('🔄 Matches unchanged, preserving focusedIndex:', focusedIndex)
+        // Ensure focusedIndex is within bounds
+        if (focusedIndex >= filteredMatches.length) {
+          console.log('🔄 focusedIndex out of bounds, adjusting to:', filteredMatches.length - 1)
+          setFocusedIndex(Math.max(0, filteredMatches.length - 1))
+        }
+      }
+      
       console.log('✅ Set matches state to:', filteredMatches.length, 'matches')
-      console.log('✅ Set focusedIndex to 0')
       
       // Update header counts
       onMatchesLoaded?.(filteredMatches.length)
