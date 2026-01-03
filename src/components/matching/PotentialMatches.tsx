@@ -815,10 +815,27 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <CardTitle className="text-lg">{current.user2?.name || 'Unknown User'}</CardTitle>
+                  <CardTitle className="text-lg">
+                    {(() => {
+                      const displayName = current.user2?.display_name
+                      if (typeof displayName === 'string' && displayName.trim()) {
+                        return displayName
+                      }
+                      if (displayName && typeof displayName === 'object' && 'String' in displayName && 'Valid' in displayName) {
+                        return displayName.Valid ? displayName.String : current.user2?.name || 'Unknown User'
+                      }
+                      return current.user2?.name || 'Unknown User'
+                    })()}
+                  </CardTitle>
                   <CardDescription className="flex items-center gap-2 mt-1">
                     <MapPin className="w-4 h-4" />
                     <span>Near you</span>
+                    {current.user2?.email && (
+                      <span className="text-xs text-gray-500">• {current.user2.email}</span>
+                    )}
+                    {current.user2?.clerk_id && (
+                      <span className="text-xs text-gray-400">({current.user2.clerk_id.substring(0, 12)}...)</span>
+                    )}
                   </CardDescription>
                 </div>
               </div>
