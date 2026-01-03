@@ -334,8 +334,11 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       })
       
       console.log(`📊 Filtered matches: ${filteredMatches.length} out of ${transformedMatches.length} (removed ${transformedMatches.length - filteredMatches.length} with existing requests)`)
+      console.log('📊 Filtered matches details:', filteredMatches.map(m => ({ id: m.id, user2_id: m.user2.id, user2_name: m.user2.name, compatibility: m.compatibility_percentage })))
       setMatches(filteredMatches)
       setFocusedIndex(0)
+      console.log('✅ Set matches state to:', filteredMatches.length, 'matches')
+      console.log('✅ Set focusedIndex to 0')
       
       // Update header counts
       onMatchesLoaded?.(filteredMatches.length)
