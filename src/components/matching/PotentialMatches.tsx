@@ -357,9 +357,21 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
     loadMatches()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Only run once on mount to prevent infinite loop
 
+  // Backend already sorts matches by compatibility score (highest first)
+  // No need to sort again - just use matches as-is
   const sortedMatches = useMemo(() => {
-    return [...matches].sort((a, b) => b.compatibility_score - a.compatibility_score)
+    console.log('🔄 sortedMatches useMemo called with matches:', matches.length, 'matches')
+    console.log('🔄 sortedMatches details:', matches.map(m => ({ id: m.id, user2_id: m.user2.id, user2_name: m.user2.name })))
+    return matches // Backend returns matches pre-sorted by compatibility
   }, [matches])
+  
+  // Log when matches state changes
+  useEffect(() => {
+    console.log('🔄 Matches state updated:', matches.length, 'matches')
+    console.log('🔄 Matches details:', matches.map(m => ({ id: m.id, user2_id: m.user2.id, user2_name: m.user2.name })))
+    console.log('🔄 sortedMatches length:', sortedMatches.length)
+    console.log('🔄 focusedIndex:', focusedIndex)
+  }, [matches, sortedMatches, focusedIndex])
 
   useEffect(() => {
     const el = listRefs.current[focusedIndex]
@@ -614,6 +626,9 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
   }
 
   const current = sortedMatches[focusedIndex]
+  
+  console.log('🔄 Rendering match card - sortedMatches.length:', sortedMatches.length, 'focusedIndex:', focusedIndex)
+  console.log('🔄 Current match:', current ? { id: current.id, user2_name: current.user2.name } : 'null')
 
   // Safety check - if no current match, show empty state
   if (!current) {
@@ -742,7 +757,15 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
             <ChevronLeft className="w-4 h-4 mr-1" />
             Back
           </Button>
-          <Button size="sm" onClick={() => setFocusedIndex(i => Math.min(sortedMatches.length - 1, i + 1))} disabled={focusedIndex >= sortedMatches.length - 1}>
+          <Button 
+            size="sm" 
+            onClick={() => {
+              const newIndex = Math.min(sortedMatches.length - 1, focusedIndex + 1)
+              console.log('🔄 Next button clicked - current index:', focusedIndex, 'new index:', newIndex, 'total matches:', sortedMatches.length)
+              setFocusedIndex(newIndex)
+            }} 
+            disabled={focusedIndex >= sortedMatches.length - 1}
+          >
             Next
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
