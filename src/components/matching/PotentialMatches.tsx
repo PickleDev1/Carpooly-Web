@@ -300,12 +300,23 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
         console.log('🔍 First match keys:', Object.keys(data.pending_matches[0]))
         if (data.pending_matches[0].user2) {
           console.log('🔍 First match user2:', data.pending_matches[0].user2)
+          console.log('🔍 First match user2.name:', data.pending_matches[0].user2.name)
+          console.log('🔍 First match user2.display_name:', data.pending_matches[0].user2.display_name)
+          console.log('🔍 First match user2.id:', data.pending_matches[0].user2.id)
+          console.log('🔍 First match user2.clerk_id:', data.pending_matches[0].user2.clerk_id)
           if (data.pending_matches[0].user2.work_location) {
             console.log('🔍 First match work location:', data.pending_matches[0].user2.work_location)
           }
           if (data.pending_matches[0].user2.home_location) {
             console.log('🔍 First match home location:', data.pending_matches[0].user2.home_location)
           }
+        }
+        if (data.pending_matches.length > 1 && data.pending_matches[1].user2) {
+          console.log('🔍 Second match user2:', data.pending_matches[1].user2)
+          console.log('🔍 Second match user2.name:', data.pending_matches[1].user2.name)
+          console.log('🔍 Second match user2.display_name:', data.pending_matches[1].user2.display_name)
+          console.log('🔍 Second match user2.id:', data.pending_matches[1].user2.id)
+          console.log('🔍 Second match user2.clerk_id:', data.pending_matches[1].user2.clerk_id)
         }
         console.log('🔍 First match compatibility_score:', data.pending_matches[0].compatibility_score)
         console.log('🔍 First match route_overlap_percentage:', data.pending_matches[0].route_overlap_percentage)
