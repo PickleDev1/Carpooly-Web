@@ -100,19 +100,26 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
       
       const existingUserIds = new Set<string>()
       
-      // Add users from outgoing requests (users we've already sent requests to)
+      // Only filter out users with PENDING requests (not accepted/declined/rejected)
+      // This allows users to see matches again if previous requests were declined or if they want another carpool
+      
+      // Add users from outgoing PENDING requests (users we've already sent requests to that are still pending)
       requestsData.outgoing.forEach(request => {
-        if (request.to_user?.id) {
+        if (request.status === 'pending' && request.to_user?.id) {
           existingUserIds.add(request.to_user.id)
-          console.log('🚫 Adding outgoing request user to filter:', request.to_user.id)
+          console.log('🚫 Adding outgoing PENDING request user to filter:', request.to_user.id, request.status)
+        } else if (request.to_user?.id) {
+          console.log('✅ Not filtering user from outgoing request (status:', request.status, '):', request.to_user.id)
         }
       })
       
-      // Add users from incoming requests (users who have sent us requests)
+      // Add users from incoming PENDING requests (users who have sent us requests that are still pending)
       requestsData.incoming.forEach(request => {
-        if (request.from_user?.id) {
+        if (request.status === 'pending' && request.from_user?.id) {
           existingUserIds.add(request.from_user.id)
-          console.log('🚫 Adding incoming request user to filter:', request.from_user.id)
+          console.log('🚫 Adding incoming PENDING request user to filter:', request.from_user.id, request.status)
+        } else if (request.from_user?.id) {
+          console.log('✅ Not filtering user from incoming request (status:', request.status, '):', request.from_user.id)
         }
       })
       
