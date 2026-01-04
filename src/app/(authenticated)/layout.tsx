@@ -1,6 +1,5 @@
 'use client'
 
-import { MainLayout } from '@/components/layouts/MainLayout'
 import { SignInRedirect } from '@/components/SignInRedirect'
 
 export default function AuthenticatedLayout({
@@ -11,9 +10,7 @@ export default function AuthenticatedLayout({
   return (
     <>
       <SignInRedirect />
-      <MainLayout>
-        {children}
-      </MainLayout>
+      {children}
     </>
   )
 }

@@ -13,7 +13,10 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  ExternalLink
+  ExternalLink,
+  Search,
+  Users,
+  Settings
 } from 'lucide-react';
 
 interface HelpTip {
@@ -42,6 +45,13 @@ const helpTips: HelpTip[] = [
     icon: MessageCircle,
   },
   {
+    id: 'find-matches-intro',
+    title: 'Finding Carpool Matches',
+    content: 'The matching feature helps you discover compatible carpool partners automatically. Go to the "Matching" page from your dashboard or navigation menu. First, set your preferences (work location, schedule, and carpool preferences), then browse potential matches based on compatibility scores, route overlap, and estimated savings.',
+    category: 'getting-started',
+    icon: Search,
+  },
+  {
     id: 'location-tracking',
     title: 'Location Tracking & Safety',
     content: 'Enable location sharing to let your carpool group know your real-time location during rides. This helps with coordination and safety.',
@@ -59,6 +69,34 @@ const helpTips: HelpTip[] = [
     id: 'communication',
     title: 'Staying Connected',
     content: 'Use the chat feature to coordinate pickups, share updates, or just stay in touch with your carpool group.',
+    category: 'features',
+    icon: MessageCircle,
+  },
+  {
+    id: 'matching-preferences',
+    title: 'Setting Your Matching Preferences',
+    content: 'To find the best matches, set your preferences in the "Preferences" tab on the Matching page. Specify your work location (destination), preferred schedule (days and times), whether you can drive or need a ride, and your carpool preferences. The more accurate your preferences, the better matches you\'ll receive.',
+    category: 'features',
+    icon: Settings,
+  },
+  {
+    id: 'understanding-matches',
+    title: 'Understanding Match Compatibility',
+    content: 'Each potential match shows a compatibility score (percentage) that indicates how well you match. This considers route overlap, schedule alignment, and preferences. You\'ll also see estimated monthly savings, route overlap percentage, and match reasons explaining why you\'re a good fit. Higher compatibility scores mean better matches!',
+    category: 'features',
+    icon: Search,
+  },
+  {
+    id: 'sending-match-requests',
+    title: 'Sending Match Requests',
+    content: 'When you find someone you\'d like to carpool with, click "Send Request" on their match card. They\'ll receive a notification and can accept or decline. If accepted, you can create a carpool together. You can send multiple requests, but each person can only have one pending request at a time.',
+    category: 'features',
+    icon: Users,
+  },
+  {
+    id: 'responding-to-requests',
+    title: 'Responding to Match Requests',
+    content: 'When someone sends you a match request, you\'ll see it in the "Requests" tab on the Matching page. Review the match details, compatibility score, and their profile. You can accept to start a carpool together, or decline if it\'s not a good fit. Accepted requests allow you to create a carpool with that person.',
     category: 'features',
     icon: MessageCircle,
   },
@@ -84,6 +122,13 @@ const helpTips: HelpTip[] = [
     icon: Lightbulb,
   },
   {
+    id: 'improve-matches',
+    title: 'Getting Better Matches',
+    content: 'To improve your match quality: 1) Set accurate work location and home address, 2) Specify your exact schedule preferences, 3) Keep your preferences up to date if they change, 4) Be patient - matches are generated based on active users in your area. The more users join, the more matches you\'ll see!',
+    category: 'tips',
+    icon: Lightbulb,
+  },
+  {
     id: 'troubleshoot-location',
     title: 'Location Issues',
     content: 'If location tracking isn\'t working, check your browser permissions and ensure you\'ve enabled location access for Carpooly.',
@@ -94,6 +139,20 @@ const helpTips: HelpTip[] = [
     id: 'troubleshoot-notifications',
     title: 'Notification Problems',
     content: 'Make sure to allow notifications in your browser settings. You can also adjust notification preferences in your account settings.',
+    category: 'troubleshooting',
+    icon: HelpCircle,
+  },
+  {
+    id: 'troubleshoot-no-matches',
+    title: 'No Matches Found?',
+    content: 'If you\'re not seeing matches, check: 1) Your work location is set correctly, 2) Your preferences are saved and active, 3) You\'ve waited a moment for matches to generate (click "Find Matches" if needed), 4) There are other active users in your area. Matches depend on having compatible users nearby with similar destinations and schedules.',
+    category: 'troubleshooting',
+    icon: HelpCircle,
+  },
+  {
+    id: 'troubleshoot-match-requests',
+    title: 'Match Request Issues',
+    content: 'If you can\'t send a request: 1) Check if you already have a pending request with that person, 2) Make sure your preferences are set, 3) Verify the match hasn\'t expired (matches expire after a period). If you can\'t see incoming requests, check the "Requests" tab and ensure notifications are enabled.',
     category: 'troubleshooting',
     icon: HelpCircle,
   },
