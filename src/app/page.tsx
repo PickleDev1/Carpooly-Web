@@ -25,7 +25,7 @@ export default function HomePage() {
     {
       icon: Users,
       title: "Smart Matching",
-      description: "Find the perfect carpool partners based on your route, schedule, and preferences. (Coming Soon)"
+      description: "Find the perfect carpool partners based on your route, schedule, and preferences."
     },
     {
       icon: MapPin,
@@ -183,14 +183,7 @@ export default function HomePage() {
                   {feature.title}
                 </h3>
                 <p className="text-gray-600 leading-relaxed">
-                  {feature.title === "Smart Matching" ? (
-                    <>
-                      Find the perfect carpool partners based on your route, schedule, and preferences.{" "}
-                      <strong className="font-bold">(Coming Soon)</strong>
-                    </>
-                  ) : (
-                    feature.description
-                  )}
+                  {feature.description}
                 </p>
               </div>
             )

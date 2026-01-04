@@ -3,11 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { InvitesTable } from '@/components/invitesTable'
-import { ActiveRideSection } from '@/components/ActiveRideSection'
 import { 
-  ChevronDown, 
-  ChevronUp, 
   Plus, 
   Car, 
   MapPin, 
@@ -91,8 +87,6 @@ function getActivityDetails(activity: Activity) {
 }
 
 export default function Dashboard() {
-  const [isInvitesOpen, setIsInvitesOpen] = useState(true)
-  const [isActiveRideOpen, setIsActiveRideOpen] = useState(true)
   const [checkingProfile, setCheckingProfile] = useState(true)
   const [stats, setStats] = useState({
     totalCarpools: 0,
@@ -1011,45 +1005,6 @@ export default function Dashboard() {
 
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-          {/* Pending Invites Section */}
-          <Card>
-            <CardHeader className="px-4 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-base sm:text-lg">Pending Invites</CardTitle>
-                  {isRefreshing && (
-                    <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsInvitesOpen(!isInvitesOpen)}
-                  onMouseEnter={() => showTooltip({
-                    id: 'toggle-invites',
-                    title: isInvitesOpen ? 'Collapse Invites' : 'Expand Invites',
-                    content: isInvitesOpen ? 'Hide pending carpool invitations' : 'Show pending carpool invitations',
-                    position: 'left'
-                  })}
-                  onMouseLeave={hideTooltip}
-                >
-                  {isInvitesOpen ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              <CardDescription className="text-sm">Respond to carpool invitations</CardDescription>
-            </CardHeader>
-            
-            {isInvitesOpen && (
-              <CardContent className="px-4 sm:px-6">
-                <InvitesTable />
-              </CardContent>
-            )}
-          </Card>
-
           {/* Matching Section */}
           <Card>
             <CardHeader className="px-4 sm:px-6">
@@ -1080,42 +1035,6 @@ export default function Dashboard() {
                 </Link>
               </div>
             </CardContent>
-          </Card>
-
-          {/* Active Ride Section */}
-          <Card>
-            <CardHeader className="px-4 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base sm:text-lg">Active Carpool Rides</CardTitle>
-                  <CardDescription className="text-sm">Ongoing active rides and their status</CardDescription>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsActiveRideOpen(!isActiveRideOpen)}
-                  onMouseEnter={() => showTooltip({
-                    id: 'toggle-active-rides',
-                    title: isActiveRideOpen ? 'Collapse Active Rides' : 'Expand Active Rides',
-                    content: isActiveRideOpen ? 'Hide ongoing active carpool rides' : 'Show ongoing active carpool rides',
-                    position: 'left'
-                  })}
-                  onMouseLeave={hideTooltip}
-                >
-                  {isActiveRideOpen ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </CardHeader>
-            
-            {isActiveRideOpen && (
-              <CardContent className="px-4 sm:px-6">
-                <ActiveRideSection />
-              </CardContent>
-            )}
           </Card>
         </div>
       </div>
