@@ -144,7 +144,8 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
   const [isAdvancedExpanded, setIsAdvancedExpanded] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
-  // Determine if advanced section should be expanded based on preferences
+  // Determine if user has set any advanced preferences (for save logic only)
+  // Note: This does NOT auto-expand the section - user must manually toggle
   const shouldExpandAdvanced = useMemo(() => {
     if (!prefs) return false
     // Check if any advanced field has a non-default value
@@ -173,11 +174,8 @@ export function MatchingPreferences({ onSaved }: { onSaved?: () => void }) {
     return false
   }, [prefs])
 
-  useEffect(() => {
-    if (shouldExpandAdvanced) {
-      setIsAdvancedExpanded(true)
-    }
-  }, [shouldExpandAdvanced])
+  // Advanced section starts collapsed by default - user must manually expand
+  // Removed auto-expansion to reduce overwhelming UI
 
   useEffect(() => {
     let mounted = true
