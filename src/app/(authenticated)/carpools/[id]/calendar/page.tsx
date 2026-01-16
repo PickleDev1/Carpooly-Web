@@ -19,20 +19,26 @@ export default function CarpoolCalendarPage() {
   const searchParams = useSearchParams()
   const api = useApi()
 
-  // Handle date query parameter to automatically open modal for specific ride
+  // Handle date query parameter to navigate to specific date
+  // Note: We don't auto-open the modal to avoid showing "no ride" errors
+  // The user can click the date if they want to see details
   useEffect(() => {
     const dateParam = searchParams.get('date')
     if (dateParam) {
       try {
-        const parsedDate = new Date(dateParam)
+        // Parse date string (YYYY-MM-DD) in local timezone
+        const [year, month, day] = dateParam.split('-').map(Number)
+        const parsedDate = new Date(year, month - 1, day) // month is 0-indexed
+        
         if (!isNaN(parsedDate.getTime())) {
           // Set current month to show the date
           setCurrentDate(parsedDate)
-          // Open modal for that date
-          setSelectedDate(parsedDate)
+          console.log('📅 Calendar: Navigated to date:', dateParam, '- User can click date to view details')
+          // Don't auto-open modal - let user click if they want to see details
+          // This prevents showing "no ride" errors if the ride doesn't exist for that date
         }
       } catch (error) {
-        console.error('Invalid date parameter:', dateParam)
+        console.error('Invalid date parameter:', dateParam, error)
       }
     }
   }, [searchParams])

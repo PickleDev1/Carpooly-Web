@@ -98,7 +98,7 @@ export function NextRideCard() {
     }
   }, [api])
 
-  const handleViewDetails = () => {
+  const handleViewDetails = async () => {
     if (!nextRide?.ride) return
     
     const { ride } = nextRide
@@ -109,11 +109,27 @@ export function NextRideCard() {
       return
     }
     
-    // Otherwise, navigate to calendar page with the ride date as query parameter
-    if (ride.carpool_id && ride.start_time) {
-      const rideDate = new Date(ride.start_time)
-      const dateStr = rideDate.toISOString().split('T')[0] // Format: YYYY-MM-DD
-      router.push(`/carpools/${ride.carpool_id}/calendar?date=${dateStr}`)
+    // Navigate to calendar
+    if (ride.carpool_id) {
+      // If ride has an ID and start_time, navigate with date parameter
+      // The calendar page will NOT auto-open the modal to avoid "no ride" errors
+      // User can click the date if they want to see details
+      if (ride.id && ride.start_time) {
+        // Extract date in local timezone to avoid timezone conversion issues
+        const rideDate = new Date(ride.start_time)
+        // Use local date components instead of UTC to get correct date
+        const year = rideDate.getFullYear()
+        const month = String(rideDate.getMonth() + 1).padStart(2, '0')
+        const day = String(rideDate.getDate()).padStart(2, '0')
+        const dateStr = `${year}-${month}-${day}` // Format: YYYY-MM-DD in local timezone
+        
+        // Navigate to calendar with date - modal will NOT auto-open
+        // This prevents "no ride" errors if the ride doesn't exist for that date
+        router.push(`/carpools/${ride.carpool_id}/calendar?date=${dateStr}`)
+      } else {
+        // No ride ID or start_time - just navigate to calendar without date
+        router.push(`/carpools/${ride.carpool_id}/calendar`)
+      }
     }
   }
 
