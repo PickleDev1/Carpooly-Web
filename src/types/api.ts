@@ -217,3 +217,48 @@ export interface MatchingStatsResponse {
     acceptances: number;
   }>;
 }
+
+// Next Ride API Response Types
+export interface NextRideParticipant {
+  id: string;
+  name: string;
+  display_name: string;
+  email: string;
+  clerk_id: string;
+}
+
+export interface NextRideDriver {
+  id: string;
+  name: string;
+  display_name: string;
+  email: string;
+  clerk_id: string;
+  city: string | null;
+  state: string | null;
+  location_sharing_enabled: boolean;
+  home_latitude: number;
+  home_longitude: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NextRide {
+  id: string;
+  carpool_id: string;
+  driver_id: string | null;
+  start_time: string; // ISO 8601 format
+  status: number; // 0 = Pending, 1 = Active, 2 = Completed
+  participants: NextRideParticipant[];
+  location_lat?: number;
+  location_lng?: number;
+  miles_saved?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NextRideInfo {
+  ride: NextRide;
+  carpool_name: string;
+  driver: NextRideDriver | null;
+  is_user_driver: boolean;
+}

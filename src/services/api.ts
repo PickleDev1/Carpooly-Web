@@ -1,4 +1,4 @@
-import { Carpool, CompletedRide, Analytics, Schedule } from '@/types/api'
+import { Carpool, CompletedRide, Analytics, Schedule, NextRideInfo } from '@/types/api'
 import { useAuth } from '@clerk/nextjs'
 import { mockService } from '@/mocks/mockService'
 import { useMemo } from 'react'
@@ -1243,6 +1243,59 @@ export const useApi = () => {
         } catch (error) {
           console.error('JSON Parse Error:', error, 'Response:', text)
           return null
+        }
+      },
+
+      /**
+       * Get user's next upcoming carpool ride
+       * GET /api/rides/next
+       * 
+       * Returns the next upcoming ride with carpool name, driver info, and whether user is driver
+       * Returns null if no upcoming rides
+       */
+      async getNextRide(): Promise<NextRideInfo | null> {
+        if (useMockApi) {
+          return null
+        }
+        
+        const headers = await getHeaders()
+        console.log('🚗 getNextRide: Making request to /api/rides/next')
+        
+        const response = await fetch(`${API_URL}/api/rides/next`, {
+          method: 'GET',
+          headers
+        })
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.error('getNextRide: Unauthorized')
+            throw new Error('Unauthorized')
+          }
+          if (response.status === 404) {
+            console.error('getNextRide: User not found')
+            throw new Error('User not found')
+          }
+          const text = await response.text()
+          console.error('getNextRide: API Error:', response.status, response.statusText, text)
+          throw new Error('Failed to get next ride')
+        }
+
+        const text = await response.text()
+        console.log('🚗 getNextRide: Raw response:', text)
+        
+        // Handle null response (no upcoming rides)
+        if (!text || text === 'null' || text.trim() === '') {
+          console.log('🚗 getNextRide: No upcoming rides')
+          return null
+        }
+
+        try {
+          const data = JSON.parse(text)
+          console.log('🚗 getNextRide: Parsed response:', data)
+          return data
+        } catch (error) {
+          console.error('🚗 getNextRide: JSON Parse Error:', error, 'Response:', text)
+          throw new Error('Failed to parse next ride response')
         }
       },
 

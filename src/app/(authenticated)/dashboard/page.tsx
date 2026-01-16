@@ -36,6 +36,7 @@ import { OnboardingTour } from '@/components/OnboardingTour'
 import { HelpTips } from '@/components/HelpTips'
 import { ContextualTooltip, useTooltips } from '@/components/ContextualTooltip'
 import { useMatchingService } from '@/services/matching'
+import { NextRideCard } from '@/components/NextRideCard'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -961,6 +962,11 @@ export default function Dashboard() {
             )
           })}
         </div>
+      </div>
+
+      {/* Next Ride - Prominent placement above main grid */}
+      <div className="mb-4 sm:mb-6">
+        <NextRideCard />
       </div>
 
       {/* Main Content Grid */}
