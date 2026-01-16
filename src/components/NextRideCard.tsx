@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Clock, Car, Users, ArrowRight } from 'lucide-react'
+import { Clock, Car, Users, ArrowRight, Calendar } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -99,19 +99,35 @@ export function NextRideCard() {
   }, [api])
 
   const handleViewDetails = () => {
-    if (nextRide?.ride?.carpool_id) {
-      router.push(`/carpools/${nextRide.ride.carpool_id}/calendar`)
+    if (!nextRide?.ride) return
+    
+    const { ride } = nextRide
+    
+    // If ride is active (status === 1), navigate to live map
+    if (ride.status === 1 && ride.id) {
+      router.push(`/maps/${ride.id}`)
+      return
+    }
+    
+    // Otherwise, navigate to calendar page with the ride date as query parameter
+    if (ride.carpool_id && ride.start_time) {
+      const rideDate = new Date(ride.start_time)
+      const dateStr = rideDate.toISOString().split('T')[0] // Format: YYYY-MM-DD
+      router.push(`/carpools/${ride.carpool_id}/calendar?date=${dateStr}`)
     }
   }
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Next Ride</CardTitle>
+      <Card className="border-2 border-dashed border-gray-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold text-gray-700">Next Ride</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4 text-gray-500 text-sm">Loading next ride...</div>
+          <div className="text-center py-8">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-gray-500 text-sm">Loading next ride...</p>
+          </div>
         </CardContent>
       </Card>
     )
@@ -119,12 +135,18 @@ export function NextRideCard() {
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Next Ride</CardTitle>
+      <Card className="border-2 border-red-200 bg-red-50/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold text-gray-700">Next Ride</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4 text-red-500 text-sm">Error: {error}</div>
+          <div className="text-center py-6">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Car className="w-6 h-6 text-red-600" />
+            </div>
+            <p className="text-red-600 text-sm font-medium mb-2">Error loading ride</p>
+            <p className="text-red-500 text-xs">{error}</p>
+          </div>
         </CardContent>
       </Card>
     )
@@ -132,20 +154,24 @@ export function NextRideCard() {
 
   if (!nextRide) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Next Ride</CardTitle>
+      <Card className="border-2 border-dashed border-gray-200 bg-gradient-to-br from-gray-50 to-white">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold text-gray-700">Next Ride</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-6">
-            <Car className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 mb-2">No upcoming rides scheduled</p>
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Car className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-600 font-medium mb-1">No upcoming rides scheduled</p>
+            <p className="text-gray-500 text-xs mb-4">Start finding carpool partners to get matched</p>
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={() => router.push('/matching')}
-              className="mt-2"
+              className="bg-primary hover:bg-primary/90 text-white"
             >
+              <Users className="w-4 h-4 mr-2" />
               Find Matches
             </Button>
           </div>
@@ -158,64 +184,109 @@ export function NextRideCard() {
   const formattedTime = formatRideTime(ride.start_time)
 
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleViewDetails}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center justify-between">
-          <span>Next Ride</span>
+    <Card 
+      className="relative overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-white to-primary/5 hover:shadow-xl hover:border-primary/40 transition-all duration-300 cursor-pointer group"
+      onClick={handleViewDetails}
+    >
+      {/* Decorative accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/80 to-primary/60"></div>
+      
+      <CardHeader className="pb-4 pt-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="text-xl font-bold text-gray-900">Next Ride</CardTitle>
+          </div>
           {is_user_driver && (
-            <Badge variant="default" className="bg-green-600">
-              <Car className="w-3 h-3 mr-1" />
-              Driving
+            <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white shadow-md px-3 py-1">
+              <Car className="w-3.5 h-3.5 mr-1.5" />
+              <span className="font-semibold">Driving</span>
             </Badge>
           )}
-        </CardTitle>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      
+      <CardContent className="space-y-5 pb-6">
+        {/* Carpool Name - Prominent */}
         <div>
-          <h3 className="font-semibold text-lg text-gray-900 mb-1">{carpool_name}</h3>
-          <div className="flex items-center gap-2 text-gray-600">
-            <Clock className="w-4 h-4" />
-            <span className="text-sm">{formattedTime}</span>
+          <h3 className="font-bold text-2xl text-gray-900 mb-3 group-hover:text-primary transition-colors">
+            {carpool_name}
+          </h3>
+          
+          {/* Time Display */}
+          <div className="flex items-center gap-3 bg-blue-50/50 rounded-lg p-3 border border-blue-100">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Clock className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-0.5">Ride Time</p>
+              <p className="text-sm font-semibold text-gray-900">{formattedTime}</p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Driver Status */}
+        <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3 border border-gray-100">
           {is_user_driver ? (
-            <div className="flex items-center gap-2 text-green-600 font-medium">
-              <Car className="w-4 h-4" />
-              <span className="text-sm">You are driving</span>
-            </div>
+            <>
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Car className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-xs text-green-600 font-medium uppercase tracking-wide mb-0.5">Driver</p>
+                <p className="text-sm font-semibold text-green-700">You are driving</p>
+              </div>
+            </>
           ) : driver ? (
-            <div className="flex items-center gap-2 text-gray-700">
-              <Car className="w-4 h-4 text-gray-500" />
-              <span className="text-sm">Driver: {driver.display_name || driver.name}</span>
-            </div>
+            <>
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Car className="w-5 h-5 text-gray-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 font-medium uppercase tracking-wide mb-0.5">Driver</p>
+                <p className="text-sm font-semibold text-gray-900">{driver.display_name || driver.name}</p>
+              </div>
+            </>
           ) : (
-            <div className="flex items-center gap-2 text-gray-500">
-              <Car className="w-4 h-4" />
-              <span className="text-sm">No driver assigned</span>
-            </div>
+            <>
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Car className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-xs text-amber-600 font-medium uppercase tracking-wide mb-0.5">Driver</p>
+                <p className="text-sm font-semibold text-amber-700">No driver assigned</p>
+              </div>
+            </>
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-gray-600">
-          <Users className="w-4 h-4" />
-          <span className="text-sm">
-            {ride.participants.length} participant{ride.participants.length !== 1 ? 's' : ''}
-          </span>
+        {/* Participants */}
+        <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3 border border-gray-100">
+          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Users className="w-5 h-5 text-purple-600" />
+          </div>
+          <div>
+            <p className="text-xs text-purple-600 font-medium uppercase tracking-wide mb-0.5">Participants</p>
+            <p className="text-sm font-semibold text-gray-900">
+              {ride.participants.length} {ride.participants.length === 1 ? 'person' : 'people'}
+            </p>
+          </div>
         </div>
 
+        {/* View Details Button */}
         <Button
-          variant="outline"
-          size="sm"
-          className="w-full mt-2"
+          variant="default"
+          size="lg"
+          className="w-full bg-primary hover:bg-primary/90 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-[1.02]"
           onClick={(e) => {
             e.stopPropagation()
             handleViewDetails()
           }}
         >
-          View Details
-          <ArrowRight className="w-4 h-4 ml-2" />
+          <span>View Details</span>
+          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
         </Button>
       </CardContent>
     </Card>

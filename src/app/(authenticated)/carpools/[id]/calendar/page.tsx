@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameMonth, addMonths, addDays, isSameDay, startOfWeek, endOfWeek, getDay, nextDay, startOfDay, isBefore, isAfter } from 'date-fns'
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,26 @@ export default function CarpoolCalendarPage() {
   const [recurringDates, setRecurringDates] = useState<Date[]>([])
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const params = useParams()
+  const searchParams = useSearchParams()
   const api = useApi()
+
+  // Handle date query parameter to automatically open modal for specific ride
+  useEffect(() => {
+    const dateParam = searchParams.get('date')
+    if (dateParam) {
+      try {
+        const parsedDate = new Date(dateParam)
+        if (!isNaN(parsedDate.getTime())) {
+          // Set current month to show the date
+          setCurrentDate(parsedDate)
+          // Open modal for that date
+          setSelectedDate(parsedDate)
+        }
+      } catch (error) {
+        console.error('Invalid date parameter:', dateParam)
+      }
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const fetchSchedules = async () => {
