@@ -1,4 +1,4 @@
-const CACHE_NAME = 'carpooly-cache-v1';
+const CACHE_NAME = 'carpooly-cache-v2';
 const urlsToCache = [
   '/',
   '/offline',
