@@ -28,8 +28,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       {/* Headers */}
       {isSignedIn ? (
         <>
-          <DesktopHeader />
-          <MobileHeader />
+          <div className="hidden md:block">
+            <DesktopHeader />
+          </div>
+          <div className="md:hidden">
+            <MobileHeader />
+          </div>
         </>
       ) : (
         <DesktopHeader />

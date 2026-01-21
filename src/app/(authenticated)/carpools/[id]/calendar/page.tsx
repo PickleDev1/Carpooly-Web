@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameMonth, addMonths, addDays, isSameDay, startOfWeek, endOfWeek, getDay, nextDay, startOfDay, isBefore, isAfter } from 'date-fns'
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,32 @@ export default function CarpoolCalendarPage() {
   const [recurringDates, setRecurringDates] = useState<Date[]>([])
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const params = useParams()
+  const searchParams = useSearchParams()
   const api = useApi()
+
+  // Handle date query parameter to navigate to specific date
+  // Note: We don't auto-open the modal to avoid showing "no ride" errors
+  // The user can click the date if they want to see details
+  useEffect(() => {
+    const dateParam = searchParams.get('date')
+    if (dateParam) {
+      try {
+        // Parse date string (YYYY-MM-DD) in local timezone
+        const [year, month, day] = dateParam.split('-').map(Number)
+        const parsedDate = new Date(year, month - 1, day) // month is 0-indexed
+        
+        if (!isNaN(parsedDate.getTime())) {
+          // Set current month to show the date
+          setCurrentDate(parsedDate)
+          console.log('📅 Calendar: Navigated to date:', dateParam, '- User can click date to view details')
+          // Don't auto-open modal - let user click if they want to see details
+          // This prevents showing "no ride" errors if the ride doesn't exist for that date
+        }
+      } catch (error) {
+        console.error('Invalid date parameter:', dateParam, error)
+      }
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const fetchSchedules = async () => {

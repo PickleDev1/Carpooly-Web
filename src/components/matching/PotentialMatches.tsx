@@ -16,7 +16,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
-  Settings
+  Settings,
+  Home
 } from 'lucide-react'
 import { useMatchingService } from '@/services/matching'
 import { type PotentialMatch, type MatchFilters } from '@/types/matching'
@@ -37,6 +38,8 @@ const transformBackendMatch = (backendMatch: any): PotentialMatch => {
       compatibility_percentage: backendMatch.schedule.compatibility_percentage ?? (backendMatch.schedule.compatibility_score ? backendMatch.schedule.compatibility_score * 100 : undefined)
     } : undefined,
     total_distance_miles: backendMatch.total_distance_miles ?? 0,
+    driving_time_minutes: backendMatch.driving_time_minutes ?? null,
+    driving_distance_miles: backendMatch.driving_distance_miles ?? null,
     status: backendMatch.status ?? 'pending',
     expires_at: backendMatch.expires_at,
     created_at: backendMatch.created_at,
@@ -910,14 +913,28 @@ export function PotentialMatches({ onStatsUpdate, onNavigateToPreferences, onNav
                       return current.user2?.name || 'Unknown User'
                     })()}
                   </CardTitle>
-                  <CardDescription className="flex items-center gap-2 mt-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>Near you</span>
-                    {current.user2?.email && (
-                      <span className="text-xs text-gray-500">• {current.user2.email}</span>
+                  <CardDescription className="flex flex-col gap-1 mt-1">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      <span>Near you</span>
+                    </div>
+                    {current.driving_distance_miles && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Home className="w-3 h-3" />
+                        <span>{current.driving_distance_miles.toFixed(1)} miles away</span>
+                      </div>
                     )}
-                    {current.user2?.clerk_id && (
-                      <span className="text-xs text-gray-400">({current.user2.clerk_id.substring(0, 12)}...)</span>
+                    {current.driving_time_minutes && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Clock className="w-3 h-3" />
+                        <span>~{Math.round(current.driving_time_minutes)} minutes drive</span>
+                      </div>
+                    )}
+                    {!current.driving_time_minutes && !current.driving_distance_miles && (
+                      <span className="text-xs text-gray-400">Distance unavailable</span>
+                    )}
+                    {current.user2?.email && (
+                      <span className="text-xs text-gray-500 mt-1">• {current.user2.email}</span>
                     )}
                   </CardDescription>
                 </div>

@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Clock } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
 import { useApi } from '@/services/api'
 
@@ -39,6 +40,7 @@ interface DayDetails {
     display_name: string
     email: string
   }[]
+  start_time?: string
 }
 
 interface Participant {
@@ -105,8 +107,10 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
           id: rideDetails.id,
           driver: rideDetails.driver_id ? { id: rideDetails.driver_id } : undefined,
           participants: participants,
+          start_time: rideDetails.start_time,
         })
         console.log('🚗 CarpoolDayModal: ✅ Day details set successfully')
+        console.log('🚗 CarpoolDayModal: Start time:', rideDetails.start_time)
       } else {
         // No ride exists yet, try to get participants from separate call as fallback
         console.warn('🚗 CarpoolDayModal: ⚠️ NO RIDE FOUND for this date!')
@@ -140,6 +144,7 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
           id: '',
           driver: undefined,
           participants: participants,
+          start_time: undefined,
         })
         console.log('🚗 CarpoolDayModal: ⚠️ Day details set with NO RIDE ID (ride does not exist)')
       }
@@ -336,6 +341,26 @@ export function CarpoolDayModal({ isOpen, onClose, date, carpoolId }: CarpoolDay
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
+          {/* Time Display */}
+          {dayDetails?.start_time && (
+            <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-100">
+              <Clock className="h-5 w-5 text-green-600" />
+              <div>
+                <span className="text-sm font-medium text-green-900">Start Time:</span>
+                <span className="ml-2 text-sm text-green-700">
+                  {(() => {
+                    try {
+                      const timeDate = new Date(dayDetails.start_time);
+                      return format(timeDate, 'h:mm a');
+                    } catch (error) {
+                      console.error('Error formatting time:', error);
+                      return dayDetails.start_time;
+                    }
+                  })()}
+                </span>
+              </div>
+            </div>
+          )}
           {/* Driver Section */}
           <div className="space-y-2">
             <h3 className="font-medium">Driver</h3>

@@ -56,6 +56,9 @@ export interface PotentialMatch {
   status: 'pending' | 'accepted' | 'expired';
   expires_at: string;
   created_at: string;
+  // NEW: Driving time and distance from user's home to match's home
+  driving_time_minutes?: number | null; // Approximate driving time in minutes
+  driving_distance_miles?: number | null; // Approximate driving distance in miles
   // Clerk ID for efficient API calls (preferred over UUID)
   user2_clerk_id?: string;
   user2: {

@@ -225,26 +225,62 @@ export const useMatchingService = () => {
     async updatePreferences(update: Partial<MatchingPreferences>): Promise<MatchingPreferences> {
       const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/matching/preferences`
       
-      // Send all user-editable fields including new destination and schedule fields
-      const payload: any = {
-        max_detour_minutes: update.max_detour_minutes,
-        preferred_group_size: update.preferred_group_size,
-        driver_preference: update.driver_preference === 'flexible' ? 'either' : update.driver_preference,
-        schedule_flexibility_minutes: update.schedule_flexibility_minutes,
-        max_pickup_distance_miles: update.max_pickup_distance_miles,
-        min_compatibility_score: update.min_compatibility_score,
-        // New required destination fields
-        destination_latitude: update.destination_latitude,
-        destination_longitude: update.destination_longitude,
-        destination_address: update.destination_address || `${update.destination_latitude},${update.destination_longitude}`,
-        // New optional schedule fields
-        arrival_time: update.arrival_time,
-        commute_days: update.commute_days,
-        // Keep existing fields
-        notification_preferences: update.notification_preferences,
-        user_demographics: update.user_demographics,
-        demographic_preferences: update.demographic_preferences,
-        is_active: update.is_active,
+      // Build payload - only include fields that are explicitly set (not undefined)
+      // The component already builds a selective payload, but we filter here for safety
+      const payload: any = {}
+      
+      // Basic required fields
+      if (update.destination_latitude !== undefined) {
+        payload.destination_latitude = update.destination_latitude
+      }
+      if (update.destination_longitude !== undefined) {
+        payload.destination_longitude = update.destination_longitude
+      }
+      if (update.destination_address !== undefined) {
+        payload.destination_address = update.destination_address
+      } else if (update.destination_latitude !== undefined && update.destination_longitude !== undefined) {
+        // Fallback: create address from coordinates if not provided
+        payload.destination_address = `${update.destination_latitude},${update.destination_longitude}`
+      }
+      if (update.arrival_time !== undefined) {
+        payload.arrival_time = update.arrival_time
+      }
+      if (update.commute_days !== undefined) {
+        payload.commute_days = update.commute_days
+      }
+      
+      // Advanced optional fields
+      if (update.max_detour_minutes !== undefined) {
+        payload.max_detour_minutes = update.max_detour_minutes
+      }
+      if (update.preferred_group_size !== undefined) {
+        payload.preferred_group_size = update.preferred_group_size
+      }
+      if (update.driver_preference !== undefined) {
+        payload.driver_preference = update.driver_preference === 'flexible' ? 'either' : update.driver_preference
+      }
+      if (update.schedule_flexibility_minutes !== undefined) {
+        payload.schedule_flexibility_minutes = update.schedule_flexibility_minutes
+      }
+      if (update.max_pickup_distance_miles !== undefined) {
+        payload.max_pickup_distance_miles = update.max_pickup_distance_miles
+      }
+      if (update.min_compatibility_score !== undefined) {
+        payload.min_compatibility_score = update.min_compatibility_score
+      }
+      
+      // Other fields
+      if (update.notification_preferences !== undefined) {
+        payload.notification_preferences = update.notification_preferences
+      }
+      if (update.user_demographics !== undefined) {
+        payload.user_demographics = update.user_demographics
+      }
+      if (update.demographic_preferences !== undefined) {
+        payload.demographic_preferences = update.demographic_preferences
+      }
+      if (update.is_active !== undefined) {
+        payload.is_active = update.is_active
       }
       
       logRequest('PUT', endpoint, payload)

@@ -16,7 +16,8 @@ import {
   ArrowLeft,
   X,
   CheckCircle,
-  Star
+  Star,
+  Search
 } from 'lucide-react';
 
 interface TourStep {
@@ -57,6 +58,14 @@ const tourSteps: TourStep[] = [
     icon: Users,
     action: 'Send Invites',
     highlight: 'invite-section',
+  },
+  {
+    id: 'find-matches',
+    title: 'Find Carpool Matches',
+    description: 'Discover compatible carpool partners automatically! First, set your preferences (work location, schedule, and carpool preferences). Then, we\'ll find people going to similar destinations near you. Review potential matches with compatibility scores, route overlap, and estimated savings. Send match requests to people you\'d like to carpool with, and respond to incoming requests from others.',
+    icon: Search,
+    action: 'Find Matches',
+    highlight: 'find-matches-section',
   },
   {
     id: 'track-rides',
@@ -131,6 +140,8 @@ export function OnboardingTour({ isOpen, onClose, onComplete }: OnboardingTourPr
       router.push('/create-carpool');
     } else if (action === 'Send Invites') {
       router.push('/carpools/list');
+    } else if (action === 'Find Matches') {
+      router.push('/matching');
     } else if (action === 'Go to Settings') {
       router.push('/settings');
     } else if (action === 'Get Started') {
